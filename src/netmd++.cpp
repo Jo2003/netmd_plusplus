@@ -561,3 +561,18 @@ int CNetMDpp::discFlags()
 
     return ret;
 }
+
+//--------------------------------------------------------------------------
+//! @brief      erase MD
+//!
+//! @return     NetMdErr
+//--------------------------------------------------------------------------
+int CNetMDpp::eraseDisc()
+{
+    int ret = 0;
+    unsigned char request[] = {0x00, 0x18, 0x40, 0xff, 0x00, 0x00};
+
+    ret = exchange(request, sizeof(request));
+
+    return (ret < 0) ? ret : NETMDERR_NO_ERROR;
+}
