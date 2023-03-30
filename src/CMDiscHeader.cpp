@@ -21,9 +21,6 @@
 #include "CMDiscHeader.h"
 #include "log.h"
 
-/// log configuration
-structlog LOGCFG = {true, DEBUG, nullptr};
-
 //-----------------------------------------------------------------------------
 //! @brief      Constructs a new instance.
 //-----------------------------------------------------------------------------
@@ -168,25 +165,25 @@ int CMDiscHeader::sanityCheck(const Groups_t& grps) const
     {
         if ((g.mFirst == 0) && (g.mLast != -1))
         {
-            LOG(ERROR) << "Title group can't have a last entry!";
+            LOG(CRITICAL) << "Title group can't have a last entry!";
             ret = -1;
             break;
         }
         else if ((g.mFirst == -1) && (g.mLast != -1))
         {
-            LOG(ERROR) << "An empty group can't have a last entry!";
+            LOG(CRITICAL) << "An empty group can't have a last entry!";
             ret = -1;
             break;
         }
         else if ((g.mFirst > g.mLast) && (g.mLast != -1))
         {
-            LOG(ERROR) << "First track number can't be larger than last track number!";
+            LOG(CRITICAL) << "First track number can't be larger than last track number!";
             ret = -1;
             break;
         }
         else if ((g.mFirst > 0) && (g.mFirst <= last))
         {
-            LOG(ERROR) << "Some groups share the same track numbers!";
+            LOG(CRITICAL) << "Some groups share the same track numbers!";
             ret = -1;
             break;
         }
@@ -289,7 +286,7 @@ int CMDiscHeader::addGroup(const std::string& name, int16_t first, int16_t last)
     }
     else
     {
-        LOG(ERROR) << "Sanity check for 'addGroup()' not(!) successful!";
+        LOG(CRITICAL) << "Sanity check for 'addGroup()' not(!) successful!";
     }
 
     return -1;
@@ -331,7 +328,7 @@ void CMDiscHeader::listGroups() const
             oss << " - " << g.mLast;
         }
 
-        LOG(ERROR) << oss.str();
+        LOG(CRITICAL) << oss.str();
     }
 }
 

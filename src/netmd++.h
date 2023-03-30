@@ -171,7 +171,7 @@ public:
     //!
     //! @return     The device name.
     //--------------------------------------------------------------------------
-    const std::string& getDeviceName();
+    std::string getDeviceName();
 
     //--------------------------------------------------------------------------
     //! @brief      Sets the log level.
@@ -452,6 +452,46 @@ T toNetMD(const T& val)
 {
     T v = val;
     if (is_big_endian())
+    {
+        byteSwop(v);
+    }
+    return v;
+}
+
+//------------------------------------------------------------------------------
+//! @brief      convert byte order from big endian
+//!
+//! @param[in]  val   The value
+//!
+//! @tparam     T     type to convert
+//!
+//! @return     converted data
+//------------------------------------------------------------------------------
+template <typename T>
+T fromBigEndian(const T& val)
+{
+    T v = val;
+    if (!is_big_endian())
+    {
+        byteSwop(v);
+    }
+    return v;
+}
+
+//------------------------------------------------------------------------------
+//! @brief      convert byte order to big endian
+//!
+//! @param[in]  val   The value
+//!
+//! @tparam     T     type to convert
+//!
+//! @return     converted data
+//------------------------------------------------------------------------------
+template <typename T>
+T toBigEndian(const T& val)
+{
+    T v = val;
+    if (!is_big_endian())
     {
         byteSwop(v);
     }

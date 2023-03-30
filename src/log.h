@@ -17,13 +17,13 @@ enum typelog
     DEBUG,
     INFO,
     WARN,
-    ERROR
+    CRITICAL
 };
 
 struct structlog
 {
     bool headers = false;
-    typelog level = WARN;
+    int level = WARN;
     std::ostringstream* sout = nullptr;
 };
 
@@ -37,12 +37,12 @@ class LOG
 public:
     LOG() {}
 
-    LOG(typelog type)
+    LOG(int type)
     {
         msglevel = type;
         if(LOGCFG.headers)
         {
-            operator << ("["+getLabel(type)+"]");
+            operator << ("["+getLabel(type)+"] ");
         }
     }
 
@@ -80,7 +80,7 @@ public:
         return *this;
     }
 
-    static std::string hexFormat(typelog sev, const unsigned char* data, std::size_t dataLen)
+    static std::string hexFormat(int sev, const unsigned char* data, std::size_t dataLen)
     {
         if (sev < LOGCFG.level)
         {
@@ -150,19 +150,19 @@ public:
 
 private:
 
-    inline std::string getLabel(typelog type)
+    inline std::string getLabel(int type)
     {
         std::string label;
         switch(type)
         {
-            case DEBUG: label = "DEBUG"; break;
-            case INFO:  label = "INFO "; break;
-            case WARN:  label = "WARN "; break;
-            case ERROR: label = "ERROR"; break;
+            case DEBUG:    label = " DEBUG  "; break;
+            case INFO:     label = "  INFO  "; break;
+            case WARN:     label = "  WARN  "; break;
+            case CRITICAL: label = "CRITICAL"; break;
         }
         return label;
     }
 
     bool opened = false;
-    typelog msglevel = DEBUG;
+    int msglevel = DEBUG;
 };
