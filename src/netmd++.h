@@ -24,6 +24,7 @@
  *
  */
 #pragma once
+#include <array>
 #include <cstddef>
 #include <cstdlib>
 #include <libusb-1.0/libusb.h>
@@ -31,9 +32,11 @@
 #include <map>
 #include <string>
 #include <memory>
-
+#include <vector>
+#include <variant>
 
 #include "log.h"
+#include "CMDiscHeader.h"
 
 //------------------------------------------------------------------------------
 //! @brief      This class describes a C++ NetMD access library
@@ -68,6 +71,14 @@ class CNetMDpp
 
 public:
 
+    /// track times
+    struct TrackTime
+    {
+        int mMinutes;
+        int mSeconds;
+        int mTenthSecs;
+    };
+
     /// 1000ms
     static constexpr unsigned int NETMD_POLL_TIMEOUT = 1000;
     static constexpr unsigned int NETMD_SEND_TIMEOUT = 1000;
@@ -77,7 +88,20 @@ public:
 
 
     // ease memory management
-    using NetMDResp = std::unique_ptr<uint8_t[]>;
+    using NetMDResp       = std::unique_ptr<uint8_t[]>;
+    using NetMDByteVector = std::vector<uint8_t>;
+    using NetMDParam      = std::variant<uint8_t, uint16_t, uint32_t, uint64_t, NetMDByteVector>;
+    using NetMDParams     = std::vector<NetMDParam>;
+
+    /// type definitaion stored in param
+    enum NetMDParamType
+    {
+        UINT8_T,        ///< uint8_t
+        UINT16_T,       ///< uint16_t
+        UINT32_T,       ///< uint32_t
+        UINT64_T,       ///< uint64_t
+        BYTE_VECTOR     ///< @see NetMDByteVector
+    };
 
     /// NetMD errors
     enum NetMdErr
@@ -88,6 +112,8 @@ public:
         NETMDERR_TIMEOUT     = -3,  ///< timeout while waiting for response
         NETMDERR_CMD_FAILED  = -4,  ///< minidisc responded with 08 response
         NETMDERR_CMD_INVALID = -5,  ///< minidisc responded with 0A response
+        NETMDERR_PARAM       = -6,  ///< parameter error
+        NETMDERR_OTHER       = -7,  ///< any other error
     };
 
     /// NetMD status
@@ -119,6 +145,13 @@ public:
     //! @return     0 -> ok; < 0 -> error
     //--------------------------------------------------------------------------
     int initDevice();
+
+    //--------------------------------------------------------------------------
+    //! @brief      Initializes the disc header.
+    //!
+    //! @return     NetMdErr
+    //--------------------------------------------------------------------------
+    int initDiscHeader();
 
     //--------------------------------------------------------------------------
     //! @brief      create unique id from vendor and device
@@ -181,6 +214,57 @@ public:
     //! @return     NetMdErr
     //--------------------------------------------------------------------------
     int eraseDisc();
+
+    //--------------------------------------------------------------------------
+    //! @brief      format query for netmd exchange
+    //!
+    //! @param[in]  format  The format
+    //! @param[in]  params  The parameters
+    //! @param[out] query   The query
+    //!
+    //! @return     < 0 -> NetMdErr; else -> query size
+    //--------------------------------------------------------------------------
+    static int formatQuery(const char* format, const NetMDParams& params, NetMDResp& query);
+
+    //--------------------------------------------------------------------------
+    //! @brief      capture data from netmd response
+    //!
+    //! @param[in]  data    The response data
+    //! @param[in]  size    The data size
+    //! @param[in]  format  The capture format string
+    //! @param[out] params  The buffer for captured parameters
+    //!
+    //! @return     NetMdErr
+    //--------------------------------------------------------------------------
+    static int scanQuery(const uint8_t data[], size_t size, const char* format, NetMDParams& params);
+
+    //--------------------------------------------------------------------------
+    //! @brief      get track time
+    //!
+    //! @param[in]  trackNo    The track no
+    //! @param      trackTime  The track time
+    //!
+    //! @return     NetMdErr
+    //--------------------------------------------------------------------------
+    int trackTime(int trackNo, TrackTime& trackTime);
+
+    //--------------------------------------------------------------------------
+    //! @brief      get disc title
+    //!
+    //! @param[out] title  The title
+    //!
+    //! @return     NetMdErr
+    //--------------------------------------------------------------------------
+    int discTitle(std::string& title);
+
+    //--------------------------------------------------------------------------
+    //! @brief      Writes a disc header.
+    //!
+    //! @param[in]  title  The title (optional)
+    //!
+    //! @return     NetMdErr
+    //--------------------------------------------------------------------------
+    int writeDiscHeader(const std::string& title = "");
 
 protected:
 
@@ -264,4 +348,159 @@ private:
 
     /// NetMD device
     NetMDDevice mDevice = {{0, 0, nullptr, false}, "", nullptr};
+
+    /// disc header
+    CMDiscHeader mDiscHeader;
 };
+
+namespace netmdutils
+{
+
+//------------------------------------------------------------------------------
+//! @brief      swop bytes
+//!
+//! @param      val   The value
+//!
+//! @tparam     T     word, dword or qword
+//!
+//! @return     value
+//------------------------------------------------------------------------------
+template <typename T>
+T& byteSwop(T& val)
+{
+    int sz  = sizeof(T);
+
+    // check size ... up too 8 bytes are supported ...
+    switch (sz)
+    {
+    case 1:
+        // nothing to do ...
+        break;
+
+    case 2:
+    case 4:
+    case 8:
+        {
+            // In case this is to cryptic, use algorithm below!
+            T   trg = 0;
+            int i, j;
+
+            // swab bytes ...
+            for (i = sz - 1, j = 0; j < sz; i--, j++)
+            {
+                trg |= ((val >> (i * 8)) & 0xFF) << (j * 8);
+            }
+
+            val = trg;
+        }
+        break;
+
+    default:
+        // don't touch anything ...
+        break;
+    }
+
+    return val;
+}
+
+//------------------------------------------------------------------------------
+//! @brief      Determines if big endian.
+//!
+//! @return     True if big endian, False otherwise.
+//------------------------------------------------------------------------------
+inline bool is_big_endian()
+{
+    union {
+        uint32_t i;
+        char c[4];
+    } bint = {0x01020304};
+
+    return bint.c[0] == 1;
+}
+
+//------------------------------------------------------------------------------
+//! @brief      convert byte order for data coming from NetMD
+//!
+//! @param[in]  val   The value
+//!
+//! @tparam     T     type to convert
+//!
+//! @return     converted data
+//------------------------------------------------------------------------------
+template <typename T>
+T fromNetMD(const T& val)
+{
+    T v = val;
+    if (is_big_endian())
+    {
+        byteSwop(v);
+    }
+    return v;
+}
+
+//------------------------------------------------------------------------------
+//! @brief      convert byte order for data sending to NetMD
+//!
+//! @param[in]  val   The value
+//!
+//! @tparam     T     type to convert
+//!
+//! @return     converted data
+//------------------------------------------------------------------------------
+template <typename T>
+T toNetMD(const T& val)
+{
+    T v = val;
+    if (is_big_endian())
+    {
+        byteSwop(v);
+    }
+    return v;
+}
+
+inline unsigned char proper_to_bcd_single(unsigned char value)
+{
+    unsigned char high, low;
+
+    low = (value % 10) & 0xf;
+    high = (((value / 10) % 10) * 0x10U) & 0xf0;
+
+    return high | low;
+}
+
+inline unsigned char* proper_to_bcd(unsigned int value, unsigned char* target, size_t len)
+{
+    while (value > 0 && len > 0) {
+        target[len - 1] = proper_to_bcd_single(value & 0xff);
+        value /= 100;
+        len--;
+    }
+
+    return target;
+}
+
+inline unsigned char bcd_to_proper_single(unsigned char value)
+{
+    unsigned char high, low;
+
+    high = (value & 0xf0) >> 4;
+    low = (value & 0xf);
+
+    return ((high * 10U) + low) & 0xff;
+}
+
+inline unsigned int bcd_to_proper(unsigned char* value, size_t len)
+{
+    unsigned int result = 0;
+    unsigned int nibble_value = 1;
+
+    for (; len > 0; len--) {
+        result += nibble_value * bcd_to_proper_single(value[len - 1]);
+
+        nibble_value *= 100;
+    }
+
+    return result;
+}
+
+}

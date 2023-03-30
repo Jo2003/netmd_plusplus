@@ -80,7 +80,7 @@ public:
         return *this;
     }
 
-    static std::string hexFormat(typelog sev, unsigned char* data, std::size_t dataLen)
+    static std::string hexFormat(typelog sev, const unsigned char* data, std::size_t dataLen)
     {
         if (sev < LOGCFG.level)
         {

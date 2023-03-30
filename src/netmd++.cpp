@@ -31,6 +31,13 @@
 #include <cstring>
 #include <unistd.h>
 
+using namespace netmdutils;
+
+#define mBYTE(x_) static_cast<uint8_t>(x_)
+#define mWORD(x_) static_cast<uint16_t>(x_)
+#define mDWORD(x_) static_cast<uint32_t>(x_)
+#define mQWORD(x_) static_cast<uint64_t>(x_)
+
 #define mkDevEntry(a_, b_, c_, d_) CNetMDpp::vendorDev(a_, b_), {a_, b_, c_, d_}
 
 
@@ -84,7 +91,7 @@ const CNetMDpp::KnownDevices CNetMDpp::smKnownDevices = {
 #undef mkDevEntry
 
 /// log configuration
-structlog LOGCFG = {true, WARN, nullptr};
+structlog LOGCFG = {true, DEBUG, nullptr};
 
 //--------------------------------------------------------------------------
 //! @brief      Constructs a new instance.
@@ -575,4 +582,519 @@ int CNetMDpp::eraseDisc()
     ret = exchange(request, sizeof(request));
 
     return (ret < 0) ? ret : NETMDERR_NO_ERROR;
+}
+
+//--------------------------------------------------------------------------
+//! @brief      format query for netmd exchange
+//!
+//! @param[in]  format  The format
+//! @param[in]  params  The parameters
+//! @param[out] query   The query
+//!
+//! @return     < 0 -> NetMdErr; else -> query size
+//--------------------------------------------------------------------------
+int CNetMDpp::formatQuery(const char* format, const NetMDParams& params, NetMDResp& query)
+{
+    int ret = 0;
+    NetMDByteVector queryBuffer;
+
+    uint8_t b;
+    char   tok[3]     = {'\0',};
+    size_t tokIdx     = 0;
+    size_t argno      = 0;
+    int    esc        = 0;
+
+    uint8_t wordBuff[sizeof(uint64_t)] = {0,};
+
+    // remove spaces
+    while (*format != '\0')
+    {
+        // add some kind of sanity check
+        if (argno > params.size())
+        {
+            LOG(ERROR) << __FUNCTION__ << " Error sanity check while creating query!";
+            return NETMDERR_PARAM;
+        }
+
+        if (!esc)
+        {
+            switch(*format)
+            {
+            case '\t':
+            case ' ':
+                // ignore
+                break;
+
+            case '%':
+                esc = 1;
+                break;
+            default:
+                tok[tokIdx++] = *format;
+                if (tokIdx == 2)
+                {
+                    char *end;
+                    b = strtoul(tok, &end, 16);
+
+                    if (end != tok)
+                    {
+                        queryBuffer.push_back(b);
+                    }
+                    else
+                    {
+                        // can't convert char* to number
+                        LOG(ERROR) << __FUNCTION__ << " Can't convert token '" << tok << "' into hex number";
+                        return NETMDERR_PARAM;
+                    }
+
+                    tokIdx = 0;
+                }
+                break;
+            }
+        }
+        else
+        {
+            int c;
+            switch((c = tolower(*format)))
+            {
+            case 'b':
+                if (params.at(argno).index() == UINT8_T)
+                {
+                    queryBuffer.push_back(std::get<uint8_t>(params.at(argno++)));
+                    esc = 0;
+                }
+                else
+                {
+                    LOG(ERROR) << __FUNCTION__ << " Stored parameter isn't of type BYTE!";
+                    return NETMDERR_PARAM;
+                }
+                break;
+
+            case 'w':
+                if (params.at(argno).index() == UINT16_T)
+                {
+                    *reinterpret_cast<uint16_t*>(wordBuff) = toNetMD(std::get<uint16_t>(params.at(argno++)));
+                    for (size_t s = 0; s < sizeof(uint16_t); s++)
+                    {
+                        queryBuffer.push_back(wordBuff[s]);
+                    }
+                    esc = 0;
+                }
+                else
+                {
+                    LOG(ERROR) << __FUNCTION__ << " Stored parameter isn't of type WORD!";
+                    return NETMDERR_PARAM;
+                }
+                break;
+
+            case 'd':
+                if (params.at(argno).index() == UINT32_T)
+                {
+                    *reinterpret_cast<uint32_t*>(wordBuff) = toNetMD(std::get<uint32_t>(params.at(argno++)));
+                    for (size_t s = 0; s < sizeof(uint32_t); s++)
+                    {
+                        queryBuffer.push_back(wordBuff[s]);
+                    }
+                    esc = 0;
+                }
+                else
+                {
+                    LOG(ERROR) << __FUNCTION__ << " Stored parameter isn't of type DWORD!";
+                    return NETMDERR_PARAM;
+                }
+                break;
+
+            case 'q':
+                if (params.at(argno).index() == UINT64_T)
+                {
+                    *reinterpret_cast<uint64_t*>(wordBuff) = toNetMD(std::get<uint64_t>(params.at(argno++)));
+                    for (size_t s = 0; s < sizeof(uint64_t); s++)
+                    {
+                        queryBuffer.push_back(wordBuff[s]);
+                    }
+                    esc = 0;
+                }
+                else
+                {
+                    LOG(ERROR) << __FUNCTION__ << " Stored parameter isn't of type QWORD!";
+                    return NETMDERR_PARAM;
+                }
+                break;
+
+            case '*':
+                if (params.at(argno).index() == BYTE_VECTOR)
+                {
+                    NetMDByteVector ba = std::get<NetMDByteVector>(params.at(argno++));
+                    for (const auto& v : ba)
+                    {
+                        queryBuffer.push_back(v);
+                    }
+                    esc = 0;
+                }
+                else
+                {
+                    LOG(ERROR) << __FUNCTION__ << " Stored parameter isn't of type NetMDByteVector!";
+                    return NETMDERR_PARAM;
+                }
+                break;
+
+            case '<':
+            case '>':
+                // ignore endianess, we always need little endian
+                break;
+
+            default:
+                LOG(ERROR) << __FUNCTION__ << " Unsupported format option '"
+                           << static_cast<char>(c) << "' used query format!";
+                return NETMDERR_PARAM;
+                break;
+            }
+        }
+        format++;
+    }
+
+    if (!queryBuffer.empty())
+    {
+        ret   = static_cast<int>(queryBuffer.size());
+        query = NetMDResp(new uint8_t[ret]);
+
+        for(int i = 0; i < ret; i++)
+        {
+            query[i] = queryBuffer.at(i);
+        }
+
+        LOG(DEBUG) << "Formatted query code:" << LOG::hexFormat(DEBUG, query.get(), ret);
+    }
+
+    return ret;
+
+}
+
+//--------------------------------------------------------------------------
+//! @brief      capture data from netmd response
+//!
+//! @param[in]  data    The response data
+//! @param[in]  size    The data size
+//! @param[in]  format  The capture format string
+//! @param[out] params  The buffer for captured parameters
+//!
+//! @return     NetMdErr
+//--------------------------------------------------------------------------
+int CNetMDpp::scanQuery(const uint8_t data[], size_t size, const char* format, NetMDParams& params)
+{
+    params.clear();
+    int     ret                 = NETMDERR_PARAM;
+    int     esc                 =  0;
+    char    tok[3]              = {'\0',};
+    size_t  tokIdx              =  0;
+    size_t  dataIdx             = 0;
+    uint8_t cmp                 = 0;
+
+    LOG(DEBUG) << "Scan query:" << LOG::hexFormat(DEBUG, data, size);
+
+    // remove spaces
+    while (*format != '\0')
+    {
+        if (dataIdx >= size)
+        {
+            LOG(ERROR) << __FUNCTION__ << " Error sanity check scanning response!";
+            return ret;
+        }
+
+        if (!esc)
+        {
+            switch(*format)
+            {
+            case '\t':
+            case ' ':
+                // ignore
+                break;
+            case '%':
+                esc = 1;
+                break;
+            default:
+                tok[tokIdx++] = *format;
+                if (tokIdx == 2)
+                {
+                    char *end;
+                    cmp = strtoul(tok, &end, 16);
+
+                    if (end != tok)
+                    {
+                        if (cmp != data[dataIdx++])
+                        {
+                            LOG(ERROR) << __FUNCTION__ << " Error! Got: " << std::hex
+                                       << static_cast<int>(data[dataIdx - 1])
+                                       << " expected: " << std::hex << static_cast<int>(cmp) << std::dec;
+                            return ret;
+                        }
+                    }
+                    else
+                    {
+                        // can't convert char* to number
+                        LOG(ERROR) << __FUNCTION__ <<  " Can't convert token '" << tok << "' into hex number!";
+                        return ret;
+                    }
+
+                    tokIdx = 0;
+                }
+                break;
+            }
+        }
+        else
+        {
+            int c;
+            switch((c = tolower(*format)))
+            {
+            case '?':
+                esc = 0;
+                dataIdx ++;
+                break;
+
+            case 'b':
+                // capture byte
+                params.push_back(data[dataIdx++]);
+                esc = 0;
+                break;
+
+            case 'w':
+                // capture word
+                params.push_back(fromNetMD(*reinterpret_cast<const uint16_t*>(&data[dataIdx])));
+                dataIdx += sizeof(uint16_t);
+                esc = 0;
+                break;
+
+            case 'd':
+                // capture dword
+                params.push_back(fromNetMD(*reinterpret_cast<const uint32_t*>(&data[dataIdx])));
+                dataIdx += sizeof(uint32_t);
+                esc = 0;
+                break;
+
+            case 'q':
+                // capture qword
+                params.push_back(fromNetMD(*reinterpret_cast<const uint64_t*>(&data[dataIdx])));
+                dataIdx += sizeof(uint64_t);
+                esc = 0;
+                break;
+
+            case '*':
+                // capture byte array
+                {
+                    NetMDByteVector ba;
+                    while (dataIdx < size)
+                    {
+                        ba.push_back(data[dataIdx++]);
+                    }
+                    params.push_back(ba);
+                    esc = 0;
+                }
+                break;
+
+            case '<':
+            case '>':
+                // ignore endianess, we always get little endian
+                break;
+
+            default:
+                LOG(ERROR) << __FUNCTION__ << " Unsupported format option '"
+                           << static_cast<char>(c) << "' used query format!";
+                return ret;
+                break;
+            }
+        }
+
+        format ++;
+    }
+
+    if (!params.empty())
+    {
+        ret = NETMDERR_NO_ERROR;
+    }
+
+
+    return ret;
+}
+
+//--------------------------------------------------------------------------
+//! @brief      get track time
+//!
+//! @param[in]  trackNo    The track no
+//! @param      trackTime  The track time
+//!
+//! @return     NetMdErr
+//--------------------------------------------------------------------------
+int CNetMDpp::trackTime(int trackNo, TrackTime& trackTime)
+{
+    unsigned char hs[] = {0x00, 0x18, 0x08, 0x10, 0x10, 0x01, 0x01, 0x00};
+
+    NetMDResp query, response;
+
+    if ((formatQuery("00 1806 02 20 10 01 %w 30 00 01 00 ff 00 00 00 00 00",
+                    {{mWORD(trackNo)}}, query) == 19) && (query != nullptr))
+    {
+        exchange(hs, sizeof(hs));
+        if ((exchange(query.get(), 19, &response) >= 31) && (response != nullptr))
+        {
+            trackTime.mMinutes   = bcd_to_proper(&response[28], 1) & 0xff;
+            trackTime.mSeconds   = bcd_to_proper(&response[29], 1) & 0xff;
+            trackTime.mTenthSecs = bcd_to_proper(&response[30], 1) & 0xff;
+            return NETMDERR_NO_ERROR;
+        }
+    }
+
+    LOG(ERROR) << __FUNCTION__ << " Error receiving track times!";
+    return NETMDERR_PARAM;
+}
+
+//--------------------------------------------------------------------------
+//! @brief      get disc title
+//!
+//! @param[out] title  The title
+//!
+//! @return     NetMdErr
+//--------------------------------------------------------------------------
+int CNetMDpp::discTitle(std::string& title)
+{
+    int ret;
+    uint16_t total = 1, remaining = 0, read = 0, chunkSz = 0;
+    unsigned char hs1[] = {0x00, 0x18, 0x08, 0x10, 0x10, 0x01, 0x01, 0x00};
+
+    NetMDResp request, response;
+    const char* format = "00 1806 02 20 18 01 00 00 30 00 0a 00 ff 00 %w %w";
+
+    exchange(hs1, sizeof(hs1));
+
+    while (read < total)
+    {
+        request  = nullptr;
+        response = nullptr;
+
+        if (formatQuery(format, {{remaining}, {read}}, request) == 19)
+        {
+            if (((ret = exchange(request.get(), 19, &response)) > 0) && (response != nullptr))
+            {
+                if (remaining == 0)
+                {
+                    // first answer
+                    total   = fromNetMD(*reinterpret_cast<uint16_t*>(&response[23]));
+                    chunkSz = fromNetMD(*reinterpret_cast<uint16_t*>(&response[15])) - 6;
+
+                    for(uint16_t i = 25; i < (25 + chunkSz); i++)
+                    {
+                        title.push_back(static_cast<char>(response[i]));
+                    }
+                }
+                else
+                {
+                    chunkSz = fromNetMD(*reinterpret_cast<uint16_t*>(&response[15]));
+
+                    for(uint16_t i = 19; i < (19 + chunkSz); i++)
+                    {
+                        title.push_back(static_cast<char>(response[i]));
+                    }
+                }
+
+                read += chunkSz;
+                remaining = total - read;
+            }
+            else
+            {
+                LOG(ERROR) << __FUNCTION__ << " Error in exchange()!";
+                return NETMDERR_PARAM;
+            }
+        }
+        else
+        {
+            LOG(ERROR) << __FUNCTION__ << " Error formatting query!";
+            return NETMDERR_PARAM;
+        }
+    }
+
+    ret = NETMDERR_NO_ERROR;
+
+    return ret;
+}
+
+//--------------------------------------------------------------------------
+//! @brief      Initializes the disc header.
+//!
+//! @return     NetMdErr
+//--------------------------------------------------------------------------
+int CNetMDpp::initDiscHeader()
+{
+    std::string head;
+
+    if (discTitle(head) == NETMDERR_NO_ERROR)
+    {
+        return mDiscHeader.fromString(head);
+    }
+
+    return NETMDERR_OTHER;
+}
+
+//--------------------------------------------------------------------------
+//! @brief      Writes a disc header.
+//!
+//! @param[in]  title  The title (optional)
+//!
+//! @return     NetMdErr
+//--------------------------------------------------------------------------
+int CNetMDpp::writeDiscHeader(const std::string& title)
+{
+    const char* content;
+    size_t contentSz = 0;
+    std::string currHead;
+
+    int ret = discTitle(currHead);
+
+    if (ret != NETMDERR_NO_ERROR)
+    {
+        return ret;
+    }
+
+    ret = NETMDERR_OTHER;
+
+    if (title.empty())
+    {
+        content = mDiscHeader.stringHeader();
+    }
+    else
+    {
+        content = title.c_str();
+    }
+
+    contentSz = strlen(content);
+
+    size_t old_header_size = currHead.size();
+
+    NetMDResp request;
+
+    unsigned char hs[]  = {0x00, 0x18, 0x08, 0x10, 0x18, 0x01, 0x01, 0x00};
+    unsigned char hs2[] = {0x00, 0x18, 0x08, 0x10, 0x18, 0x01, 0x00, 0x00};
+    unsigned char hs3[] = {0x00, 0x18, 0x08, 0x10, 0x18, 0x01, 0x03, 0x00};
+
+    const char* format = "00 1807 02 20 18 01 00 00 30 00 0a 00 50 00 %w 00 00 %w %*";
+    NetMDByteVector ba;
+
+    for (size_t i = 0; i < contentSz; i++)
+    {
+        ba.push_back(static_cast<uint8_t>(content[i]));
+    }
+
+    if (((ret = formatQuery(format, {{mWORD(contentSz)}, {mWORD(old_header_size)}, {ba}},
+        request)) > 0) && (request != nullptr))
+    {
+        exchange(hs , sizeof(hs) );
+        exchange(hs2, sizeof(hs2));
+        exchange(hs3, sizeof(hs3));
+
+        if (exchange(request.get(), ret) > -1)
+        {
+            ret = NETMDERR_NO_ERROR;
+        }
+
+        exchange(hs2, sizeof(hs2));
+    }
+
+    return ret;
 }
