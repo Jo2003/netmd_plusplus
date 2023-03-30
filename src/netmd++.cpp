@@ -135,11 +135,11 @@ void CNetMDpp::setLogLevel(typelog severity)
 //--------------------------------------------------------------------------
 //! @brief      Initializes the device.
 //!
-//! @return     0 -> ok; < 0 -> error
+//! @return     NetMdErr
 //--------------------------------------------------------------------------
 int CNetMDpp::initDevice()
 {
-    int ret = -1;
+    int ret = NETMDERR_USB;
 
     if (mInitialized)
     {
@@ -170,7 +170,7 @@ int CNetMDpp::initDevice()
 
                         if ((libusb_open(devs[i], &mDevice.mDevHdl) == 0) && (libusb_claim_interface(mDevice.mDevHdl, 0) == 0))
                         {
-                            ret = 0;
+                            ret = NETMDERR_NO_ERROR;
                         }
                     }
                 }
