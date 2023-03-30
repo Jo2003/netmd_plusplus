@@ -19,6 +19,10 @@
 #include <regex>
 #include <sstream>
 #include "CMDiscHeader.h"
+#include "log.h"
+
+/// log configuration
+structlog LOGCFG = {true, DEBUG, nullptr};
 
 //-----------------------------------------------------------------------------
 //! @brief      Constructs a new instance.
@@ -164,25 +168,25 @@ int CMDiscHeader::sanityCheck(const Groups_t& grps) const
     {
         if ((g.mFirst == 0) && (g.mLast != -1))
         {
-            netmd_log(NETMD_LOG_ERROR, "Title group can't have a last entry!\n");
+            LOG(ERROR) << "Title group can't have a last entry!";
             ret = -1;
             break;
         }
         else if ((g.mFirst == -1) && (g.mLast != -1))
         {
-            netmd_log(NETMD_LOG_ERROR, "An empty group can't have a last entry!\n");
+            LOG(ERROR) << "An empty group can't have a last entry!";
             ret = -1;
             break;
         }
         else if ((g.mFirst > g.mLast) && (g.mLast != -1))
         {
-            netmd_log(NETMD_LOG_ERROR, "First track number can't be larger than last track number!\n");
+            LOG(ERROR) << "First track number can't be larger than last track number!";
             ret = -1;
             break;
         }
         else if ((g.mFirst > 0) && (g.mFirst <= last))
         {
-            netmd_log(NETMD_LOG_ERROR, "Some groups share the same track numbers!\n");
+            LOG(ERROR) << "Some groups share the same track numbers!";
             ret = -1;
             break;
         }
@@ -279,13 +283,13 @@ int CMDiscHeader::addGroup(const std::string& name, int16_t first, int16_t last)
 
     if (sanityCheck(tmpGrps) == 0)
     {
-        netmd_log(NETMD_LOG_VERBOSE, "Sanity check for 'addGroup()' successful!\n", mGroupId);
+        LOG(DEBUG) << "Sanity check for 'addGroup()' successful!";
         mGroups = tmpGrps;
         return mGroupId - 1;
     }
     else
     {
-        netmd_log(NETMD_LOG_ERROR, "Sanity check for 'addGroup()' not(!) successful!\n");
+        LOG(ERROR) << "Sanity check for 'addGroup()' not(!) successful!";
     }
 
     return -1;
@@ -327,7 +331,7 @@ void CMDiscHeader::listGroups() const
             oss << " - " << g.mLast;
         }
 
-        netmd_log(NETMD_LOG_ERROR, "%s\n", oss.str().c_str());
+        LOG(ERROR) << oss.str();
     }
 }
 
@@ -529,7 +533,7 @@ int CMDiscHeader::delGroup(int gid)
     {
         if (cit->mGid == gid)
         {
-            netmd_log(NETMD_LOG_VERBOSE, "Delete group %d, name: '%s'\n", cit->mGid, cit->mName.c_str());
+            LOG(DEBUG) << "Delete group " << cit->mGid << ", name: '" << cit->mName << "'";
             mGroups.erase(cit);
             ret = 0;
             break;
