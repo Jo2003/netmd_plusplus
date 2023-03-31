@@ -152,7 +152,7 @@ int formatQuery(const char* format, const NetMDParams& params, NetMDResp& query)
             case 'w':
                 if (params.at(argno).index() == UINT16_T)
                 {
-                    auto f = bigE ? toBigEndian<uint16_t> : toNetMD<uint16_t>;
+                    auto f = bigE ? toBigEndian<uint16_t> : toLittleEndian<uint16_t>;
                     *reinterpret_cast<uint16_t*>(wordBuff) = f(std::get<uint16_t>(params.at(argno++)));
                     for (size_t s = 0; s < sizeof(uint16_t); s++)
                     {
@@ -171,7 +171,7 @@ int formatQuery(const char* format, const NetMDParams& params, NetMDResp& query)
             case 'd':
                 if (params.at(argno).index() == UINT32_T)
                 {
-                    auto f = bigE ? toBigEndian<uint32_t> : toNetMD<uint32_t>;
+                    auto f = bigE ? toBigEndian<uint32_t> : toLittleEndian<uint32_t>;
                     *reinterpret_cast<uint32_t*>(wordBuff) = f(std::get<uint32_t>(params.at(argno++)));
                     for (size_t s = 0; s < sizeof(uint32_t); s++)
                     {
@@ -190,7 +190,7 @@ int formatQuery(const char* format, const NetMDParams& params, NetMDResp& query)
             case 'q':
                 if (params.at(argno).index() == UINT64_T)
                 {
-                    auto f = bigE ? toBigEndian<uint64_t> : toNetMD<uint64_t>;
+                    auto f = bigE ? toBigEndian<uint64_t> : toLittleEndian<uint64_t>;
                     *reinterpret_cast<uint64_t*>(wordBuff) = f(std::get<uint64_t>(params.at(argno++)));
                     for (size_t s = 0; s < sizeof(uint64_t); s++)
                     {
@@ -350,7 +350,7 @@ int scanQuery(const uint8_t data[], size_t size, const char* format, NetMDParams
             case 'w':
                 {
                     // capture word
-                    auto f = bigE ? fromBigEndian<uint16_t> : fromNetMD<uint16_t>;
+                    auto f = bigE ? fromBigEndian<uint16_t> : fromLittleEndian<uint16_t>;
                     params.push_back(f(*reinterpret_cast<const uint16_t*>(&data[dataIdx])));
                     dataIdx += sizeof(uint16_t);
                     esc = 0;
@@ -361,7 +361,7 @@ int scanQuery(const uint8_t data[], size_t size, const char* format, NetMDParams
             case 'd':
                 {
                     // capture dword
-                    auto f = bigE ? fromBigEndian<uint32_t> : fromNetMD<uint32_t>;
+                    auto f = bigE ? fromBigEndian<uint32_t> : fromLittleEndian<uint32_t>;
                     params.push_back(f(*reinterpret_cast<const uint32_t*>(&data[dataIdx])));
                     dataIdx += sizeof(uint32_t);
                     esc = 0;
@@ -372,7 +372,7 @@ int scanQuery(const uint8_t data[], size_t size, const char* format, NetMDParams
             case 'q':
                 {
                     // capture qword
-                    auto f = bigE ? fromBigEndian<uint64_t> : fromNetMD<uint64_t>;
+                    auto f = bigE ? fromBigEndian<uint64_t> : fromLittleEndian<uint64_t>;
                     params.push_back(f(*reinterpret_cast<const uint64_t*>(&data[dataIdx])));
                     dataIdx += sizeof(uint64_t);
                     esc = 0;

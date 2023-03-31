@@ -135,7 +135,7 @@ inline bool is_big_endian()
 //! @return     converted data
 //------------------------------------------------------------------------------
 template <typename T>
-T fromNetMD(const T& val)
+T fromLittleEndian(const T& val)
 {
     T v = val;
     if (is_big_endian())
@@ -155,7 +155,7 @@ T fromNetMD(const T& val)
 //! @return     converted data
 //------------------------------------------------------------------------------
 template <typename T>
-T toNetMD(const T& val)
+T toLittleEndian(const T& val)
 {
     T v = val;
     if (is_big_endian())
