@@ -53,6 +53,11 @@ int main (int argc, char* argv[])
             {
                 CNetMdApi::TrackTime tt;
                 pNetMD->trackTime(j, tt);
+
+                if (pNetMD->trackTitle(j, s) == NETMDERR_NO_ERROR)
+                {
+                    std::cout << "Track " << (j + 1) << ": " << s << std::endl;
+                }
             }
         }
 

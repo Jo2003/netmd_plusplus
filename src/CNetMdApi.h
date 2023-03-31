@@ -27,6 +27,7 @@
 #include "netmd_defines.h"
 #include "CNetMdDev.hpp"
 #include "CMDiscHeader.h"
+#include <cstdint>
 
 namespace netmd {
 
@@ -233,6 +234,106 @@ public:
     //! @return     NetMdErr
     //--------------------------------------------------------------------------
     int writeDiscHeader(const std::string& title = "");
+
+    //--------------------------------------------------------------------------
+    //! @brief      move a track (number)
+    //!
+    //! @param[in]  from  from position
+    //! @param[in]  to    to position
+    //!
+    //! @return     NetMdErr
+    //--------------------------------------------------------------------------
+    int moveTrack(uint16_t from, uint16_t to);
+
+    //--------------------------------------------------------------------------
+    //! @brief      Sets the group title.
+    //!
+    //! @param[in]  group  The group
+    //! @param[in]  title  The title
+    //!
+    //! @return     NetMdErr
+    //--------------------------------------------------------------------------
+    int setGroupTitle(uint16_t group, const std::string& title);
+
+    //--------------------------------------------------------------------------
+    //! @brief      Creates a group.
+    //!
+    //! @param[in]  title  The title
+    //! @param[in]  first  The first track
+    //! @param[in]  last   The last track
+    //!
+    //! @return     NetMdErr
+    //--------------------------------------------------------------------------
+    int createGroup(const std::string& title, int first, int last);
+
+    //--------------------------------------------------------------------------
+    //! @brief      Adds a track to group.
+    //!
+    //! @param[in]  track  The track
+    //! @param[in]  group  The group
+    //!
+    //! @return     NetMdErr
+    //--------------------------------------------------------------------------
+    int addTrackToGroup(int track, int group);
+
+    //--------------------------------------------------------------------------
+    //! @brief      remove track from group
+    //!
+    //! @param[in]  track  The track
+    //! @param[in]  group  The group
+    //!
+    //! @return     NetMdErr
+    //--------------------------------------------------------------------------
+    int delTrackFromGroup(int track, int group);
+
+    //--------------------------------------------------------------------------
+    //! @brief      delete a group
+    //!
+    //! @param[in]  group  The group
+    //!
+    //! @return     NetMdErr
+    //--------------------------------------------------------------------------
+    int deleteGroup(int group);
+
+    //--------------------------------------------------------------------------
+    //! @brief      delete track
+    //!
+    //! @param[in]  track  The track number
+    //!
+    //! @return     NetMdErr
+    //--------------------------------------------------------------------------
+    int deleteTrack(uint16_t track);
+
+    //--------------------------------------------------------------------------
+    //! @brief      get track bitrate data
+    //!
+    //! @param[in]  track     The track number
+    //! @param[out] encoding  The encoding flag
+    //! @param[out] channel   The channel flag
+    //!
+    //! @return     NetMdErr
+    //--------------------------------------------------------------------------
+    int trackBitRate(uint16_t track, uint8_t& encoding, uint8_t& channel);
+
+    //--------------------------------------------------------------------------
+    //! @brief      get track flags
+    //!
+    //! @param[in]  track  The track number
+    //! @param[out] flags  The track flags
+    //!
+    //! @return     NetMdErr
+    //--------------------------------------------------------------------------
+    int trackFlags(uint16_t track, uint8_t& flags);
+
+    //--------------------------------------------------------------------------
+    //! @brief      get track title
+    //!
+    //! @param[in]  track  The track number
+    //! @param[out] title  The track title
+    //!
+    //! @return     NetMdErr
+    //--------------------------------------------------------------------------
+    int trackTitle(uint16_t track, std::string& title);
 
 protected:
 

@@ -27,9 +27,11 @@
 #include "CNetMdDev.hpp"
 #include "log.h"
 #include "CNetMdApi.h"
+#include "netmd_defines.h"
 #include "netmd_utils.h"
 #include <cstring>
 #include <sys/types.h>
+#include <unistd.h>
 
 /// log configuration
 structlog LOGCFG = {true, DEBUG, nullptr};
@@ -216,6 +218,8 @@ int CNetMdApi::trackTime(int trackNo, TrackTime& trackTime)
 //--------------------------------------------------------------------------
 int CNetMdApi::discTitle(std::string& title)
 {
+    title.clear();
+
     int ret;
     uint16_t total = 1, remaining = 0, read = 0, chunkSz = 0;
     unsigned char hs1[] = {0x00, 0x18, 0x08, 0x10, 0x10, 0x01, 0x01, 0x00};
@@ -357,6 +361,272 @@ int CNetMdApi::writeDiscHeader(const std::string& title)
         }
 
         mNetMd.exchange(hs2, sizeof(hs2));
+    }
+
+    return ret;
+}
+
+//--------------------------------------------------------------------------
+//! @brief      move a track (number)
+//!
+//! @param[in]  from  from position
+//! @param[in]  to    to position
+//!
+//! @return     NetMdErr
+//--------------------------------------------------------------------------
+int CNetMdApi::moveTrack(uint16_t from, uint16_t to)
+{
+    int ret = 0;
+    unsigned char hs[] = {0x00, 0x18, 0x08, 0x10, 0x10, 0x01, 0x00, 0x00};
+
+    const char* format = "00 1843 ff 00 00 20 10 01 %>w 20 10 01 %>w";
+
+    NetMDResp query;
+
+    if (((ret = formatQuery(format, {{from}, {to}}, query)) == 16) && (query != nullptr))
+    {
+        mNetMd.exchange(hs, sizeof(hs));
+        ret = mNetMd.exchange(query.get(), ret);
+    }
+    else
+    {
+        ret = NETMDERR_PARAM;
+    }
+
+    return ret;
+}
+
+//--------------------------------------------------------------------------
+//! @brief      Sets the group title.
+//!
+//! @param[in]  group  The group
+//! @param[in]  title  The title
+//!
+//! @return     NetMdErr
+//--------------------------------------------------------------------------
+int CNetMdApi::setGroupTitle(uint16_t group, const std::string& title)
+{
+    if (mDiscHeader.renameGroup(group, title) == 0)
+    {
+        return writeDiscHeader();
+    }
+
+    return NETMDERR_PARAM;
+}
+
+//--------------------------------------------------------------------------
+//! @brief      Creates a group.
+//!
+//! @param[in]  title  The title
+//! @param[in]  first  The first track
+//! @param[in]  last   The last track
+//!
+//! @return     NetMdErr
+//--------------------------------------------------------------------------
+int CNetMdApi::createGroup(const std::string& title, int first, int last)
+{
+    if (mDiscHeader.addGroup(title, first, last) == 0)
+    {
+        return writeDiscHeader();
+    }
+
+    return NETMDERR_PARAM;
+}
+
+//--------------------------------------------------------------------------
+//! @brief      Adds a track to group.
+//!
+//! @param[in]  track  The track
+//! @param[in]  group  The group
+//!
+//! @return     NetMdErr
+//--------------------------------------------------------------------------
+int CNetMdApi::addTrackToGroup(int track, int group)
+{
+    // this might fail
+    mDiscHeader.delTrackFromGroup(group, track);
+
+    if (mDiscHeader.addTrackToGroup(group, track) == 0)
+    {
+        return writeDiscHeader();
+    }
+
+    return NETMDERR_PARAM;
+}
+
+//--------------------------------------------------------------------------
+//! @brief      remove track from group
+//!
+//! @param[in]  track  The track
+//! @param[in]  group  The group
+//!
+//! @return     NetMdErr
+//--------------------------------------------------------------------------
+int CNetMdApi::delTrackFromGroup(int track, int group)
+{
+    if (mDiscHeader.delTrackFromGroup(group, track) == 0)
+    {
+        return writeDiscHeader();
+    }
+
+    return NETMDERR_PARAM;
+}
+
+//--------------------------------------------------------------------------
+//! @brief      delete a group
+//!
+//! @param[in]  group  The group
+//!
+//! @return     NetMdErr
+//--------------------------------------------------------------------------
+int CNetMdApi::deleteGroup(int group)
+{
+    if (mDiscHeader.delGroup(group) == 0)
+    {
+        return writeDiscHeader();
+    }
+
+    return NETMDERR_PARAM;
+}
+
+//--------------------------------------------------------------------------
+//! @brief      delete track
+//!
+//! @param[in]  track  The track number
+//!
+//! @return     NetMdErr
+//--------------------------------------------------------------------------
+int CNetMdApi::deleteTrack(uint16_t track)
+{
+    int ret = 0;
+    const char* format = "00 1840 ff 01 00 20 10 01 %>w";
+
+    NetMDResp query;
+    if (((ret = formatQuery(format, {{track}}, query)) == 11) && (query != nullptr))
+    {
+        ret = mNetMd.exchange(query.get(), ret);
+    }
+    else
+    {
+        ret = NETMDERR_PARAM;
+    }
+
+    return ret;
+}
+
+//--------------------------------------------------------------------------
+//! @brief      get track bitrate data
+//!
+//! @param[in]  track     The track number
+//! @param[out] encoding  The encoding flag
+//! @param[out] channel   The channel flag
+//!
+//! @return     NetMdErr
+//--------------------------------------------------------------------------
+int CNetMdApi::trackBitRate(uint16_t track, uint8_t& encoding, uint8_t& channel)
+{
+    encoding = 0;
+    channel  = 0;
+
+    int ret;
+    const char* format = "00 1806 02 20 10 01 %>w 30 80 07 00 ff 00 00 00 00 00";
+    NetMDResp query, response;
+
+    if (((ret = formatQuery(format, {{track}}, query)) == 19) && (query != nullptr))
+    {
+        usleep(5'000);
+
+        if (((ret = mNetMd.exchange(query.get(), ret, &response)) >= 29) && (response != nullptr))
+        {
+            encoding = response[27];
+            channel  = response[28];
+            ret = NETMDERR_NO_ERROR;
+        }
+    }
+    else
+    {
+        ret = NETMDERR_PARAM;
+    }
+
+    return ret;
+}
+
+//--------------------------------------------------------------------------
+//! @brief      get track flags
+//!
+//! @param[in]  track  The track number
+//! @param[out] flags  The track flags
+//!
+//! @return     NetMdErr
+//--------------------------------------------------------------------------
+int CNetMdApi::trackFlags(uint16_t track, uint8_t& flags)
+{
+    flags = 0;
+    int ret;
+
+    NetMDResp query, response;
+    const char* format = "00 1806 01 20 10 01 %>w ff 00 00 01 00 08";
+
+    if (((ret = formatQuery(format, {{track}}, query)) == 15) && (query != nullptr))
+    {
+        if (((ret = mNetMd.exchange(query.get(), ret, &response)) > 0) && (response != nullptr))
+        {
+            flags = response[ret - 1];
+            ret = NETMDERR_NO_ERROR;
+        }
+    }
+    else
+    {
+        ret = NETMDERR_PARAM;
+    }
+
+    return ret;
+}
+
+//--------------------------------------------------------------------------
+//! @brief      get track title
+//!
+//! @param[in]  track  The track number
+//! @param[out] title  The track title
+//!
+//! @return     NetMdErr
+//--------------------------------------------------------------------------
+int CNetMdApi::trackTitle(uint16_t track, std::string& title)
+{
+    title.clear();
+
+    int ret;
+
+    NetMDResp query, response;
+    NetMDParams params;
+    const char* format  = "00 1806 02 20 18 02 %>w 30 00 0a 00 ff 00 00 00 00 00";
+    const char* capture = "09 1806 %?%?%?%?%?%?%?%?%?%?%?%?%?%?%?%?%?%?%?%?%?%? %*";
+
+    if (((ret = formatQuery(format, {{track}}, query)) == 19) && (query != nullptr))
+    {
+        if (((ret = mNetMd.exchange(query.get(), ret, &response)) >= 25) && (response != nullptr))
+        {
+            if ((ret = scanQuery(response.get(), ret, capture, params)) == NETMDERR_NO_ERROR)
+            {
+                if (params.at(0).index() == BYTE_VECTOR)
+                {
+                    NetMDByteVector ba = std::get<NetMDByteVector>(params.at(0));
+
+                    for (const auto& c : ba)
+                    {
+                        title.push_back(c);
+                    }
+                }
+            }
+        }
+        else
+        {
+            ret = NETMDERR_OTHER;
+        }
+    }
+    else
+    {
+        ret = NETMDERR_PARAM;
     }
 
     return ret;
