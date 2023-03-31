@@ -7,6 +7,7 @@
 
 #pragma once
 #include <cstddef>
+#include <ctime>
 #include <iostream>
 #include <iomanip>
 #include <string>
@@ -29,6 +30,8 @@ struct structlog
 
 extern structlog LOGCFG;
 
+#define mLOG(x_) LOG(x_) << __FUNCTION__ << "():" << __LINE__ << ": "
+
 //------------------------------------------------------------------------------
 //! @brief      This class describes a log helper
 //------------------------------------------------------------------------------
@@ -44,6 +47,7 @@ public:
         {
             operator << ("["+getLabel(type)+"] ");
         }
+        operator << (timeStamp());
     }
 
     ~LOG()
@@ -145,6 +149,16 @@ public:
             }
         }
 
+        return oss.str();
+    }
+
+    static std::string timeStamp()
+    {
+        std::ostringstream oss;
+        auto time = std::time(nullptr);
+
+        // ISO 8601: %Y-%m-%d %H:%M:%S, e.g. 2017-07-31 00:42:00+0200.
+        oss <<  std::put_time(std::localtime(&time), "%Y-%m-%d %H:%M:%S |");
         return oss.str();
     }
 

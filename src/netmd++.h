@@ -79,6 +79,24 @@ public:
         int mTenthSecs;
     };
 
+    //--------------------------------------------------------------------------
+    //! @brief      format helper for TrackTime
+    //!
+    //! @param      o     ref. to ostream
+    //! @param[in]  tt    TrackTime
+    //!
+    //! @return     formatted TrackTime stored in ostream
+    //--------------------------------------------------------------------------
+    friend std::ostream& operator<<(std::ostream& o, const TrackTime& tt)
+    {
+        o << std::dec
+          << std::setw(2) << std::setfill('0') << tt.mMinutes << ":"
+          << std::setw(2) << std::setfill('0') << tt.mSeconds << "."
+          << tt.mTenthSecs;
+
+        return o;
+    }
+
     /// 1000ms
     static constexpr unsigned int NETMD_POLL_TIMEOUT = 1000;
     static constexpr unsigned int NETMD_SEND_TIMEOUT = 1000;
@@ -128,6 +146,101 @@ public:
         NETMD_STATUS_INTERIM         = 0x0f,
     };
 
+    /// type safe protection flags
+    enum class TrackProtection : uint8_t
+    {
+        UNPROTECTED = 0x00,
+        PROTECTED   = 0x03,
+        UNKNOWN     = 0xFF
+    };
+
+    //--------------------------------------------------------------------------
+    //! @brief      format helper for TrackProtection
+    //!
+    //! @param      o     ref. to ostream
+    //! @param[in]  tp    TrackProtection
+    //!
+    //! @return     formatted TrackProtection stored in ostream
+    //--------------------------------------------------------------------------
+    friend std::ostream& operator<<(std::ostream& o, const TrackProtection& tp)
+    {
+        switch (tp)
+        {
+        case TrackProtection::UNPROTECTED:
+            o << "UnPROT";
+            break;
+        case TrackProtection::PROTECTED:
+            o << "TrPROT";
+            break;
+        default:
+            o << "N/A";
+            break;
+        }
+        return o;
+    }
+
+    /// type safe encoding flags
+    enum class AudioEncoding : uint8_t
+    {
+        SP      = 0x90,
+        LP2     = 0x92,
+        LP4     = 0x93,
+        UNKNOWN = 0xff
+    };
+
+    //--------------------------------------------------------------------------
+    //! @brief      format helper for AudioEncoding
+    //!
+    //! @param      o     ref. to ostream
+    //! @param[in]  ae    AudioEncoding
+    //!
+    //! @return     formatted AudioEncoding stored in ostream
+    //--------------------------------------------------------------------------
+    friend std::ostream& operator<<(std::ostream& o, const AudioEncoding& ae)
+    {
+        switch (ae)
+        {
+        case AudioEncoding::SP:
+            o << "SP";
+            break;
+        case AudioEncoding::LP2:
+            o << "LP2";
+            break;
+        case AudioEncoding::LP4:
+            o << "LP4";
+            break;
+        default:
+            o << "N/A";
+            break;
+        }
+        return o;
+    }
+
+    /// descriptor types
+    enum class Descriptor : uint8_t
+    {
+        discTitleTD,
+        audioUTOC1TD,
+        audioUTOC4TD,
+        DSITD,
+        audioContentsTD,
+        rootTD,
+
+        discSubunitIndentifier,
+        operatingStatusBlock,
+    };
+
+    /// descriptor actions
+    enum class DscrtAction : uint8_t
+    {
+        openread  = 0x01,
+        openwrite = 0x03,
+        close     = 0x00,
+    };
+
+
+    /// a type for storing descriptor data
+    using DscrtData = std::map<Descriptor, NetMDByteVector>;
 
     //--------------------------------------------------------------------------
     //! @brief      Constructs a new instance.
@@ -342,6 +455,16 @@ protected:
     //--------------------------------------------------------------------------
     int releaseDev();
 
+    //--------------------------------------------------------------------------
+    //! @brief      change descriptor state
+    //!
+    //! @param[in]  d     descriptor
+    //! @param[in]  a     action
+    //!
+    //! @return     NetMdErr
+    //--------------------------------------------------------------------------
+    int changeDscrtState(Descriptor d, DscrtAction a);
+
 private:
     /// init marker
     bool mInitialized = false;
@@ -351,6 +474,9 @@ private:
 
     /// disc header
     CMDiscHeader mDiscHeader;
+
+    /// descriptor data
+    static const DscrtData smDescrData;
 };
 
 namespace netmdutils

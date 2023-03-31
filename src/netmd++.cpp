@@ -40,6 +40,8 @@ using namespace netmdutils;
 
 #define mkDevEntry(a_, b_, c_, d_) CNetMDpp::vendorDev(a_, b_), {a_, b_, c_, d_}
 
+/// log configuration
+structlog LOGCFG = {true, DEBUG, nullptr};
 
 /// map with known / supported NetMD devices
 const CNetMDpp::KnownDevices CNetMDpp::smKnownDevices = {
@@ -90,8 +92,17 @@ const CNetMDpp::KnownDevices CNetMDpp::smKnownDevices = {
 
 #undef mkDevEntry
 
-/// log configuration
-structlog LOGCFG = {true, DEBUG, nullptr};
+/// descriptor data
+const CNetMDpp::DscrtData CNetMDpp::smDescrData = {
+    {CNetMDpp::Descriptor::discTitleTD           , {0x10, 0x18, 0x01}},
+    {CNetMDpp::Descriptor::audioUTOC1TD          , {0x10, 0x18, 0x02}},
+    {CNetMDpp::Descriptor::audioUTOC4TD          , {0x10, 0x18, 0x03}},
+    {CNetMDpp::Descriptor::DSITD                 , {0x10, 0x18, 0x04}},
+    {CNetMDpp::Descriptor::audioContentsTD       , {0x10, 0x10, 0x01}},
+    {CNetMDpp::Descriptor::rootTD                , {0x10, 0x10, 0x00}},
+    {CNetMDpp::Descriptor::discSubunitIndentifier, {0x00}            },
+    {CNetMDpp::Descriptor::operatingStatusBlock  , {0x80, 0x00}      },
+};
 
 //--------------------------------------------------------------------------
 //! @brief      Constructs a new instance.
@@ -99,7 +110,7 @@ structlog LOGCFG = {true, DEBUG, nullptr};
 CNetMDpp::CNetMDpp()
 {
     mInitialized = libusb_init(NULL) == 0;
-    LOG(INFO) << "Init:" << mInitialized;
+    mLOG(INFO) << "Init:" << mInitialized;
 }
 
 //--------------------------------------------------------------------------
@@ -208,7 +219,7 @@ int CNetMDpp::poll(uint8_t buf[4], int tries)
 {
     if (mDevice.mDevHdl == nullptr)
     {
-        LOG(CRITICAL) << __FUNCTION__ << "(): No NetMD device available!";
+        mLOG(CRITICAL) << "No NetMD device available!";
         return NETMDERR_NOTREADY;
     }
 
@@ -223,7 +234,7 @@ int CNetMDpp::poll(uint8_t buf[4], int tries)
                                     LIBUSB_ENDPOINT_IN | LIBUSB_REQUEST_TYPE_VENDOR | LIBUSB_RECIPIENT_INTERFACE,
                                     0x01, 0, 0, buf, 4, NETMD_POLL_TIMEOUT) < 0)
         {
-            LOG(CRITICAL) << __FUNCTION__ << "(): libusb_control_transfer failed!";
+            mLOG(CRITICAL) << "libusb_control_transfer failed!";
             return NETMDERR_USB;
         }
 
@@ -265,19 +276,19 @@ int CNetMDpp::sendCmd(unsigned char* cmd, size_t cmdLen, bool factory)
     len = poll(pollbuf, 1);
     if (len != 0)
     {
-        LOG(CRITICAL) << __FUNCTION__ << "(): poll() failed!";
+        mLOG(CRITICAL) << "poll() failed!";
         return (len > 0) ? NETMDERR_NOTREADY : len;
     }
 
     // send data
-    LOG(DEBUG) << (factory ? "factory " : "") << "command:" << LOG::hexFormat(DEBUG, cmd, cmdLen);
+    mLOG(DEBUG) << (factory ? "factory " : "") << "command:" << LOG::hexFormat(DEBUG, cmd, cmdLen);
 
     if (libusb_control_transfer(mDevice.mDevHdl,
                                 LIBUSB_ENDPOINT_OUT | LIBUSB_REQUEST_TYPE_VENDOR | LIBUSB_RECIPIENT_INTERFACE,
                                 factory ? 0xff : 0x80, 0, 0, cmd, cmdLen,
                                 NETMD_SEND_TIMEOUT) < 0)
     {
-        LOG(CRITICAL) << __FUNCTION__ << "(): libusb_control_transfer failed!";
+        mLOG(CRITICAL) << "libusb_control_transfer failed!";
         return NETMDERR_USB;
     }
 
@@ -299,7 +310,7 @@ int CNetMDpp::getResponse(NetMDResp& response)
     int ret = poll(pollbuf, NETMD_RECV_TRIES);
     if (ret <= 0)
     {
-        LOG(CRITICAL) << __FUNCTION__ << "(): poll failed!";
+        mLOG(CRITICAL) << "poll failed!";
         return (ret == 0) ? NETMDERR_TIMEOUT : ret;
     }
 
@@ -311,11 +322,14 @@ int CNetMDpp::getResponse(NetMDResp& response)
                                 pollbuf[1], 0, 0, response.get(), ret,
                                 NETMD_RECV_TIMEOUT) < 0)
     {
-        LOG(CRITICAL) << __FUNCTION__ << "():)libusb_control_transfer failed!";
+        mLOG(CRITICAL) << "libusb_control_transfer failed!";
         return NETMDERR_USB;
     }
 
-    LOG(DEBUG) << "Response:" << LOG::hexFormat(DEBUG, response.get(), ret);
+    mLOG(INFO)  << "Response code: " << std::hex << std::setw(2) << std::setfill('0')
+                << static_cast<int>(response[0]) << "h" << std::dec;
+
+    mLOG(DEBUG) << "Response:" << LOG::hexFormat(DEBUG, response.get(), ret);
 
     // return length
     return ret;
@@ -335,7 +349,7 @@ int CNetMDpp::exchange(unsigned char* cmd, size_t cmdLen, NetMDResp* response, b
 {
     if (mDevice.mDevHdl == nullptr)
     {
-        LOG(CRITICAL) << __FUNCTION__ << "(): No NetMD device available!";
+        mLOG(CRITICAL) << "No NetMD device available!";
         return NETMDERR_NOTREADY;
     }
 
@@ -359,7 +373,7 @@ int CNetMDpp::exchange(unsigned char* cmd, size_t cmdLen, NetMDResp* response, b
         }
         else if ((*pResp)[0] == NETMD_STATUS_INTERIM)
         {
-            LOG(DEBUG) << __FUNCTION__ << "(): Re-read ...!";
+            mLOG(DEBUG) << "Re-read ...!";
             (*pResp) = nullptr;
             ret = getResponse(*pResp);
 
@@ -367,10 +381,6 @@ int CNetMDpp::exchange(unsigned char* cmd, size_t cmdLen, NetMDResp* response, b
             {
                 ret = NETMDERR_USB;
             }
-        }
-        else
-        {
-            LOG(DEBUG) << "Response code:" << LOG::hexFormat(DEBUG, &(*pResp)[0], 1);
         }
     }
 
@@ -386,7 +396,7 @@ int CNetMDpp::waitForSync()
 {
     if (mDevice.mDevHdl == nullptr)
     {
-        LOG(CRITICAL) << __FUNCTION__ << "(): No NetMD device available!";
+        mLOG(CRITICAL) << "No NetMD device available!";
         return NETMDERR_NOTREADY;
     }
 
@@ -405,11 +415,11 @@ int CNetMDpp::waitForSync()
         tries --;
         if (ret < 0)
         {
-            LOG(DEBUG) << __FUNCTION__ << "(): libusb error " << ret << " waiting for control transfer!";
+            mLOG(DEBUG) << "libusb error " << ret << " waiting for control transfer!";
         }
         else if (ret != 4)
         {
-            LOG(DEBUG) << __FUNCTION__ << "(): control transfer returned " << ret << " bytes instead of the expected 4!";
+            mLOG(DEBUG) << "control transfer returned " << ret << " bytes instead of the expected 4!";
         }
         else if (memcmp(syncmsg, "\0\0\0\0", 4) == 0)
         {
@@ -424,11 +434,11 @@ int CNetMDpp::waitForSync()
 
     if (!success)
     {
-        LOG(WARN) << __FUNCTION__ << "(): no sync response from device!";
+        mLOG(WARN) << "no sync response from device!";
     }
     else
     {
-        LOG(DEBUG) << __FUNCTION__ << "(): device successfully synced!";
+        mLOG(DEBUG) << "device successfully synced!";
     }
 
     return success ? 1 : 0;
@@ -626,7 +636,7 @@ int CNetMDpp::formatQuery(const char* format, const NetMDParams& params, NetMDRe
         // add some kind of sanity check
         if (argno > params.size())
         {
-            LOG(CRITICAL) << __FUNCTION__ << "(): Error sanity check while creating query!";
+            mLOG(CRITICAL) << "Error sanity check while creating query!";
             return NETMDERR_PARAM;
         }
 
@@ -656,7 +666,7 @@ int CNetMDpp::formatQuery(const char* format, const NetMDParams& params, NetMDRe
                     else
                     {
                         // can't convert char* to number
-                        LOG(CRITICAL) << __FUNCTION__ << "(): Can't convert token '" << tok << "' into hex number";
+                        mLOG(CRITICAL) << "Can't convert token '" << tok << "' into hex number";
                         return NETMDERR_PARAM;
                     }
 
@@ -679,7 +689,7 @@ int CNetMDpp::formatQuery(const char* format, const NetMDParams& params, NetMDRe
                 }
                 else
                 {
-                    LOG(CRITICAL) << __FUNCTION__ << "(): Stored parameter isn't of type BYTE!";
+                    mLOG(CRITICAL) << "Stored parameter isn't of type BYTE!";
                     return NETMDERR_PARAM;
                 }
                 break;
@@ -698,7 +708,7 @@ int CNetMDpp::formatQuery(const char* format, const NetMDParams& params, NetMDRe
                 }
                 else
                 {
-                    LOG(CRITICAL) << __FUNCTION__ << "(): Stored parameter isn't of type WORD!";
+                    mLOG(CRITICAL) << "Stored parameter isn't of type WORD!";
                     return NETMDERR_PARAM;
                 }
                 break;
@@ -717,7 +727,7 @@ int CNetMDpp::formatQuery(const char* format, const NetMDParams& params, NetMDRe
                 }
                 else
                 {
-                    LOG(CRITICAL) << __FUNCTION__ << "(): Stored parameter isn't of type DWORD!";
+                    mLOG(CRITICAL) << "Stored parameter isn't of type DWORD!";
                     return NETMDERR_PARAM;
                 }
                 break;
@@ -736,7 +746,7 @@ int CNetMDpp::formatQuery(const char* format, const NetMDParams& params, NetMDRe
                 }
                 else
                 {
-                    LOG(CRITICAL) << __FUNCTION__ << "(): Stored parameter isn't of type QWORD!";
+                    mLOG(CRITICAL) << "Stored parameter isn't of type QWORD!";
                     return NETMDERR_PARAM;
                 }
                 break;
@@ -754,7 +764,7 @@ int CNetMDpp::formatQuery(const char* format, const NetMDParams& params, NetMDRe
                 }
                 else
                 {
-                    LOG(CRITICAL) << __FUNCTION__ << "(): Stored parameter isn't of type NetMDByteVector!";
+                    mLOG(CRITICAL) << "Stored parameter isn't of type NetMDByteVector!";
                     return NETMDERR_PARAM;
                 }
                 break;
@@ -768,7 +778,7 @@ int CNetMDpp::formatQuery(const char* format, const NetMDParams& params, NetMDRe
                 break;
 
             default:
-                LOG(CRITICAL) << __FUNCTION__ << "(): Unsupported format option '"
+                mLOG(CRITICAL) << "Unsupported format option '"
                            << static_cast<char>(c) << "' used query format!";
                 return NETMDERR_PARAM;
                 break;
@@ -786,8 +796,6 @@ int CNetMDpp::formatQuery(const char* format, const NetMDParams& params, NetMDRe
         {
             query[i] = queryBuffer.at(i);
         }
-
-        LOG(DEBUG) << "Formatted query code:" << LOG::hexFormat(DEBUG, query.get(), ret);
     }
 
     return ret;
@@ -817,14 +825,12 @@ int CNetMDpp::scanQuery(const uint8_t data[], size_t size, const char* format, N
     // endianess
     bool bigE = false;
 
-    LOG(DEBUG) << "Scan query:" << LOG::hexFormat(DEBUG, data, size);
-
     // remove spaces
     while (*format != '\0')
     {
         if (dataIdx >= size)
         {
-            LOG(CRITICAL) << __FUNCTION__ << "(): Error sanity check scanning response!";
+            mLOG(CRITICAL) << "Error sanity check scanning response!";
             return ret;
         }
 
@@ -850,7 +856,7 @@ int CNetMDpp::scanQuery(const uint8_t data[], size_t size, const char* format, N
                     {
                         if (cmp != data[dataIdx++])
                         {
-                            LOG(CRITICAL) << __FUNCTION__ << "(): Error! Got: " << std::hex
+                            mLOG(CRITICAL) << "Error! Got: " << std::hex
                                        << static_cast<int>(data[dataIdx - 1])
                                        << " expected: " << std::hex << static_cast<int>(cmp) << std::dec;
                             return ret;
@@ -859,7 +865,7 @@ int CNetMDpp::scanQuery(const uint8_t data[], size_t size, const char* format, N
                     else
                     {
                         // can't convert char* to number
-                        LOG(CRITICAL) << __FUNCTION__ <<  "(): Can't convert token '" << tok << "' into hex number!";
+                        mLOG(CRITICAL) << "Can't convert token '" << tok << "' into hex number!";
                         return ret;
                     }
 
@@ -942,7 +948,7 @@ int CNetMDpp::scanQuery(const uint8_t data[], size_t size, const char* format, N
                 break;
 
             default:
-                LOG(CRITICAL) << __FUNCTION__ << "(): Unsupported format option '"
+                mLOG(CRITICAL) << "Unsupported format option '"
                            << static_cast<char>(c) << "' used query format!";
                 return ret;
                 break;
@@ -975,7 +981,7 @@ int CNetMDpp::trackTime(int trackNo, TrackTime& trackTime)
 
     NetMDResp query, response;
 
-    if ((formatQuery("00 1806 02 20 10 01 %w 30 00 01 00 ff 00 00 00 00 00",
+    if ((formatQuery("00 1806 02 20 10 01 %>w 30 00 01 00 ff 00 00 00 00 00",
                     {{mWORD(trackNo)}}, query) == 19) && (query != nullptr))
     {
         exchange(hs, sizeof(hs));
@@ -984,11 +990,13 @@ int CNetMDpp::trackTime(int trackNo, TrackTime& trackTime)
             trackTime.mMinutes   = bcd_to_proper(&response[28], 1) & 0xff;
             trackTime.mSeconds   = bcd_to_proper(&response[29], 1) & 0xff;
             trackTime.mTenthSecs = bcd_to_proper(&response[30], 1) & 0xff;
+
+            mLOG(DEBUG) << "Track " << (trackNo + 1) << " length: " << trackTime;
             return NETMDERR_NO_ERROR;
         }
     }
 
-    LOG(CRITICAL) << __FUNCTION__ << "(): Error receiving track times!";
+    mLOG(CRITICAL) << "Error receiving track times!";
     return NETMDERR_PARAM;
 }
 
@@ -1025,7 +1033,7 @@ int CNetMDpp::discTitle(std::string& title)
                     total   = fromBigEndian(*reinterpret_cast<uint16_t*>(&response[23]));
                     chunkSz = fromBigEndian(*reinterpret_cast<uint16_t*>(&response[15])) - 6;
 
-                    LOG(DEBUG) << "Total: " << total << ", chunk: " << chunkSz;
+                    mLOG(DEBUG) << "Total size: " << total << ", chunk size: " << chunkSz;
 
                     for(uint16_t i = 25; i < (25 + chunkSz); i++)
                     {
@@ -1047,13 +1055,13 @@ int CNetMDpp::discTitle(std::string& title)
             }
             else
             {
-                LOG(CRITICAL) << __FUNCTION__ << "(): Error in exchange()!";
+                mLOG(CRITICAL) << "Error in exchange()!";
                 return NETMDERR_PARAM;
             }
         }
         else
         {
-            LOG(CRITICAL) << __FUNCTION__ << "(): Error formatting query!";
+            mLOG(CRITICAL) << "Error formatting query!";
             return NETMDERR_PARAM;
         }
     }
@@ -1121,7 +1129,7 @@ int CNetMDpp::writeDiscHeader(const std::string& title)
     unsigned char hs2[] = {0x00, 0x18, 0x08, 0x10, 0x18, 0x01, 0x00, 0x00};
     unsigned char hs3[] = {0x00, 0x18, 0x08, 0x10, 0x18, 0x01, 0x03, 0x00};
 
-    const char* format = "00 1807 02 20 18 01 00 00 30 00 0a 00 50 00 %w 00 00 %w %*";
+    const char* format = "00 1807 02 20 18 01 00 00 30 00 0a 00 50 00 %>w 00 00 %>w %*";
     NetMDByteVector ba;
 
     for (size_t i = 0; i < contentSz; i++)
@@ -1144,5 +1152,30 @@ int CNetMDpp::writeDiscHeader(const std::string& title)
         exchange(hs2, sizeof(hs2));
     }
 
+    return ret;
+}
+
+//--------------------------------------------------------------------------
+//! @brief      change descriptor state
+//!
+//! @param[in]  d     descriptor
+//! @param[in]  a     action
+//!
+//! @return     NetMdErr
+//--------------------------------------------------------------------------
+int CNetMDpp::changeDscrtState(Descriptor d, DscrtAction a)
+{
+    int ret = NETMDERR_OTHER;
+    DscrtData::const_iterator cit = smDescrData.find(d);
+
+    if (cit != smDescrData.cend())
+    {
+        NetMDResp query;
+        if (((ret = formatQuery("00 1808 %* %b 00", {{cit->second}, {mBYTE(a)}}, query)) > 0)
+            && (query != nullptr))
+        {
+            ret = exchange(query.get(), ret);
+        }
+    }
     return ret;
 }

@@ -165,25 +165,25 @@ int CMDiscHeader::sanityCheck(const Groups_t& grps) const
     {
         if ((g.mFirst == 0) && (g.mLast != -1))
         {
-            LOG(CRITICAL) << "Title group can't have a last entry!";
+            mLOG(CRITICAL) << "Title group can't have a last entry!";
             ret = -1;
             break;
         }
         else if ((g.mFirst == -1) && (g.mLast != -1))
         {
-            LOG(CRITICAL) << "An empty group can't have a last entry!";
+            mLOG(CRITICAL) << "An empty group can't have a last entry!";
             ret = -1;
             break;
         }
         else if ((g.mFirst > g.mLast) && (g.mLast != -1))
         {
-            LOG(CRITICAL) << "First track number can't be larger than last track number!";
+            mLOG(CRITICAL) << "First track number can't be larger than last track number!";
             ret = -1;
             break;
         }
         else if ((g.mFirst > 0) && (g.mFirst <= last))
         {
-            LOG(CRITICAL) << "Some groups share the same track numbers!";
+            mLOG(CRITICAL) << "Some groups share the same track numbers!";
             ret = -1;
             break;
         }
@@ -280,13 +280,13 @@ int CMDiscHeader::addGroup(const std::string& name, int16_t first, int16_t last)
 
     if (sanityCheck(tmpGrps) == 0)
     {
-        LOG(DEBUG) << "Sanity check for 'addGroup()' successful!";
+        mLOG(DEBUG) << "Sanity check for 'addGroup()' successful!";
         mGroups = tmpGrps;
         return mGroupId - 1;
     }
     else
     {
-        LOG(CRITICAL) << "Sanity check for 'addGroup()' not(!) successful!";
+        mLOG(CRITICAL) << "Sanity check for 'addGroup()' not(!) successful!";
     }
 
     return -1;
@@ -328,7 +328,7 @@ void CMDiscHeader::listGroups() const
             oss << " - " << g.mLast;
         }
 
-        LOG(CRITICAL) << oss.str();
+        mLOG(CRITICAL) << oss.str();
     }
 }
 
@@ -530,7 +530,7 @@ int CMDiscHeader::delGroup(int gid)
     {
         if (cit->mGid == gid)
         {
-            LOG(DEBUG) << "Delete group " << cit->mGid << ", name: '" << cit->mName << "'";
+            mLOG(DEBUG) << "Delete group " << cit->mGid << ", name: '" << cit->mName << "'";
             mGroups.erase(cit);
             ret = 0;
             break;

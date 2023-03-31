@@ -21,6 +21,12 @@ int main ()
         if ((i = pNetMD->trackCount()) > -1)
         {
             std::cout << "Track Count: " << i << std::endl;
+
+            for (int j = 0; j < i; j++)
+            {
+                CNetMDpp::TrackTime tt;
+                pNetMD->trackTime(j, tt);
+            }
         }
 
 
@@ -31,6 +37,13 @@ int main ()
 
         s = pNetMD->getDeviceName();
         std::cout << "Device name: " << s << std::endl;
+
+        pNetMD->writeDiscHeader("Das ist eine Disc!");
+        if (pNetMD->discTitle(s) == CNetMDpp::NETMDERR_NO_ERROR)
+        {
+            std::cout << "Title: " << s << std::endl;
+        }
+
 
         delete pNetMD;
     }
