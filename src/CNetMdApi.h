@@ -59,7 +59,7 @@ public:
         o << std::dec
           << std::setw(2) << std::setfill('0') << tt.mMinutes << ":"
           << std::setw(2) << std::setfill('0') << tt.mSeconds << "."
-          << tt.mTenthSecs;
+          << std::setw(2) << std::setfill('0') << tt.mTenthSecs;
 
         return o;
     }
