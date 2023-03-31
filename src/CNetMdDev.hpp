@@ -39,6 +39,9 @@ namespace netmd
 /// announce API class
 class CNetMdApi;
 
+/// announce Patch class
+class CNetMdPatch;
+
 //------------------------------------------------------------------------------
 //! @brief      This class describes a NetMd device
 //------------------------------------------------------------------------------
@@ -72,6 +75,7 @@ class CNetMdDev
 
     /// make friends
     friend CNetMdApi;
+    friend CNetMdPatch;
 
     /// 1000ms
     static constexpr unsigned int NETMD_POLL_TIMEOUT = 1000;

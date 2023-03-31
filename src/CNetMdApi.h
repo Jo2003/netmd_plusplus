@@ -27,6 +27,7 @@
 #include "netmd_defines.h"
 #include "CNetMdDev.hpp"
 #include "CMDiscHeader.h"
+#include "CNetMdPatch.h"
 #include <cstdint>
 
 namespace netmd {
