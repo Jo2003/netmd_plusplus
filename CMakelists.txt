@@ -5,5 +5,5 @@ set (CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set (CMAKE_VERBOSE_BUILD 1)
 
-add_executable(testnetmd test.cpp src/netmd++.cpp src/CMDiscHeader.cpp)
+add_executable(testnetmd test.cpp src/netmd_utils.cpp src/CMDiscHeader.cpp src/CNetMdApi.cpp src/CNetMdDev.cpp)
 target_link_libraries(testnetmd usb-1.0)

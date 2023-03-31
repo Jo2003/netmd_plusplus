@@ -1,8 +1,35 @@
-#include "src/netmd++.h"
+/*
+ * test.cpp
+ *
+ * This file is part of netmd++, a library for accessing NetMD devices.
+ *
+ * It makes use of knowledge / code collected by Marc Britten and
+ * Alexander Sulfrian for the Linux Minidisc project.
+ *
+ * Copyright (C) 2023 Jo2003 (olenka.joerg@gmail.com)
+ *
+ * This library is free software; you can redistribute it and/or
+ * modify it under the terms of the GNU Lesser General Public
+ * License as published by the Free Software Foundation; either
+ * version 2.1 of the License, or (at your option) any later version.
+ *
+ * This library is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+ * Lesser General Public License for more details.
+ *
+ * You should have received a copy of the GNU Lesser General Public
+ * License along with this library; if not, write to the Free Software
+ * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
+ *
+ */
+#include "src/CNetMdApi.h"
 
-int main ()
+using namespace netmd;
+
+int main (int argc, char* argv[])
 {
-    CNetMDpp* pNetMD = new CNetMDpp();
+    CNetMdApi* pNetMD = new CNetMdApi();
 
     if (pNetMD)
     {
@@ -11,7 +38,7 @@ int main ()
 
         std::string s;
 
-        if (pNetMD->discTitle(s) == CNetMDpp::NETMDERR_NO_ERROR)
+        if (pNetMD->discTitle(s) == NETMDERR_NO_ERROR)
         {
             std::cout << "Title: " << s << std::endl;
         }
@@ -24,7 +51,7 @@ int main ()
 
             for (int j = 0; j < i; j++)
             {
-                CNetMDpp::TrackTime tt;
+                CNetMdApi::TrackTime tt;
                 pNetMD->trackTime(j, tt);
             }
         }
@@ -38,12 +65,14 @@ int main ()
         s = pNetMD->getDeviceName();
         std::cout << "Device name: " << s << std::endl;
 
-        pNetMD->writeDiscHeader("Das ist eine Disc!");
-        if (pNetMD->discTitle(s) == CNetMDpp::NETMDERR_NO_ERROR)
+        if (argc > 1)
         {
-            std::cout << "Title: " << s << std::endl;
+            pNetMD->writeDiscHeader(argv[1]);
+            if (pNetMD->discTitle(s) == NETMDERR_NO_ERROR)
+            {
+                std::cout << "Title: " << s << std::endl;
+            }
         }
-
 
         delete pNetMD;
     }
