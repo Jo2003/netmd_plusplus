@@ -32,16 +32,15 @@ namespace netmd {
 //! @brief      Calculates the checksum.
 //!
 //! @param[in]  data     The data
-//! @param[in]  dataLen  The data length
 //!
 //! @return     The checksum.
 //--------------------------------------------------------------------------
-unsigned int calculateChecksum(unsigned char* data, size_t dataLen)
+unsigned int calculateChecksum(const NetMDByteVector& data)
 {
     unsigned int crc  = 0;
-    unsigned int temp = dataLen;
+    unsigned int temp = data.size();
 
-    for (size_t i = 0; i < dataLen; i++)
+    for (size_t i = 0; i < data.size(); i++)
     {
         temp = (temp & 0xffff0000) | data[i];
         crc ^= temp;

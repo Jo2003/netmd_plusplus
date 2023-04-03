@@ -26,9 +26,15 @@
 #pragma once
 #include <cstddef>
 #include <cstdint>
+#include <sstream>
+#include <type_traits>
+#include <typeinfo>
 #include "netmd_defines.h"
 
 namespace netmd {
+
+/// macro to throw an exception
+#define mNetMdThrow(x_, ...) { std::ostringstream os_; os_ << __VA_ARGS__; throw ThrownData{x_, os_.str()}; }
 
 //--------------------------------------------------------------------------
 //! @brief      format query for netmd exchange
@@ -57,11 +63,10 @@ int scanQuery(const uint8_t data[], size_t size, const char* format, NetMDParams
 //! @brief      Calculates the checksum.
 //!
 //! @param[in]  data     The data
-//! @param[in]  dataLen  The data length
 //!
 //! @return     The checksum.
 //--------------------------------------------------------------------------
-unsigned int calculateChecksum(unsigned char* data, size_t dataLen);
+unsigned int calculateChecksum(const NetMDByteVector& data);
 
 //------------------------------------------------------------------------------
 //! @brief      swop bytes
@@ -143,6 +148,43 @@ T fromLittleEndian(const T& val)
         byteSwop(v);
     }
     return v;
+}
+
+template <typename T>
+T fromLittleEndian(const NetMDByteVector& val)
+{
+    if(sizeof(T) == val.size())
+    {
+        uint8_t data[val.size()];
+        for (size_t i = 0; i < val.size(); i++)
+        {
+            data[i] = val.at(i);
+        }
+        return fromLittleEndian(*reinterpret_cast<T*>(data));
+    }
+    else
+    {
+        return static_cast<T>(-1);
+    }
+}
+
+template <typename T, typename U>
+U toLittleEndian(const T& val)
+{
+    if (std::is_base_of<NetMDByteVector,U>::value)
+    {
+        U ret;
+        uint8_t data[sizeof(val)];
+        *reinterpret_cast<T*>(data) = toLittleEndian(val);
+
+        for (size_t i = 0; i < sizeof(T); i++)
+        {
+            ret.push_back(data[i]);
+        }
+        return ret;
+    }
+
+    return U{};
 }
 
 //------------------------------------------------------------------------------

@@ -44,6 +44,7 @@ class CNetMdPatch
     static constexpr uint32_t PERIPHERAL_BASE = 0x03802000;
     static constexpr uint8_t  MAX_PATCH       = 8;
 
+    /// device info flags
     enum SonyDevInfo : uint32_t
     {
         SDI_S1200   = (1ul <<  0),    //!< S1.200 version
@@ -54,6 +55,7 @@ class CNetMdPatch
         SDI_UNKNOWN = (1ul << 31),    //!< unsupported or unknown
     };
 
+    /// patch IDs
     enum PatchId : uint8_t
     {
         PID_UNUSED,
@@ -68,6 +70,7 @@ class CNetMdPatch
         PID_SAFETY,
     };
 
+    /// memory access
     enum MemAcc : uint8_t
     {
         NETMD_MEM_CLOSE      = 0x0,
@@ -76,22 +79,201 @@ class CNetMdPatch
         NETMD_MEM_READ_WRITE = 0x3,
     };
 
+    /// payload structure
     struct PayLoad
     {
         uint32_t mDevs;
         NetMDByteVector mPtData;
     };
 
+    /// type defines
     using PatchAddr       = std::map<SonyDevInfo, uint32_t>;
     using PatchAdrrTab    = std::map<PatchId, PatchAddr>;
     using PatchPayloadTab = std::map<PatchId, PayLoad>;
 
+    /// patch addresses with for devices
     static const PatchAdrrTab    smPatchAddrTab;
+
+    /// patch payload for devices
     static const PatchPayloadTab smPatchPayloadTab;
 
+    //! @brief patch areas used
+    static PatchId smUsedPatches[MAX_PATCH];
+
+    //--------------------------------------------------------------------------
+    //! @brief      Constructs a new instance.
+    //!
+    //! @param      netMd  The net md device reference
+    //--------------------------------------------------------------------------
     CNetMdPatch(CNetMdDev& netMd) : mNetMd(netMd)
     {}
 
+    //--------------------------------------------------------------------------
+    //! @brief      get next pree patch index
+    //!
+    //! @param[in]  pid   The pid
+    //!
+    //! @return     -1 -> no more free | > -1 -> free patch index
+    //--------------------------------------------------------------------------
+    static int nextFreePatch(PatchId pid);
+
+    //------------------------------------------------------------------------------
+    //! @brief      get patch address by name and device info
+    //!
+    //! @param[in]  devinfo    device info
+    //! @param[in]  pid        patch id
+    //!
+    //! @return     0 -> error | > 0 -> address
+    //------------------------------------------------------------------------------
+    static uint32_t patchAddress(SonyDevInfo devinfo, PatchId pid);
+
+    //------------------------------------------------------------------------------
+    //! @brief      get patch payload by name and device info
+    //!
+    //! @param[in]  devinfo    device info
+    //! @param[in]  pid        patch id
+    //!
+    //! @return     empty vector -> error; else -> patch content
+    //------------------------------------------------------------------------------
+    static NetMDByteVector patchPayload(SonyDevInfo devinfo, PatchId pid);
+
+    //------------------------------------------------------------------------------
+    //! @brief      write patch data
+    //!
+    //! @param[in]  addr      address
+    //! @param[in]  data      data to write
+    //!
+    //! @return     NetMdErr
+    //! @see        NetMdErr
+    //------------------------------------------------------------------------------
+    int patchWrite(uint32_t addr, const NetMDByteVector& data);
+
+    //------------------------------------------------------------------------------
+    //! @brief      read patch data
+    //!
+    //! @param[in]  addr      address
+    //! @param[in]  size      size to read
+    //! @param[in]  data      read data
+    //!
+    //! @return     NetMdErr
+    //! @see        NetMdErr
+    //------------------------------------------------------------------------------
+    int patchRead(uint32_t addr, uint8_t size, NetMDByteVector& data);
+
+    //--------------------------------------------------------------------------
+    //! @brief      change memory access state
+    //!
+    //! @param[in]  addr  The address
+    //! @param[in]  size  The size
+    //! @param[in]  acc   The memory access acc
+    //!
+    //! @return     NetMdErr
+    //! @see        NetMdErr
+    //--------------------------------------------------------------------------
+    int changeMemState(uint32_t addr, uint8_t size, MemAcc acc);
+
+    //------------------------------------------------------------------------------
+    //! @brief      open for read, read, close
+    //!
+    //! @param[in]  addr     address
+    //! @param[in]  sz       size of data to read
+    //! @param[out] data     read data
+    //!
+    //! @return     NetMdErr
+    //! @see        NetMdErr
+    //------------------------------------------------------------------------------
+    int cleanRead(uint32_t addr, uint8_t sz, NetMDByteVector& data);
+
+    //------------------------------------------------------------------------------
+    //! @brief      open for write, write, close
+    //!
+    //! @param[in]  addr     address
+    //! @param[in]  data     data to write
+    //!
+    //! @return     NetMdErr
+    //! @see        NetMdErr
+    //------------------------------------------------------------------------------
+    int cleanWrite(uint32_t addr, const NetMDByteVector& data);
+
+    //--------------------------------------------------------------------------
+    //! @brief      get device code
+    //!
+    //! @return     SonyDevInfo
+    //! @see        SonyDevInfo
+    //--------------------------------------------------------------------------
+    SonyDevInfo devCodeEx();
+
+    //--------------------------------------------------------------------------
+    //! @brief      Reads a patch data.
+    //!
+    //! @param[in]  patchNo  The patch no
+    //! @param      addr     The patch address
+    //! @param      patch    The patch
+    //!
+    //! @return     NetMdErr
+    //! @see        NetMdErr
+    //--------------------------------------------------------------------------
+    int readPatchData(int patchNo, uint32_t& addr, NetMDByteVector& patch);
+
+    //--------------------------------------------------------------------------
+    //! @brief      do one patch
+    //!
+    //! @param[in]  addr     The address
+    //! @param[in]  data     The patch data
+    //! @param[in]  patchNo  The patch no
+    //!
+    //! @return     NetMdErr
+    //! @see        NetMdErr
+    //--------------------------------------------------------------------------
+    int patch(uint32_t addr, const NetMDByteVector& data, int patchNo);
+
+    //--------------------------------------------------------------------------
+    //! @brief      unpatch a patch
+    //!
+    //! @param[in]  pid   patch id of patch to undo
+    //!
+    //! @return     NetMdErr
+    //! @see        NetMdErr
+    //--------------------------------------------------------------------------
+    int unpatch(PatchId pid);
+
+    //--------------------------------------------------------------------------
+    //! @brief      do safety patch of needed
+    //!
+    //! @return     NetMdErr
+    //! @see        NetMdErr
+    //--------------------------------------------------------------------------
+    int safetyPatch();
+
+    //--------------------------------------------------------------------------
+    //! @brief      Enables the factory mode.
+    //!
+    //! @return     NetMdErr
+    //! @see        NetMdErr
+    //--------------------------------------------------------------------------
+    int enableFactory();
+
+    //--------------------------------------------------------------------------
+    //! @brief      apply SP upload patch
+    //!
+    //! @param[in]  chanNo  The number of channels
+    //!
+    //! @return     NetMdErr
+    //! @see        NetMdErr
+    //--------------------------------------------------------------------------
+    int applySpPatch(int chanNo);
+
+    //--------------------------------------------------------------------------
+    //! @brief      undo the SP upload patch
+    //--------------------------------------------------------------------------
+    void undoSpPatch();
+
+    //--------------------------------------------------------------------------
+    //! @brief      check if device supports SP upload
+    //!
+    //! @return     true -> supports; false -> doesn't support
+    //--------------------------------------------------------------------------
+    bool supportsSpUpload();
 
     CNetMdDev& mNetMd;
 };

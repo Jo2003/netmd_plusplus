@@ -29,6 +29,7 @@
 #include <vector>
 #include <memory>
 #include <variant>
+#include <string>
 
 namespace  netmd  {
 
@@ -64,6 +65,13 @@ enum NetMdErr
     NETMDERR_CMD_INVALID = -5,  ///< minidisc responded with 0A response
     NETMDERR_PARAM       = -6,  ///< parameter error
     NETMDERR_OTHER       = -7,  ///< any other error
+};
+
+/// helper structure to throw an error with description
+struct ThrownData
+{
+    int mErr;
+    std::string mErrDescr;
 };
 
 } // ~namespace
