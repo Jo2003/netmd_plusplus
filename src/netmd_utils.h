@@ -150,8 +150,17 @@ T fromLittleEndian(const T& val)
     return v;
 }
 
+//------------------------------------------------------------------------------
+//! @brief      convert byte vector ro little endian integer type
+//!
+//! @param[in]  val   The value
+//!
+//! @tparam     T     integer type
+//!
+//! @return     converted integer
+//------------------------------------------------------------------------------
 template <typename T>
-T fromLittleEndian(const NetMDByteVector& val)
+T fromLittleEndianByteVector(const NetMDByteVector& val)
 {
     if(sizeof(T) == val.size())
     {
@@ -166,25 +175,6 @@ T fromLittleEndian(const NetMDByteVector& val)
     {
         return static_cast<T>(-1);
     }
-}
-
-template <typename T, typename U>
-U toLittleEndian(const T& val)
-{
-    if (std::is_base_of<NetMDByteVector,U>::value)
-    {
-        U ret;
-        uint8_t data[sizeof(val)];
-        *reinterpret_cast<T*>(data) = toLittleEndian(val);
-
-        for (size_t i = 0; i < sizeof(T); i++)
-        {
-            ret.push_back(data[i]);
-        }
-        return ret;
-    }
-
-    return U{};
 }
 
 //------------------------------------------------------------------------------
@@ -205,6 +195,30 @@ T toLittleEndian(const T& val)
         byteSwop(v);
     }
     return v;
+}
+
+//------------------------------------------------------------------------------
+//! @brief      convert integer type into little endian byte vector
+//!
+//! @param[in]  val   The value
+//!
+//! @tparam     T     integer type
+//!
+//! @return     The net md byte vector.
+//------------------------------------------------------------------------------
+template <typename T>
+NetMDByteVector toLittleEndianByteVector(const T& val)
+{
+
+    NetMDByteVector ret;
+    uint8_t data[sizeof(val)];
+    *reinterpret_cast<T*>(data) = toLittleEndian(val);
+
+    for (size_t i = 0; i < sizeof(T); i++)
+    {
+        ret.push_back(data[i]);
+    }
+    return ret;
 }
 
 //------------------------------------------------------------------------------

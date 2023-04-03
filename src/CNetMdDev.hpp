@@ -234,6 +234,16 @@ class CNetMdDev
     //--------------------------------------------------------------------------
     int changeDscrtState(Descriptor d, DscrtAction a);
 
+    //--------------------------------------------------------------------------
+    //! @brief      check for Sony device
+    //!
+    //! @return     true if Sony
+    //--------------------------------------------------------------------------
+    bool itsASony() const
+    {
+        return mDevice.mKnownDev.mVendorID == 0x054c;
+    }
+
     /// init marker
     bool mInitialized = false;
 

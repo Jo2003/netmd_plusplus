@@ -24,6 +24,7 @@ enum typelog
 struct structlog
 {
     bool headers = false;
+    bool time = false;
     int level = WARN;
     std::ostringstream* sout = nullptr;
 };
@@ -47,7 +48,10 @@ public:
         {
             operator << ("["+getLabel(type)+"] ");
         }
-        operator << (timeStamp());
+        if(LOGCFG.time)
+        {
+            operator << (timeStamp());
+        }
     }
 
     ~LOG()

@@ -57,14 +57,15 @@ enum NetMDParamType
 /// NetMD errors
 enum NetMdErr
 {
-    NETMDERR_NO_ERROR    =  0,  ///< success
-    NETMDERR_USB         = -1,  ///< general USB error
-    NETMDERR_NOTREADY    = -2,  ///< player not ready for command
-    NETMDERR_TIMEOUT     = -3,  ///< timeout while waiting for response
-    NETMDERR_CMD_FAILED  = -4,  ///< minidisc responded with 08 response
-    NETMDERR_CMD_INVALID = -5,  ///< minidisc responded with 0A response
-    NETMDERR_PARAM       = -6,  ///< parameter error
-    NETMDERR_OTHER       = -7,  ///< any other error
+    NETMDERR_NO_ERROR      =  0,  ///< success
+    NETMDERR_USB           = -1,  ///< general USB error
+    NETMDERR_NOTREADY      = -2,  ///< player not ready for command
+    NETMDERR_TIMEOUT       = -3,  ///< timeout while waiting for response
+    NETMDERR_CMD_FAILED    = -4,  ///< minidisc responded with 08 response
+    NETMDERR_CMD_INVALID   = -5,  ///< minidisc responded with 0A response
+    NETMDERR_PARAM         = -6,  ///< parameter error
+    NETMDERR_OTHER         = -7,  ///< any other error
+    NETMDERR_NOT_SUPPORTED = -8,  ///< not supported
 };
 
 /// helper structure to throw an error with description

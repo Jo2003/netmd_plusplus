@@ -79,6 +79,10 @@ int main (int argc, char* argv[])
             }
         }
 
+        bool support = pNetMD->spUploadSupported();
+
+        std::cout << "Supports SP upload: " << support << std::endl;
+
         delete pNetMD;
     }
 

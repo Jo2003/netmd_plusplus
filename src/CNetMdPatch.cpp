@@ -370,7 +370,7 @@ int CNetMdPatch::readPatchData(int patchNo, uint32_t& addr, NetMDByteVector& pat
 
     if ((cleanRead(base + 4, 4, reply) == NETMDERR_NO_ERROR) && (reply.size() == 4))
     {
-        addr = fromLittleEndian<uint32_t>(reply);
+        addr = fromLittleEndianByteVector<uint32_t>(reply);
 
         if ((cleanRead(base + 8, 4, patch) != NETMDERR_NO_ERROR) || (patch.size() != 4))
         {
@@ -444,7 +444,7 @@ int CNetMdPatch::patch(uint32_t addr, const NetMDByteVector& data, int patchNo)
             mNetMdThrow(NETMDERR_USB, "Error while writing patch control #2.");
         }
 
-        if ((reply = toLittleEndian<uint32_t, NetMDByteVector>(addr)).size() != sizeof(addr))
+        if ((reply = toLittleEndianByteVector(addr)).size() != sizeof(addr))
         {
             mNetMdThrow(NETMDERR_USB, "Error converting address into little endian byte vector.");
         }
@@ -704,6 +704,11 @@ int CNetMdPatch::enableFactory()
 //--------------------------------------------------------------------------
 int CNetMdPatch::applySpPatch(int chanNo)
 {
+    if (!mNetMd.itsASony())
+    {
+        return NETMDERR_NOT_SUPPORTED;
+    }
+
     PatchId         patch0 = PID_UNUSED;
     uint32_t        addr   = 0;
     NetMDByteVector data;
@@ -812,6 +817,11 @@ int CNetMdPatch::applySpPatch(int chanNo)
 //--------------------------------------------------------------------------
 void CNetMdPatch::undoSpPatch()
 {
+    if (!mNetMd.itsASony())
+    {
+        return;
+    }
+
     mLOG(DEBUG) << "=== Undo patch 0 ===";
     static_cast<void>(unpatch(PID_PATCH_0));
 
@@ -836,14 +846,19 @@ void CNetMdPatch::undoSpPatch()
 bool CNetMdPatch::supportsSpUpload()
 {
     bool ret = false;
-    mLOG(DEBUG) << "Enable factory ...";
-    if (enableFactory() == NETMDERR_NO_ERROR)
+
+    // only available on Sony devices!
+    if (mNetMd.itsASony())
     {
-        mLOG(DEBUG) << "Get extended device info!";
-        if (devCodeEx() != SDI_UNKNOWN)
+        mLOG(DEBUG) << "Enable factory ...";
+        if (enableFactory() == NETMDERR_NO_ERROR)
         {
-            mLOG(DEBUG) << "Supported device!";
-            ret = true;
+            mLOG(DEBUG) << "Get extended device info!";
+            if (devCodeEx() != SDI_UNKNOWN)
+            {
+                mLOG(DEBUG) << "Supported device!";
+                ret = true;
+            }
         }
     }
 

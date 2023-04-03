@@ -336,6 +336,13 @@ public:
     //--------------------------------------------------------------------------
     int trackTitle(uint16_t track, std::string& title);
 
+    //--------------------------------------------------------------------------
+    //! @brief      is SP upload supported?
+    //!
+    //! @return     true if yes
+    //--------------------------------------------------------------------------
+    bool spUploadSupported();
+
 protected:
 
 
@@ -345,6 +352,9 @@ private:
 
     /// access device class
     CNetMdDev mNetMd;
+
+    /// patch support class
+    CNetMdPatch mPatch;
 };
 
 } // ~namespace

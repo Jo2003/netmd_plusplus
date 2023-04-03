@@ -307,10 +307,9 @@ int CNetMdDev::getResponse(NetMDResp& response)
         return NETMDERR_USB;
     }
 
-    mLOG(INFO)  << "Response code: " << std::hex << std::setw(2) << std::setfill('0')
-                << static_cast<int>(response[0]) << "h" << std::dec;
-
-    mLOG(DEBUG) << "Response:" << LOG::hexFormat(DEBUG, response.get(), ret);
+    mLOG(INFO)  << "Response: 0x" << std::hex << std::setw(2) << std::setfill('0')
+                << static_cast<int>(response[0]) << std::dec
+                << LOG::hexFormat(DEBUG, response.get(), ret);
 
     // return length
     return ret;
@@ -362,6 +361,12 @@ int CNetMdDev::exchange(unsigned char* cmd, size_t cmdLen, NetMDResp* response, 
             {
                 ret = NETMDERR_USB;
             }
+        }
+        else if ((*pResp)[0] != NETMD_STATUS_ACCEPTED)
+        {
+            mLOG(CRITICAL) << "### Bad return value: 0x" << std::hex << std::setw(2)
+                           << std::setfill('0') << (*pResp)[0] << std::dec;
+            ret = NETMDERR_CMD_FAILED;
         }
     }
 
@@ -434,11 +439,8 @@ int CNetMdDev::aquireDev()
 {
     unsigned char request[] = {0x00, 0xff, 0x01, 0x0c, 0xff, 0xff, 0xff, 0xff,
                                0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff};
-    NetMDResp response;
 
-    exchange(request, sizeof(request), &response);
-
-    if ((response != nullptr) && (response[0] == NETMD_STATUS_ACCEPTED))
+    if (exchange(request, sizeof(request)) > 0)
     {
         return NETMDERR_NO_ERROR;
     }
@@ -453,12 +455,15 @@ int CNetMdDev::aquireDev()
 //--------------------------------------------------------------------------
 int CNetMdDev::releaseDev()
 {
-    int ret = 0;
     unsigned char request[] = {0x00, 0xff, 0x01, 0x00, 0xff, 0xff, 0xff, 0xff,
                                0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff};
 
-    ret = exchange(request, sizeof(request));
-    return (ret < 0) ? ret : NETMDERR_NO_ERROR;
+    if (exchange(request, sizeof(request)) > 0)
+    {
+        return NETMDERR_NO_ERROR;
+    }
+
+    return NETMDERR_CMD_FAILED;
 }
 
 //--------------------------------------------------------------------------
@@ -480,7 +485,10 @@ int CNetMdDev::changeDscrtState(Descriptor d, DscrtAction a)
         if (((ret = formatQuery("00 1808 %* %b 00", {{cit->second}, {mBYTE(a)}}, query)) > 0)
             && (query != nullptr))
         {
-            ret = exchange(query.get(), ret);
+            if ((ret = exchange(query.get(), ret)) > 0)
+            {
+                ret = NETMDERR_NO_ERROR;
+            }
         }
     }
     return ret;

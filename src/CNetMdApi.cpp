@@ -34,14 +34,14 @@
 #include <unistd.h>
 
 /// log configuration
-structlog LOGCFG = {true, DEBUG, nullptr};
+structlog LOGCFG = {false, false, DEBUG, nullptr};
 
 namespace netmd {
 
 //--------------------------------------------------------------------------
 //! @brief      Constructs a new instance.
 //--------------------------------------------------------------------------
-CNetMdApi::CNetMdApi()
+CNetMdApi::CNetMdApi() : mPatch(mNetMd)
 {
 }
 
@@ -606,7 +606,12 @@ int CNetMdApi::trackTitle(uint16_t track, std::string& title)
     {
         if (((ret = mNetMd.exchange(query.get(), ret, &response)) >= 25) && (response != nullptr))
         {
-            if ((ret = scanQuery(response.get(), ret, capture, params)) == NETMDERR_NO_ERROR)
+            if (ret == 25)
+            {
+                // empty track title
+                ret = NETMDERR_NO_ERROR;
+            }
+            else if ((ret = scanQuery(response.get(), ret, capture, params)) == NETMDERR_NO_ERROR)
             {
                 if (params.at(0).index() == BYTE_VECTOR)
                 {
@@ -630,6 +635,16 @@ int CNetMdApi::trackTitle(uint16_t track, std::string& title)
     }
 
     return ret;
+}
+
+//--------------------------------------------------------------------------
+//! @brief      is SP upload supported?
+//!
+//! @return     true if yes
+//--------------------------------------------------------------------------
+bool CNetMdApi::spUploadSupported()
+{
+    return mPatch.supportsSpUpload();
 }
 
 } // ~namespace
