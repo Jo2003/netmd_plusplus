@@ -42,6 +42,9 @@ class CNetMdApi;
 /// announce Patch class
 class CNetMdPatch;
 
+/// announce Secure class
+class CNetMdSecure;
+
 //------------------------------------------------------------------------------
 //! @brief      This class describes a NetMd device
 //------------------------------------------------------------------------------
@@ -76,6 +79,7 @@ class CNetMdDev
     /// make friends
     friend CNetMdApi;
     friend CNetMdPatch;
+    friend CNetMdSecure;
 
     /// 1000ms
     static constexpr unsigned int NETMD_POLL_TIMEOUT = 1000;

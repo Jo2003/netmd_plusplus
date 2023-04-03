@@ -1,5 +1,5 @@
 /*
- * CNetMdAPatch.h
+ * CNetMdPatch.h
  *
  * This file is part of netmd++, a library for accessing NetMD devices.
  *
@@ -26,7 +26,6 @@
  */
 #pragma once
 #include "CNetMdDev.hpp"
-#include "netmd_defines.h"
 #include <cstdint>
 
 namespace netmd {
