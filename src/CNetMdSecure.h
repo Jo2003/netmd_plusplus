@@ -38,6 +38,16 @@ class CNetMdApi;
 class CNetMdSecure
 {
     friend CNetMdApi;
+
+    //--------------------------------------------------------------------------
+    //! @brief      Constructs a new instance.
+    //!
+    //! @param      netMd  The net md device reference
+    //--------------------------------------------------------------------------
+    CNetMdSecure(CNetMdDev& netMd) : mNetMd(netMd)
+    {}
+
+    CNetMdDev& mNetMd;
 };
 
 } // ~namespace

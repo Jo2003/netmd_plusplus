@@ -12,6 +12,7 @@ add_executable(testnetmd
 	src/CNetMdApi.cpp 
 	src/CNetMdDev.cpp 
 	src/CNetMdPatch.cpp
+	src/CNetMdSecure.cpp
 )
 
 target_link_libraries(testnetmd usb-1.0)

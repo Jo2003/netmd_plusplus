@@ -26,7 +26,7 @@ struct structlog
     bool headers = false;
     bool time = false;
     int level = WARN;
-    std::ostringstream* sout = nullptr;
+    std::ostream* sout = &std::cerr;
 };
 
 extern structlog LOGCFG;
@@ -58,14 +58,7 @@ public:
     {
         if(opened)
         {
-            if (LOGCFG.sout != nullptr)
-            {
-                *LOGCFG.sout << std::endl;
-            }
-            else
-            {
-                std::cerr << std::endl;
-            }
+            *LOGCFG.sout << std::endl;
         }
         opened = false;
     }
@@ -75,14 +68,7 @@ public:
     {
         if(msglevel >= LOGCFG.level)
         {
-            if (LOGCFG.sout != nullptr)
-            {
-                *LOGCFG.sout << msg;
-            }
-            else
-            {
-                std::cerr << msg;
-            }
+            *LOGCFG.sout << msg;
             opened = true;
         }
         return *this;

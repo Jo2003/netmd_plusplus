@@ -28,6 +28,7 @@
 #include "CNetMdDev.hpp"
 #include "CMDiscHeader.h"
 #include "CNetMdPatch.h"
+#include "CNetMdSecure.h"
 #include <cstdint>
 
 namespace netmd {
@@ -172,6 +173,13 @@ public:
     //! @param[in]  severity  The severity
     //--------------------------------------------------------------------------
     static void setLogLevel(int severity);
+
+    //--------------------------------------------------------------------------
+    //! @brief      Sets the log stream.
+    //!
+    //! @param      os    The stream instance to log to
+    //--------------------------------------------------------------------------
+    static void setLogStream(std::ostream& os);
 
     //--------------------------------------------------------------------------
     //! @brief      cache table of contents
@@ -355,6 +363,9 @@ private:
 
     /// patch support class
     CNetMdPatch mPatch;
+
+    /// secure implmentation
+    CNetMdSecure mSecure;
 };
 
 } // ~namespace
