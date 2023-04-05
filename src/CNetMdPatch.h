@@ -31,6 +31,7 @@
 namespace netmd {
 
 class CNetMdApi;
+class CNetMdSecure;
 
 //------------------------------------------------------------------------------
 //! @brief      This class describes a net md patch.
@@ -39,6 +40,7 @@ class CNetMdPatch
 {
     // make friends
     friend CNetMdApi;
+    friend CNetMdSecure;
 
     static constexpr uint32_t PERIPHERAL_BASE = 0x03802000;
     static constexpr uint8_t  MAX_PATCH       = 8;

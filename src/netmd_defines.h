@@ -55,7 +55,7 @@ enum NetMDParamType
 };
 
 /// NetMD errors
-enum NetMdErr
+enum NetMdErr : int
 {
     NETMDERR_NO_ERROR      =  0,  ///< success
     NETMDERR_USB           = -1,  ///< general USB error
@@ -66,6 +66,17 @@ enum NetMdErr
     NETMDERR_PARAM         = -6,  ///< parameter error
     NETMDERR_OTHER         = -7,  ///< any other error
     NETMDERR_NOT_SUPPORTED = -8,  ///< not supported
+    NETMDERR_INTERIM       = -9,  ///< interim
+};
+
+/// disk format
+enum DiskFormat : uint8_t
+{
+    NETMD_DISKFORMAT_LP4       =   0,
+    NETMD_DISKFORMAT_LP2       =   2,
+    NETMD_DISKFORMAT_SP_MONO   =   4,
+    NETMD_DISKFORMAT_SP_STEREO =   6,
+    NO_ONTHEFLY_CONVERSION     = 0xf
 };
 
 /// helper structure to throw an error with description
@@ -74,5 +85,8 @@ struct ThrownData
     int mErr;
     std::string mErrDescr;
 };
+
+constexpr uint8_t NETMD_CHANNELS_MONO   = 0x01;
+constexpr uint8_t NETMD_CHANNELS_STEREO = 0x00;
 
 } // ~namespace

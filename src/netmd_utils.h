@@ -261,6 +261,46 @@ T toBigEndian(const T& val)
     return v;
 }
 
+//------------------------------------------------------------------------------
+//! @brief      convert byte order from big endian
+//!
+//! @param[in]  val   The value
+//!
+//! @tparam     T     type to convert
+//!
+//! @return     converted data
+//------------------------------------------------------------------------------
+template <typename T>
+T fromBigEndianArray(const uint8_t* val)
+{
+    T v = *reinterpret_cast<const T*>(val);
+    return fromBigEndian(v);
+}
+
+//------------------------------------------------------------------------------
+//! @brief      convert byte order from little endian
+//!
+//! @param[in]  val   The value
+//!
+//! @tparam     T     type to convert
+//!
+//! @return     converted data
+//------------------------------------------------------------------------------
+template <typename T>
+T fromLittleEndianArray(const uint8_t* val)
+{
+    T v = *reinterpret_cast<const T*>(val);
+    return fromLittleEndian(v);
+}
+
+inline void addArrayData(NetMDByteVector& vec, const uint8_t* data, size_t dataSz)
+{
+    for (size_t i = 0; i < dataSz; i++)
+    {
+        vec.push_back(data[i]);
+    }
+}
+
 inline unsigned char proper_to_bcd_single(unsigned char value)
 {
     unsigned char high, low;

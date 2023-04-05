@@ -87,9 +87,10 @@ class CNetMdDev
     static constexpr unsigned int NETMD_RECV_TIMEOUT = 1000;
     static constexpr unsigned int NETMD_RECV_TRIES   =   30;
     static constexpr unsigned int NETMD_SYNC_TRIES   =    5;
+    static constexpr uint8_t    NETMD_STATUS_CONTROL = 0x00;
 
     /// NetMD status
-    enum NetMdStatus
+    enum NetMdStatus : uint8_t
     {
         NETMD_STATUS_NOT_IMPLEMENTED = 0x08,
         NETMD_STATUS_ACCEPTED        = 0x09,
@@ -189,7 +190,7 @@ class CNetMdDev
     //--------------------------------------------------------------------------
     //! @brief      Gets the response.
     //!
-    //! @param      response  The response
+    //! @param[out] response  The response
     //!
     //! @return     The response size or NetMdErr.
     //--------------------------------------------------------------------------
@@ -198,14 +199,27 @@ class CNetMdDev
     //--------------------------------------------------------------------------
     //! @brief      excahnge data with NetMD device
     //!
-    //! @param      cmd       The command
+    //! @param[in]  cmd       The command
     //! @param[in]  cmdLen    The command length
-    //! @param      response  The response
-    //! @param[in]  factory   if true, use factory mode
+    //! @param[out] response  The response pointer (optional)
+    //! @param[in]  factory   if true, use factory mode (optional)
+    //! @param[in]  expected  The expected status (optional)
     //!
     //! @return     The response size or NetMdErr.
     //--------------------------------------------------------------------------
-    int exchange(unsigned char* cmd, size_t cmdLen, NetMDResp* response = nullptr, bool factory = false);
+    int exchange(unsigned char* cmd, size_t cmdLen, NetMDResp* response = nullptr,
+                 bool factory = false, NetMdStatus expected =  NETMD_STATUS_ACCEPTED);
+
+    //--------------------------------------------------------------------------
+    //! @brief      do a bulk transfer
+    //!
+    //! @param      cmd      The command bytes
+    //! @param[in]  cmdLen   The command length
+    //! @param[in]  timeOut  The time out
+    //!
+    //! @return     The response size or NetMdErr.
+    //--------------------------------------------------------------------------
+    int bulkTransfer(unsigned char* cmd, size_t cmdLen, int timeOut);
 
     //--------------------------------------------------------------------------
     //! @brief      wait for the device respond to a command

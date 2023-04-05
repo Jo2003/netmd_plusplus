@@ -25,7 +25,10 @@
  */
 
 #include "CNetMdDev.hpp"
+#include "log.h"
+#include "netmd_defines.h"
 #include "netmd_utils.h"
+#include <libusb-1.0/libusb.h>
 #include <sys/types.h>
 #include <cstring>
 #include <unistd.h>
@@ -279,7 +282,7 @@ int CNetMdDev::sendCmd(unsigned char* cmd, size_t cmdLen, bool factory)
 //--------------------------------------------------------------------------
 //! @brief      Gets the response.
 //!
-//! @param      response  The response
+//! @param[out] response  The response
 //!
 //! @return     The response size or NetMdErr.
 //--------------------------------------------------------------------------
@@ -318,14 +321,16 @@ int CNetMdDev::getResponse(NetMDResp& response)
 //--------------------------------------------------------------------------
 //! @brief      excahnge data with NetMD device
 //!
-//! @param      cmd       The command
+//! @param[in]  cmd       The command
 //! @param[in]  cmdLen    The command length
-//! @param      response  The response
-//! @param[in]  factory   if true, use factory mode
+//! @param[out] response  The response pointer (optional)
+//! @param[in]  factory   if true, use factory mode (optional)
+//! @param[in]  expected  The expected status (optional)
 //!
 //! @return     The response size or NetMdErr.
 //--------------------------------------------------------------------------
-int CNetMdDev::exchange(unsigned char* cmd, size_t cmdLen, NetMDResp* response, bool factory)
+int CNetMdDev::exchange(unsigned char* cmd, size_t cmdLen, NetMDResp* response,
+                        bool factory, NetMdStatus expected)
 {
     if (mDevice.mDevHdl == nullptr)
     {
@@ -351,7 +356,7 @@ int CNetMdDev::exchange(unsigned char* cmd, size_t cmdLen, NetMDResp* response, 
         {
             ret = NETMDERR_CMD_FAILED;
         }
-        else if ((*pResp)[0] == NETMD_STATUS_INTERIM)
+        else if (((*pResp)[0] == NETMD_STATUS_INTERIM) && (expected != NETMD_STATUS_INTERIM))
         {
             mLOG(DEBUG) << "Re-read ...!";
             (*pResp) = nullptr;
@@ -362,6 +367,11 @@ int CNetMdDev::exchange(unsigned char* cmd, size_t cmdLen, NetMDResp* response, 
                 ret = NETMDERR_USB;
             }
         }
+        else if (((*pResp)[0] == NETMD_STATUS_INTERIM) && (expected == NETMD_STATUS_INTERIM))
+        {
+            mLOG(DEBUG) << "Expected INTERIM return value: 0x" << std::hex << std::setw(2)
+                           << std::setfill('0') << (*pResp)[0] << std::dec;
+        }
         else if ((*pResp)[0] != NETMD_STATUS_ACCEPTED)
         {
             mLOG(CRITICAL) << "### Bad return value: 0x" << std::hex << std::setw(2)
@@ -371,6 +381,50 @@ int CNetMdDev::exchange(unsigned char* cmd, size_t cmdLen, NetMDResp* response, 
     }
 
     return ret;
+}
+
+//--------------------------------------------------------------------------
+//! @brief      do a bulk transfer
+//!
+//! @param      cmd      The command bytes
+//! @param[in]  cmdLen   The command length
+//! @param[in]  timeOut  The time out
+//!
+//! @return     The response size or NetMdErr.
+//--------------------------------------------------------------------------
+int CNetMdDev::bulkTransfer(unsigned char* cmd, size_t cmdLen, int timeOut)
+{
+    if (mDevice.mDevHdl == nullptr)
+    {
+        mLOG(CRITICAL) << "No NetMD device available!";
+        return NETMDERR_NOTREADY;
+    }
+
+    int bytesDone = 0, sent, err = 0;
+
+    do
+    {
+        sent = 0;
+        err  = libusb_bulk_transfer(mDevice.mDevHdl,
+                                    LIBUSB_RECIPIENT_ENDPOINT,
+                                    cmd + bytesDone, cmdLen - bytesDone,
+                                    &sent, timeOut);
+
+        bytesDone += sent;
+
+        if (bytesDone < static_cast<int>(cmdLen))
+        {
+            if ((err != LIBUSB_ERROR_INTERRUPTED) && (err != LIBUSB_SUCCESS))
+            {
+                mLOG(CRITICAL) << "USB transfer error while transffering "
+                               << cmdLen << " bytes: " << libusb_strerror(err);
+                return NETMDERR_USB;
+            }
+        }
+    }
+    while(bytesDone < static_cast<int>(cmdLen));
+
+    return bytesDone;
 }
 
 //--------------------------------------------------------------------------

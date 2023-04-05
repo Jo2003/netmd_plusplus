@@ -15,4 +15,4 @@ add_executable(testnetmd
 	src/CNetMdSecure.cpp
 )
 
-target_link_libraries(testnetmd usb-1.0)
+target_link_libraries(testnetmd usb-1.0 gcrypt gpg-error)
