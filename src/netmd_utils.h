@@ -34,7 +34,7 @@
 namespace netmd {
 
 /// macro to throw an exception
-#define mNetMdThrow(x_, ...) { std::ostringstream os_; os_ << __FUNCTION__ << "()" << __LINE__ << ": " << __VA_ARGS__; throw ThrownData{x_, os_.str()}; }
+#define mNetMdThrow(x_, ...) { std::ostringstream os_; os_ << __FUNCTION__ << "():" << __LINE__ << ": " << __VA_ARGS__; throw ThrownData{x_, os_.str()}; }
 
 //--------------------------------------------------------------------------
 //! @brief      format query for netmd exchange
@@ -67,6 +67,36 @@ int scanQuery(const uint8_t data[], size_t size, const char* format, NetMDParams
 //! @return     The checksum.
 //--------------------------------------------------------------------------
 unsigned int calculateChecksum(const NetMDByteVector& data);
+
+//--------------------------------------------------------------------------
+//! @brief      format helper for TrackTime
+//!
+//! @param      o     ref. to ostream
+//! @param[in]  tt    TrackTime
+//!
+//! @return     formatted TrackTime stored in ostream
+//--------------------------------------------------------------------------
+std::ostream& operator<<(std::ostream& o, const TrackTime& tt);
+
+//--------------------------------------------------------------------------
+//! @brief      format helper for AudioEncoding
+//!
+//! @param      o     ref. to ostream
+//! @param[in]  ae    AudioEncoding
+//!
+//! @return     formatted AudioEncoding stored in ostream
+//--------------------------------------------------------------------------
+std::ostream& operator<<(std::ostream& o, const AudioEncoding& ae);
+
+//--------------------------------------------------------------------------
+//! @brief      format helper for TrackProtection
+//!
+//! @param      o     ref. to ostream
+//! @param[in]  tp    TrackProtection
+//!
+//! @return     formatted TrackProtection stored in ostream
+//--------------------------------------------------------------------------
+std::ostream& operator<<(std::ostream& o, const TrackProtection& tp);
 
 //------------------------------------------------------------------------------
 //! @brief      swop bytes

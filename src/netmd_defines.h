@@ -79,6 +79,31 @@ enum DiskFormat : uint8_t
     NO_ONTHEFLY_CONVERSION     = 0xf
 };
 
+/// track times
+struct TrackTime
+{
+    int mMinutes;
+    int mSeconds;
+    int mTenthSecs;
+};
+
+/// type safe protection flags
+enum class TrackProtection : uint8_t
+{
+    UNPROTECTED = 0x00,
+    PROTECTED   = 0x03,
+    UNKNOWN     = 0xFF
+};
+
+/// type safe encoding flags
+enum class AudioEncoding : uint8_t
+{
+    SP      = 0x90,
+    LP2     = 0x92,
+    LP4     = 0x93,
+    UNKNOWN = 0xff
+};
+
 /// helper structure to throw an error with description
 struct ThrownData
 {

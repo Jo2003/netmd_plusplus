@@ -23,7 +23,8 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
  *
  */
-#include "src/CNetMdApi.h"
+#include <iostream>
+#include "include/CNetMdApi.h"
 
 using namespace netmd;
 
@@ -51,7 +52,7 @@ int main (int argc, char* argv[])
 
             for (int j = 0; j < i; j++)
             {
-                CNetMdApi::TrackTime tt;
+                TrackTime tt;
                 pNetMD->trackTime(j, tt);
 
                 if (pNetMD->trackTitle(j, s) == NETMDERR_NO_ERROR)

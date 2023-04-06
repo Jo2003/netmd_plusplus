@@ -12,6 +12,7 @@
 #include <iomanip>
 #include <string>
 #include <sstream>
+#include <mutex>
 
 enum typelog
 {
@@ -27,6 +28,7 @@ struct structlog
     bool time = false;
     int level = WARN;
     std::ostream* sout = &std::cerr;
+    std::mutex mtxLog;
 };
 
 extern structlog LOGCFG;
@@ -56,6 +58,7 @@ public:
 
     ~LOG()
     {
+        std::unique_lock lck(LOGCFG.mtxLog);
         if(opened)
         {
             *LOGCFG.sout << std::endl;
@@ -66,6 +69,7 @@ public:
     template<class T>
     LOG &operator<<(const T &msg)
     {
+        std::unique_lock lck(LOGCFG.mtxLog);
         if(msglevel >= LOGCFG.level)
         {
             *LOGCFG.sout << msg;

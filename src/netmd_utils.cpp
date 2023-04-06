@@ -421,6 +421,77 @@ int scanQuery(const uint8_t data[], size_t size, const char* format, NetMDParams
     return ret;
 }
 
+//--------------------------------------------------------------------------
+//! @brief      format helper for TrackTime
+//!
+//! @param      o     ref. to ostream
+//! @param[in]  tt    TrackTime
+//!
+//! @return     formatted TrackTime stored in ostream
+//--------------------------------------------------------------------------
+std::ostream& operator<<(std::ostream& o, const TrackTime& tt)
+{
+    o << std::dec
+      << std::setw(2) << std::setfill('0') << tt.mMinutes << ":"
+      << std::setw(2) << std::setfill('0') << tt.mSeconds << "."
+      << std::setw(2) << std::setfill('0') << tt.mTenthSecs;
+
+    return o;
+}
+
+//--------------------------------------------------------------------------
+//! @brief      format helper for TrackProtection
+//!
+//! @param      o     ref. to ostream
+//! @param[in]  tp    TrackProtection
+//!
+//! @return     formatted TrackProtection stored in ostream
+//--------------------------------------------------------------------------
+std::ostream& operator<<(std::ostream& o, const TrackProtection& tp)
+{
+    switch (tp)
+    {
+    case TrackProtection::UNPROTECTED:
+        o << "UnPROT";
+        break;
+    case TrackProtection::PROTECTED:
+        o << "TrPROT";
+        break;
+    default:
+        o << "N/A";
+        break;
+    }
+    return o;
+}
+
+//--------------------------------------------------------------------------
+//! @brief      format helper for AudioEncoding
+//!
+//! @param      o     ref. to ostream
+//! @param[in]  ae    AudioEncoding
+//!
+//! @return     formatted AudioEncoding stored in ostream
+//--------------------------------------------------------------------------
+std::ostream& operator<<(std::ostream& o, const AudioEncoding& ae)
+{
+    switch (ae)
+    {
+    case AudioEncoding::SP:
+        o << "SP";
+        break;
+    case AudioEncoding::LP2:
+        o << "LP2";
+        break;
+    case AudioEncoding::LP4:
+        o << "LP4";
+        break;
+    default:
+        o << "N/A";
+        break;
+    }
+    return o;
+}
+
 
 
 } // ~namespace

@@ -24,13 +24,99 @@
  *
  */
 #pragma once
-#include "netmd_utils.h"
-#include "CNetMdDev.hpp"
-#include "CMDiscHeader.h"
-#include "CNetMdSecure.h"
 #include <cstdint>
+#include <sstream>
 
 namespace netmd {
+
+/// disk format
+enum DiskFormat : uint8_t
+{
+    NETMD_DISKFORMAT_LP4       =   0,
+    NETMD_DISKFORMAT_LP2       =   2,
+    NETMD_DISKFORMAT_SP_MONO   =   4,
+    NETMD_DISKFORMAT_SP_STEREO =   6,
+    NO_ONTHEFLY_CONVERSION     = 0xf
+};
+
+/// NetMD errors
+enum NetMdErr : int
+{
+    NETMDERR_NO_ERROR      =  0,  ///< success
+    NETMDERR_USB           = -1,  ///< general USB error
+    NETMDERR_NOTREADY      = -2,  ///< player not ready for command
+    NETMDERR_TIMEOUT       = -3,  ///< timeout while waiting for response
+    NETMDERR_CMD_FAILED    = -4,  ///< minidisc responded with 08 response
+    NETMDERR_CMD_INVALID   = -5,  ///< minidisc responded with 0A response
+    NETMDERR_PARAM         = -6,  ///< parameter error
+    NETMDERR_OTHER         = -7,  ///< any other error
+    NETMDERR_NOT_SUPPORTED = -8,  ///< not supported
+    NETMDERR_INTERIM       = -9,  ///< interim
+};
+
+/// track times
+struct TrackTime
+{
+    int mMinutes;
+    int mSeconds;
+    int mTenthSecs;
+};
+
+/// type safe protection flags
+enum class TrackProtection : uint8_t
+{
+    UNPROTECTED = 0x00,
+    PROTECTED   = 0x03,
+    UNKNOWN     = 0xFF
+};
+
+/// type safe encoding flags
+enum class AudioEncoding : uint8_t
+{
+    SP      = 0x90,
+    LP2     = 0x92,
+    LP4     = 0x93,
+    UNKNOWN = 0xff
+};
+
+//--------------------------------------------------------------------------
+//! @brief      format helper for TrackTime
+//!
+//! @param      o     ref. to ostream
+//! @param[in]  tt    TrackTime
+//!
+//! @return     formatted TrackTime stored in ostream
+//--------------------------------------------------------------------------
+std::ostream& operator<<(std::ostream& o, const TrackTime& tt);
+
+//--------------------------------------------------------------------------
+//! @brief      format helper for AudioEncoding
+//!
+//! @param      o     ref. to ostream
+//! @param[in]  ae    AudioEncoding
+//!
+//! @return     formatted AudioEncoding stored in ostream
+//--------------------------------------------------------------------------
+std::ostream& operator<<(std::ostream& o, const AudioEncoding& ae);
+
+//--------------------------------------------------------------------------
+//! @brief      format helper for TrackProtection
+//!
+//! @param      o     ref. to ostream
+//! @param[in]  tp    TrackProtection
+//!
+//! @return     formatted TrackProtection stored in ostream
+//--------------------------------------------------------------------------
+std::ostream& operator<<(std::ostream& o, const TrackProtection& tp);
+
+/// disc header
+class CMDiscHeader;
+
+/// access device class
+class CNetMdDev;
+
+/// secure implmentation
+class CNetMdSecure;
 
 //------------------------------------------------------------------------------
 //! @brief      This class describes a C++ NetMD access library
@@ -82,20 +168,6 @@ public:
     //! @param      os    The stream instance to log to
     //--------------------------------------------------------------------------
     static void setLogStream(std::ostream& os);
-
-    //--------------------------------------------------------------------------
-    //! @brief      cache table of contents
-    //!
-    //! @return     NetMdErr
-    //--------------------------------------------------------------------------
-    int cacheTOC();
-
-    //--------------------------------------------------------------------------
-    //! @brief      sync table of contents
-    //!
-    //! @return     NetMdErr
-    //--------------------------------------------------------------------------
-    int syncTOC();
 
     //--------------------------------------------------------------------------
     //! @brief      request track count
@@ -275,9 +347,6 @@ public:
     //! @see        NetMdErr
     //--------------------------------------------------------------------------
     int setTrackTitle(uint16_t trackNo, const std::string& title);
-
-protected:
-
 
 private:
     /// disc header
