@@ -16,3 +16,5 @@ add_executable(testnetmd
 )
 
 target_link_libraries(testnetmd usb-1.0 gcrypt gpg-error)
+target_compile_options(testnetmd PRIVATE -W -Wall -O)
+target_link_options(testnetmd PRIVATE -s)

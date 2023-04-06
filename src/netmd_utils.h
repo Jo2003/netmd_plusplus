@@ -34,7 +34,7 @@
 namespace netmd {
 
 /// macro to throw an exception
-#define mNetMdThrow(x_, ...) { std::ostringstream os_; os_ << __VA_ARGS__; throw ThrownData{x_, os_.str()}; }
+#define mNetMdThrow(x_, ...) { std::ostringstream os_; os_ << __FUNCTION__ << "()" << __LINE__ << ": " << __VA_ARGS__; throw ThrownData{x_, os_.str()}; }
 
 //--------------------------------------------------------------------------
 //! @brief      format query for netmd exchange

@@ -1098,7 +1098,7 @@ int CNetMdSecure::sendTrack(WireFormat wf, DiskFormat df, uint32_t frames,
     }
     catch(const ThrownData& e)
     {
-        mLOG(CRITICAL) << e.mErrDescr;
+        LOG(CRITICAL) << e.mErrDescr;
         return e.mErr;
     }
     catch(...)
@@ -1171,7 +1171,7 @@ int CNetMdSecure::commitTrack(uint16_t track, uint8_t sessionKey[8])
     }
     catch(const ThrownData& e)
     {
-        mLOG(CRITICAL) << e.mErrDescr;
+        LOG(CRITICAL) << e.mErrDescr;
         ret = e.mErr;
     }
     catch(...)
@@ -1227,7 +1227,8 @@ int CNetMdSecure::setTrackProtection(uint8_t val)
 int CNetMdSecure::sendAudioTrack(const std::string& filename, DiskFormat otf, uint16_t& trackNo)
 {
     int ret = NETMDERR_NO_ERROR;
-    Ekb ekb;
+    Ekb ekb = {0, nullptr, 0, {0,}};
+
     uint8_t chain[] =
     {
         0x25, 0x45, 0x06, 0x4d, 0xea, 0xca,
@@ -1253,8 +1254,8 @@ int CNetMdSecure::sendAudioTrack(const std::string& filename, DiskFormat otf, ui
         0x13, 0x37, 0x13, 0x37
     };
 
-    Keychain *keychain;
-    Keychain *next;
+    Keychain *keychain = nullptr;
+    Keychain *next = nullptr;
     size_t done;
     uint8_t hostnonce[8] = {0,};
     uint8_t devnonce[8] = {0,};
@@ -1282,7 +1283,6 @@ int CNetMdSecure::sendAudioTrack(const std::string& filename, DiskFormat otf, ui
 
     uint8_t uuid[8] = {0,};
     uint8_t new_contentid[20] = {0,};
-    char ctitle[256] = {0,};
 
     uint32_t headersize;
     uint8_t channels;
@@ -1290,13 +1290,17 @@ int CNetMdSecure::sendAudioTrack(const std::string& filename, DiskFormat otf, ui
     size_t data_position, audio_data_position, audio_data_size, i;
     AudioPatch audio_patch = NO_PATCH;
     uint8_t* audio_data;
-    WireFormat wf;
-    DiskFormat df;
+    WireFormat wf = NETMD_WIREFORMAT_PCM;
+    DiskFormat df = NETMD_DISKFORMAT_SP_STEREO;
 
-    std::ifstream audioFile(filename, std::ios_base::in | std::ios_base::binary);
-
-    if (audioFile)
+    try
     {
+        std::ifstream audioFile(filename, std::ios_base::in | std::ios_base::binary);
+        if (!audioFile)
+        {
+            mNetMdThrow(NETMDERR_PARAM, "Can't open audio file : " << filename);
+        }
+
         // get pointer to associated buffer object
         std::filebuf* pbuf = audioFile.rdbuf();
 
@@ -1309,57 +1313,40 @@ int CNetMdSecure::sendAudioTrack(const std::string& filename, DiskFormat otf, ui
 
         if (data == nullptr)
         {
-            mLOG(CRITICAL) << "error allocating memory for file input";
-            return NETMDERR_OTHER;
+            mNetMdThrow(NETMDERR_OTHER, "error allocating memory for file input");
         }
 
-        // get file data
+        // read source
         pbuf->sgetn(reinterpret_cast<char*>(data), data_size);
 
         audioFile.close();
-    }
-    else
-    {
-        mLOG(CRITICAL) << "cannot open audio file";
-        return NETMDERR_OTHER;
-    }
 
-    // read source
-    if (data_size  < MIN_WAV_LENGTH)
-    {
-        delete [] data;
-        mLOG(CRITICAL) << "audio file too small (corrupt or not supported)";
-        return NETMDERR_NOT_SUPPORTED;
-    }
+        if (data_size < MIN_WAV_LENGTH)
+        {
+            mNetMdThrow(NETMDERR_NOT_SUPPORTED, "audio file too small (corrupt or not supported)");
+        }
 
-    mLOG(DEBUG) << "audio file size : " << data_size << " bytes.";
+        mLOG(DEBUG) << "audio file size : " << data_size << " bytes.";
 
-    // check contents
-    if (!audioSupported(data, data_size, wf, df, audio_patch, channels, headersize))
-    {
-        mLOG(CRITICAL) << "audio format unknown or not supported";
-        delete [] data;
-        return NETMDERR_NOT_SUPPORTED;
-    }
-    else
-    {
+        // check contents
+        if (!audioSupported(data, data_size, wf, df, audio_patch, channels, headersize))
+        {
+            mNetMdThrow(NETMDERR_NOT_SUPPORTED, "audio format unknown or not supported");
+        }
+
         mLOG(DEBUG) << "supported audio file detected";
 
         if (audio_patch == SP)
         {
             if (!mPatch.supportsSpUpload())
             {
-                mLOG(CRITICAL) << "device doesn't support SP upload!";
-                delete [] data;
-                return NETMDERR_NOT_SUPPORTED;
+                mNetMdThrow(NETMDERR_NOT_SUPPORTED, "device doesn't support SP upload!");
             }
 
             override_frames = (data_size - 2048) / 212;
             if (prepareSpAudio(&data, data_size) != NETMDERR_NO_ERROR)
             {
-                mLOG(CRITICAL) << "cannot prepare ATRAC1 audio data for SP transfer!";
-                delete [] data;
-                return NETMDERR_NOT_SUPPORTED;
+                mNetMdThrow(NETMDERR_NOT_SUPPORTED, "cannot prepare ATRAC1 audio data for SP transfer!");
             }
             else
             {
@@ -1371,9 +1358,7 @@ int CNetMdSecure::sendAudioTrack(const std::string& filename, DiskFormat otf, ui
         }
         else if ((data_position = waveDataPosition(data, headersize, data_size)) == 0)
         {
-            mLOG(CRITICAL) << "cannot locate audio data in file!";
-            delete [] data;
-            return NETMDERR_NOT_SUPPORTED;
+            mNetMdThrow(NETMDERR_NOT_SUPPORTED, "cannot locate audio data in file!");
         }
         else
         {
@@ -1384,70 +1369,138 @@ int CNetMdSecure::sendAudioTrack(const std::string& filename, DiskFormat otf, ui
             mLOG(DEBUG) << "audio data size read from file :           " << audio_data_size << " bytes";
             mLOG(DEBUG) << "audio data size calculated from file size: " << (data_size - audio_data_position) << " bytes";
         }
-    }
 
-    // acquire device - needed by Sharp devices, may fail on Sony devices
-    static_cast<void>(mNetMd.aquireDev());
+        // acquire device - needed by Sharp devices, may fail on Sony devices
+        static_cast<void>(mNetMd.aquireDev());
 
-    if (audio_patch == SP)
-    {
-        if (mPatch.applySpPatch((channels == NETMD_CHANNELS_STEREO) ? 2 : 1) != NETMDERR_NO_ERROR)
+        // try to apply SP upload patch
+        if (audio_patch == SP)
         {
-            mLOG(CRITICAL) << "Can't patch NetMD device for SP transfer!";
-            delete [] data;
-            mPatch.undoSpPatch();
-            static_cast<void>(mNetMd.releaseDev());
-            return NETMDERR_NOT_SUPPORTED;
-        }
-    }
-
-    if (leaveSession() != NETMDERR_NO_ERROR)
-    {
-        mLOG(DEBUG) << "leaveSession() failed.";
-    }
-
-    if (setTrackProtection(0x01) != NETMDERR_NO_ERROR)
-    {
-        mLOG(DEBUG) << "setTrackProtection() failed.";
-    }
-
-    if (enterSession() != NETMDERR_NO_ERROR)
-    {
-        mLOG(DEBUG) << "enterSession() failed.";
-    }
-
-    // build ekb
-    ekb.id = 0x26422642;
-    ekb.depth = 9;
-    memcpy(ekb.signature, signature, sizeof(signature));
-
-    // build ekb key chain
-    ekb.chain = nullptr;
-    for (done = 0; done < sizeof(chain); done += 16U)
-    {
-        next = new Keychain;
-
-        if (ekb.chain == nullptr)
-        {
-            ekb.chain = next;
-        }
-        else
-        {
-            keychain->mpNext = next;
+            if (mPatch.applySpPatch((channels == NETMD_CHANNELS_STEREO) ? 2 : 1) != NETMDERR_NO_ERROR)
+            {
+                mNetMdThrow(NETMDERR_NOT_SUPPORTED, "Can't patch NetMD device for SP transfer!");
+            }
         }
 
-        next->mpNext = nullptr;
-        memcpy(next->mKey, chain + done, 16);
+        if (leaveSession() != NETMDERR_NO_ERROR)
+        {
+            mLOG(DEBUG) << "leaveSession() failed.";
+        }
 
-        keychain = next;
+        if (setTrackProtection(0x01) != NETMDERR_NO_ERROR)
+        {
+            mLOG(DEBUG) << "setTrackProtection() failed.";
+        }
+
+        if (enterSession() != NETMDERR_NO_ERROR)
+        {
+            mLOG(DEBUG) << "enterSession() failed.";
+        }
+
+        // build ekb
+        ekb.id = 0x26422642;
+        ekb.depth = 9;
+        memcpy(ekb.signature, signature, sizeof(signature));
+
+        // build ekb key chain
+        for (done = 0; done < sizeof(chain); done += 16U)
+        {
+            if ((next = new Keychain) != nullptr)
+            {
+                if (ekb.chain == nullptr)
+                {
+                    ekb.chain = next;
+                }
+                else
+                {
+                    keychain->mpNext = next;
+                }
+
+                next->mpNext = nullptr;
+                memcpy(next->mKey, chain + done, 16);
+
+                keychain = next;
+            }
+            else
+            {
+                mNetMdThrow(NETMDERR_OTHER, "error allocating memory for key chain.");
+            }
+        }
+
+        if (sendKeyData(ekb) != NETMDERR_NO_ERROR)
+        {
+            mLOG(DEBUG) << "sendKeyData() failed!";
+        }
+
+        // exchange nonces
+        gcry_create_nonce(hostnonce, sizeof(hostnonce));
+
+        if (sessionKeyExchange(hostnonce, devnonce) != NETMDERR_NO_ERROR)
+        {
+            mLOG(DEBUG) << "sessionKeyExchange() failed!";
+        }
+
+        // calculate session key
+        retailMAC(rootkey, hostnonce, devnonce, sessionkey);
+
+        if (setupDownload(contentid, kek, sessionkey) != NETMDERR_NO_ERROR)
+        {
+            mLOG(DEBUG) << "setupDownload() failed!";
+        }
+
+        // conversion (byte swapping) for pcm raw data from wav file if needed
+        if (audio_patch == WAVE)
+        {
+            for (i = 0; i < audio_data_size; i += 2)
+            {
+                uint8_t first = audio_data[i];
+                audio_data[i] = audio_data[i + 1];
+                audio_data[i + 1] = first;
+            }
+        }
+
+        // number of frames will be calculated by preparePackets() depending on the wire format and channels
+        if (preparePackets(audio_data, audio_data_size, &packets, packet_count, frames,
+                           channels, packet_length, kek, wf) != NETMDERR_NO_ERROR)
+        {
+            mNetMdThrow(NETMDERR_OTHER, "preparePackets() failed!");
+        }
+
+        if ((df == NETMD_DISKFORMAT_SP_STEREO) && (otf != NO_ONTHEFLY_CONVERSION))
+        {
+            df = otf;
+        }
+
+        if(override_frames)
+        {
+            frames = override_frames;
+        }
+
+        // send to device
+        if (sendTrack(wf, df, frames, packets, packet_length, sessionkey,
+                      trackNo, uuid, new_contentid) != NETMDERR_NO_ERROR)
+        {
+            mNetMdThrow(NETMDERR_CMD_FAILED, "sendTrack() failed!");
+        }
+
+        // commit
+        if (commitTrack(trackNo, sessionkey) != NETMDERR_NO_ERROR)
+        {
+            mNetMdThrow(NETMDERR_CMD_FAILED, "commitTrack() failed!");
+        }
     }
-
-    if (sendKeyData(ekb) != NETMDERR_NO_ERROR)
+    catch(const ThrownData& e)
     {
-        mLOG(DEBUG) << "sendKeyData() failed!";
+        LOG(CRITICAL) << e.mErrDescr;
+        ret = e.mErr;
+    }
+    catch(...)
+    {
+        mLOG(CRITICAL) << "Unknown error while committing track!";
+        ret = NETMDERR_OTHER;
     }
 
-    // cleanup
+    // cleanup time!
     keychain = ekb.chain;
     while (keychain != nullptr)
     {
@@ -1456,68 +1509,11 @@ int CNetMdSecure::sendAudioTrack(const std::string& filename, DiskFormat otf, ui
         keychain = next;
     }
 
-    // exchange nonces
-    gcry_create_nonce(hostnonce, sizeof(hostnonce));
-
-    if (sessionKeyExchange(hostnonce, devnonce) != NETMDERR_NO_ERROR)
-    {
-        mLOG(DEBUG) << "sessionKeyExchange() failed!";
-    }
-
-    // calculate session key
-    retailMAC(rootkey, hostnonce, devnonce, sessionkey);
-
-    if (setupDownload(contentid, kek, sessionkey) != NETMDERR_NO_ERROR)
-    {
-        mLOG(DEBUG) << "setupDownload() failed!";
-    }
-
-    // conversion (byte swapping) for pcm raw data from wav file if needed
-    if (audio_patch == WAVE)
-    {
-        for (i = 0; i < audio_data_size; i += 2)
-        {
-            uint8_t first = audio_data[i];
-            audio_data[i] = audio_data[i + 1];
-            audio_data[i + 1] = first;
-        }
-    }
-
-    // number of frames will be calculated by preparePackets() depending on the wire format and channels
-    if (preparePackets(audio_data, audio_data_size, &packets, packet_count, frames,
-                       channels, packet_length, kek, wf) != NETMDERR_NO_ERROR)
-    {
-        mLOG(DEBUG) << "preparePackets() failed!";
-    }
-
-    if ((df == NETMD_DISKFORMAT_SP_STEREO) && (otf != NO_ONTHEFLY_CONVERSION))
-    {
-        df = otf;
-    }
-
-    if(override_frames)
-    {
-        frames = override_frames;
-    }
-
-    // send to device
-    if (sendTrack(wf, df, frames, packets, packet_length, sessionkey,
-                  trackNo, uuid, new_contentid) != NETMDERR_NO_ERROR)
-    {
-        mLOG(DEBUG) << "sendTrack() failed!";
-    }
-
-    // cleanup
     cleanupPackets(&packets);
-    delete [] data;
-    audio_data = nullptr;
 
-    if (ret == NETMDERR_NO_ERROR)
+    if (data)
     {
-        if (commitTrack(trackNo, sessionkey) != NETMDERR_NO_ERROR)
-        {
-            mLOG(DEBUG) << "commitTrack() failed!";
-        }
+        delete [] data;
     }
 
     // forget key
@@ -1537,11 +1533,10 @@ int CNetMdSecure::sendAudioTrack(const std::string& filename, DiskFormat otf, ui
         mPatch.undoSpPatch();
     }
 
-    // release device - needed by Sharp devices, may fail on Sony devices */
+    // release device - needed by Sharp devices, may fail on Sony devices
     static_cast<void>(mNetMd.releaseDev());
 
-
-    return ret; /* return error code from the "business logic" */
+    return ret;
 }
 
 //--------------------------------------------------------------------------

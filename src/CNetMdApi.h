@@ -350,6 +350,29 @@ public:
     //--------------------------------------------------------------------------
     bool spUploadSupported();
 
+    //--------------------------------------------------------------------------
+    //! @brief      Sends an audio track
+    //!
+    //! @param[in]  filename  The filename
+    //! @param[in]  title     The title
+    //! @param[in]  otf       The disk format
+    //!
+    //! @return     NetMdErr
+    //! @see        NetMdErr
+    //--------------------------------------------------------------------------
+    int sendAudioFile(const std::string& filename, const std::string& title, DiskFormat otf);
+
+    //--------------------------------------------------------------------------
+    //! @brief      Sets the track title.
+    //!
+    //! @param[in]  trackNo  The track no
+    //! @param[in]  title    The title
+    //!
+    //! @return     NetMdErr
+    //! @see        NetMdErr
+    //--------------------------------------------------------------------------
+    int setTrackTitle(uint16_t trackNo, const std::string& title);
+
 protected:
 
 

@@ -488,7 +488,7 @@ int CNetMdPatch::patch(uint32_t addr, const NetMDByteVector& data, int patchNo)
     }
     catch(const ThrownData& e)
     {
-        mLOG(CRITICAL) << e.mErrDescr;
+        LOG(CRITICAL) << e.mErrDescr;
         return e.mErr;
     }
     catch(...)
@@ -570,7 +570,7 @@ int CNetMdPatch::unpatch(PatchId pid)
     }
     catch(const ThrownData& e)
     {
-        mLOG(CRITICAL) << e.mErrDescr;
+        LOG(CRITICAL) << e.mErrDescr;
         return e.mErr;
     }
     catch(...)
@@ -642,11 +642,11 @@ int CNetMdPatch::safetyPatch()
     {
         if (e.mErr == NETMDERR_NO_ERROR)
         {
-            mLOG(DEBUG) << e.mErrDescr;
+            LOG(DEBUG) << e.mErrDescr;
         }
         else
         {
-            mLOG(CRITICAL) << e.mErrDescr;
+            LOG(CRITICAL) << e.mErrDescr;
         }
         return e.mErr;
     }
@@ -795,11 +795,11 @@ int CNetMdPatch::applySpPatch(int chanNo)
     {
         if (e.mErr == NETMDERR_NO_ERROR)
         {
-            mLOG(DEBUG) << e.mErrDescr;
+            LOG(DEBUG) << e.mErrDescr;
         }
         else
         {
-            mLOG(CRITICAL) << e.mErrDescr;
+            LOG(CRITICAL) << e.mErrDescr;
         }
         return e.mErr;
     }
