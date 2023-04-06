@@ -119,8 +119,8 @@ class CNetMdSecure
     //!
     //! @param      netMd  The net md device reference
     //--------------------------------------------------------------------------
-    CNetMdSecure(CNetMdDev& netMd, CNetMdPatch& patch)
-        : mNetMd(netMd), mPatch(patch)
+    CNetMdSecure(CNetMdDev& netMd)
+        : mNetMd(netMd), mPatch(netMd)
     {}
 
     //--------------------------------------------------------------------------
@@ -189,8 +189,8 @@ class CNetMdSecure
     //! @see        NetMdErr
     //--------------------------------------------------------------------------
     static int preparePackets(uint8_t* data, size_t dataLen, TrackPackets** packets,
-                              uint32_t* packetCount,  uint32_t* frames, uint8_t channels,
-                              uint32_t* packetLen, uint8_t kek[8], WireFormat wf);
+                              uint32_t& packetCount,  uint32_t& frames, uint8_t channels,
+                              uint32_t& packetLen, uint8_t kek[8], WireFormat wf);
 
     //--------------------------------------------------------------------------
     //! @brief      free allocated memory
@@ -370,7 +370,7 @@ class CNetMdSecure
     //--------------------------------------------------------------------------
     int sendTrack(WireFormat wf, DiskFormat df, uint32_t frames,
                   TrackPackets* packets, uint32_t packetLen,
-                  uint8_t sessionKey[8], uint16_t* track,
+                  uint8_t sessionKey[8], uint16_t& track,
                   uint8_t uuid[8], uint8_t contentId[20]);
 
     //--------------------------------------------------------------------------
@@ -398,16 +398,25 @@ class CNetMdSecure
     //! @brief      Sends an audio track
     //!
     //! @param[in]  filename  The filename
-    //! @param[in]  title     The title
     //! @param[in]  otf       The disk format
+    //! @param[out] trackNo   The track no
     //!
     //! @return     NetMdErr
     //! @see        NetMdErr
     //--------------------------------------------------------------------------
-    int sendAudioTrack(const std::string& filename, const std::string& title, DiskFormat otf);
+    int sendAudioTrack(const std::string& filename, DiskFormat otf, uint16_t& trackNo);
+
+    //--------------------------------------------------------------------------
+    //! @brief      is SP upload supported?
+    //!
+    //! @return     true if yes
+    //--------------------------------------------------------------------------
+    bool spUploadSupported();
 
     CNetMdDev& mNetMd;
-    CNetMdPatch& mPatch;
+
+    /// patch support class
+    CNetMdPatch mPatch;
 
 };
 

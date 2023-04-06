@@ -41,7 +41,7 @@ namespace netmd {
 //--------------------------------------------------------------------------
 //! @brief      Constructs a new instance.
 //--------------------------------------------------------------------------
-CNetMdApi::CNetMdApi() : mPatch(mNetMd), mSecure(mNetMd)
+CNetMdApi::CNetMdApi() : mSecure(mNetMd)
 {
 }
 
@@ -667,7 +667,7 @@ int CNetMdApi::trackTitle(uint16_t track, std::string& title)
 //--------------------------------------------------------------------------
 bool CNetMdApi::spUploadSupported()
 {
-    return mPatch.supportsSpUpload();
+    return mSecure.spUploadSupported();
 }
 
 } // ~namespace

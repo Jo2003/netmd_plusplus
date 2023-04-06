@@ -27,7 +27,6 @@
 #include "netmd_defines.h"
 #include "CNetMdDev.hpp"
 #include "CMDiscHeader.h"
-#include "CNetMdPatch.h"
 #include "CNetMdSecure.h"
 #include <cstdint>
 
@@ -360,9 +359,6 @@ private:
 
     /// access device class
     CNetMdDev mNetMd;
-
-    /// patch support class
-    CNetMdPatch mPatch;
 
     /// secure implmentation
     CNetMdSecure mSecure;

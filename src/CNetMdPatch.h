@@ -30,7 +30,6 @@
 
 namespace netmd {
 
-class CNetMdApi;
 class CNetMdSecure;
 
 //------------------------------------------------------------------------------
@@ -39,7 +38,6 @@ class CNetMdSecure;
 class CNetMdPatch
 {
     // make friends
-    friend CNetMdApi;
     friend CNetMdSecure;
 
     static constexpr uint32_t PERIPHERAL_BASE = 0x03802000;
