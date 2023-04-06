@@ -492,6 +492,19 @@ std::ostream& operator<<(std::ostream& o, const AudioEncoding& ae)
     return o;
 }
 
+//------------------------------------------------------------------------------
+//! @brief      parse netmd time
+//!
+//! @param      src   The source
+//! @param      time  The time
+//------------------------------------------------------------------------------
+void parse_time(uint8_t* src, NetMdTime& time)
+{
+    time.hour = bcd_to_proper(src, 2) & 0xffff;
+    time.minute = bcd_to_proper(src + 2, 1) & 0xff;
+    time.second = bcd_to_proper(src + 3, 1) & 0xff;
+    time.frame = bcd_to_proper(src + 4, 1) & 0xff;
+}
 
 
 } // ~namespace

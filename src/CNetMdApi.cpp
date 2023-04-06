@@ -781,4 +781,47 @@ int CNetMdApi::sendAudioFile(const std::string& filename, const std::string& tit
     return ret;
 }
 
+//--------------------------------------------------------------------------
+//! @brief      is on the fly encoding supported by device
+//!
+//! @return     true if so
+//--------------------------------------------------------------------------
+bool CNetMdApi::otfEncodeSupported()
+{
+    return mpNetMd->mDevice.mKnownDev.mOtfEncode;
+}
+
+//--------------------------------------------------------------------------
+//! @brief      get disc capacity
+//!
+//! @param      dcap  The buffer for disc capacity
+//!
+//! @return     NetMdErr
+//! @see        NetMdErr
+//--------------------------------------------------------------------------
+int CNetMdApi::discCapacity(DiscCapacity& dcap)
+{
+    int ret;
+    uint8_t hs[] = {0x00, 0x18, 0x08, 0x10, 0x10, 0x00, 0x01, 0x00};
+    uint8_t request[] = {0x00, 0x18, 0x06, 0x02, 0x10, 0x10,
+                         0x00, 0x30, 0x80, 0x03, 0x00, 0xff,
+                         0x00, 0x00, 0x00, 0x00, 0x00};
+
+    NetMDResp resp;
+    mpNetMd->exchange(hs, sizeof(hs));
+
+    if (((ret = mpNetMd->exchange(request, sizeof(request), &resp)) >= 46) && (resp != nullptr))
+    {
+        parse_time(resp.get() + 27, dcap.recorded);
+        parse_time(resp.get() + 34, dcap.total);
+        parse_time(resp.get() + 41, dcap.available);
+        ret = NETMDERR_NO_ERROR;
+    }
+    else
+    {
+        ret = NETMDERR_CMD_FAILED;
+    }
+    return ret;
+}
+
 } // ~namespace

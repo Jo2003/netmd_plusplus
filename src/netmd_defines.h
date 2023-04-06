@@ -111,6 +111,30 @@ struct ThrownData
     std::string mErrDescr;
 };
 
+/// NetMD time
+struct NetMdTime
+{
+    uint16_t hour;
+    uint8_t  minute;
+    uint8_t  second;
+    uint8_t  frame;
+};
+
+/// Structure to hold the capacity information of a disc.
+struct DiscCapacity
+{
+    /// Time allready recorded on the disc.
+    NetMdTime recorded;
+
+    /// Total time, that could be recorded on the disc. This depends on the
+    /// current recording settings.
+    NetMdTime total;
+
+    /// Time that is available on the disc. This depends on the current
+    /// recording settings.
+    NetMdTime available;
+};
+
 constexpr uint8_t NETMD_CHANNELS_MONO   = 0x01;
 constexpr uint8_t NETMD_CHANNELS_STEREO = 0x00;
 

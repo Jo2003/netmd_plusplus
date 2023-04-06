@@ -323,6 +323,13 @@ T fromLittleEndianArray(const uint8_t* val)
     return fromLittleEndian(v);
 }
 
+//------------------------------------------------------------------------------
+//! @brief      add bytes to byte vector
+//!
+//! @param      vec     The vector
+//! @param[in]  data    The data
+//! @param[in]  dataSz  The data size
+//------------------------------------------------------------------------------
 inline void addArrayData(NetMDByteVector& vec, const uint8_t* data, size_t dataSz)
 {
     for (size_t i = 0; i < dataSz; i++)
@@ -331,6 +338,13 @@ inline void addArrayData(NetMDByteVector& vec, const uint8_t* data, size_t dataS
     }
 }
 
+//------------------------------------------------------------------------------
+//! @brief      do strange netmd value handling
+//!
+//! @param[in]  value  The value
+//!
+//! @return     the converted value
+//------------------------------------------------------------------------------
 inline unsigned char proper_to_bcd_single(unsigned char value)
 {
     unsigned char high, low;
@@ -341,6 +355,15 @@ inline unsigned char proper_to_bcd_single(unsigned char value)
     return high | low;
 }
 
+//------------------------------------------------------------------------------
+//! @brief      do strange netmd value handling
+//!
+//! @param[in]  value   The value
+//! @param      target  The target
+//! @param[in]  len     The length
+//!
+//! @return     the converted value
+//------------------------------------------------------------------------------
 inline unsigned char* proper_to_bcd(unsigned int value, unsigned char* target, size_t len)
 {
     while (value > 0 && len > 0) {
@@ -352,6 +375,13 @@ inline unsigned char* proper_to_bcd(unsigned int value, unsigned char* target, s
     return target;
 }
 
+//------------------------------------------------------------------------------
+//! @brief      do strange netmd value handling
+//!
+//! @param[in]  value  The value
+//!
+//! @return     the converted value
+//------------------------------------------------------------------------------
 inline unsigned char bcd_to_proper_single(unsigned char value)
 {
     unsigned char high, low;
@@ -362,6 +392,14 @@ inline unsigned char bcd_to_proper_single(unsigned char value)
     return ((high * 10U) + low) & 0xff;
 }
 
+//------------------------------------------------------------------------------
+//! @brief      do strange netmd value handling
+//!
+//! @param[in]  value  The value
+//! @param[in]  len    The length
+//!
+//! @return     the converted value
+//------------------------------------------------------------------------------
 inline unsigned int bcd_to_proper(unsigned char* value, size_t len)
 {
     unsigned int result = 0;
@@ -375,6 +413,14 @@ inline unsigned int bcd_to_proper(unsigned char* value, size_t len)
 
     return result;
 }
+
+//------------------------------------------------------------------------------
+//! @brief      parse netmd time
+//!
+//! @param      src   The source
+//! @param      time  The time
+//------------------------------------------------------------------------------
+void parse_time(uint8_t* src, NetMdTime& time);
 
 
 } // ~namespace

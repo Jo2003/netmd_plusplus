@@ -254,6 +254,13 @@ public:
     bool spUploadSupported();
 
     //--------------------------------------------------------------------------
+    //! @brief      is on the fly encoding supported by device
+    //!
+    //! @return     true if so
+    //--------------------------------------------------------------------------
+    bool otfEncodeSupported();
+
+    //--------------------------------------------------------------------------
     //! @brief      Sends an audio track
     //!
     //! @param[in]  filename  The filename
@@ -275,6 +282,16 @@ public:
     //! @see        NetMdErr
     //--------------------------------------------------------------------------
     int setTrackTitle(uint16_t trackNo, const std::string& title);
+
+    //--------------------------------------------------------------------------
+    //! @brief      get disc capacity
+    //!
+    //! @param      dcap  The buffer for disc capacity
+    //!
+    //! @return     NetMdErr
+    //! @see        NetMdErr
+    //--------------------------------------------------------------------------
+    int discCapacity(DiscCapacity& dcap);
 
 protected:
 

@@ -79,6 +79,39 @@ enum class AudioEncoding : uint8_t
     UNKNOWN = 0xff
 };
 
+/// log severity
+enum typelog
+{
+    DEBUG,
+    INFO,
+    WARN,
+    CRITICAL
+};
+
+/// NetMD time
+struct NetMdTime
+{
+    uint16_t hour;
+    uint8_t  minute;
+    uint8_t  second;
+    uint8_t  frame;
+};
+
+/// Structure to hold the capacity information of a disc.
+struct DiscCapacity
+{
+    /// Time allready recorded on the disc.
+    NetMdTime recorded;
+
+    /// Total time, that could be recorded on the disc. This depends on the
+    /// current recording settings.
+    NetMdTime total;
+
+    /// Time that is available on the disc. This depends on the current
+    /// recording settings.
+    NetMdTime available;
+};
+
 //--------------------------------------------------------------------------
 //! @brief      format helper for TrackTime
 //!
@@ -326,6 +359,13 @@ public:
     bool spUploadSupported();
 
     //--------------------------------------------------------------------------
+    //! @brief      is on the fly encoding supported by device
+    //!
+    //! @return     true if so
+    //--------------------------------------------------------------------------
+    bool otfEncodeSupported();
+
+    //--------------------------------------------------------------------------
     //! @brief      Sends an audio track
     //!
     //! @param[in]  filename  The filename
@@ -347,6 +387,16 @@ public:
     //! @see        NetMdErr
     //--------------------------------------------------------------------------
     int setTrackTitle(uint16_t trackNo, const std::string& title);
+
+    //--------------------------------------------------------------------------
+    //! @brief      get disc capacity
+    //!
+    //! @param      dcap  The buffer for disc capacity
+    //!
+    //! @return     NetMdErr
+    //! @see        NetMdErr
+    //--------------------------------------------------------------------------
+    int discCapacity(DiscCapacity& dcap);
 
 private:
     /// disc header
