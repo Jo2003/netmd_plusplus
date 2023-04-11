@@ -258,16 +258,16 @@ int CNetMdApi::trackTime(int trackNo, TrackTime& trackTime)
 }
 
 //--------------------------------------------------------------------------
-//! @brief      get disc title
+//! @brief      get raw disc header
 //!
-//! @param[out] title  The title
+//! @param[out] header  The buffer for disc header
 //!
 //! @return     NetMdErr
 //--------------------------------------------------------------------------
-int CNetMdApi::discTitle(std::string& title)
+int CNetMdApi::rawDiscHeader(std::string& header)
 {
     mLOG(DEBUG);
-    title.clear();
+    header.clear();
 
     int ret;
     uint16_t total = 1, remaining = 0, read = 0, chunkSz = 0;
@@ -297,7 +297,7 @@ int CNetMdApi::discTitle(std::string& title)
 
                     for(uint16_t i = 25; i < (25 + chunkSz); i++)
                     {
-                        title.push_back(static_cast<char>(response[i]));
+                        header.push_back(static_cast<char>(response[i]));
                     }
                 }
                 else
@@ -306,7 +306,7 @@ int CNetMdApi::discTitle(std::string& title)
 
                     for(uint16_t i = 19; i < (19 + chunkSz); i++)
                     {
-                        title.push_back(static_cast<char>(response[i]));
+                        header.push_back(static_cast<char>(response[i]));
                     }
                 }
 
@@ -341,7 +341,7 @@ int CNetMdApi::initDiscHeader()
     mLOG(DEBUG);
     std::string head;
 
-    if (discTitle(head) == NETMDERR_NO_ERROR)
+    if (rawDiscHeader(head) == NETMDERR_NO_ERROR)
     {
         return mpDiscHeader->fromString(head);
     }
@@ -350,36 +350,58 @@ int CNetMdApi::initDiscHeader()
 }
 
 //--------------------------------------------------------------------------
-//! @brief      Writes a disc header.
+//! @brief      get disc title
 //!
-//! @param[in]  title  The title (optional)
+//! @param      title  The title
 //!
 //! @return     NetMdErr
 //--------------------------------------------------------------------------
-int CNetMdApi::writeDiscHeader(const std::string& title)
+int CNetMdApi::discTitle(std::string& title)
+{
+    title = mpDiscHeader->discTitle();
+    return NETMDERR_NO_ERROR;
+}
+
+//--------------------------------------------------------------------------
+//! @brief      Sets the disc title.
+//!
+//! @param[in]  title  The title
+//!
+//! @return     NetMdErr
+//--------------------------------------------------------------------------
+int CNetMdApi::setDiscTitle(const std::string& title)
+{
+    if (mpDiscHeader->setDiscTitle(title) == 0)
+    {
+        return writeRawDiscHeader();
+    }
+
+    return NETMDERR_PARAM;
+}
+
+//--------------------------------------------------------------------------
+//! @brief      Writes a disc header.
+//!
+//! @return     NetMdErr
+//--------------------------------------------------------------------------
+int CNetMdApi::writeRawDiscHeader()
 {
     mLOG(DEBUG);
     const char* content;
     size_t contentSz = 0;
     std::string currHead;
+    std::string tmpStr;
 
-    int ret = discTitle(currHead);
+    int ret = rawDiscHeader(currHead);
 
     if (ret != NETMDERR_NO_ERROR)
     {
         return ret;
     }
 
-    if (title.empty())
-    {
-        content = mpDiscHeader->stringHeader();
-    }
-    else
-    {
-        content = title.c_str();
-    }
-
-    contentSz = strlen(content);
+    tmpStr    = mpDiscHeader->toString();
+    contentSz = tmpStr.size();
+    content   = tmpStr.c_str();
 
     size_t old_header_size = currHead.size();
 
@@ -391,11 +413,7 @@ int CNetMdApi::writeDiscHeader(const std::string& title)
 
     const char* format = "00 1807 02 20 18 01 00 00 30 00 0a 00 50 00 %>w 00 00 %>w %*";
     NetMDByteVector ba;
-
-    for (size_t i = 0; i < contentSz; i++)
-    {
-        ba.push_back(static_cast<uint8_t>(content[i]));
-    }
+    addArrayData(ba, reinterpret_cast<const uint8_t*>(content), contentSz);
 
     if (((ret = formatQuery(format, {{mWORD(contentSz)}, {mWORD(old_header_size)}, {ba}},
         request)) > 0) && (request != nullptr))
@@ -466,7 +484,7 @@ int CNetMdApi::setGroupTitle(uint16_t group, const std::string& title)
     mLOG(DEBUG);
     if (mpDiscHeader->renameGroup(group, title) == 0)
     {
-        return writeDiscHeader();
+        return writeRawDiscHeader();
     }
 
     return NETMDERR_PARAM;
@@ -484,9 +502,9 @@ int CNetMdApi::setGroupTitle(uint16_t group, const std::string& title)
 int CNetMdApi::createGroup(const std::string& title, int first, int last)
 {
     mLOG(DEBUG);
-    if (mpDiscHeader->addGroup(title, first, last) == 0)
+    if (mpDiscHeader->addGroup(title, first, last) >= 0)
     {
-        return writeDiscHeader();
+        return writeRawDiscHeader();
     }
 
     return NETMDERR_PARAM;
@@ -508,7 +526,7 @@ int CNetMdApi::addTrackToGroup(int track, int group)
 
     if (mpDiscHeader->addTrackToGroup(group, track) == 0)
     {
-        return writeDiscHeader();
+        return writeRawDiscHeader();
     }
 
     return NETMDERR_PARAM;
@@ -527,7 +545,7 @@ int CNetMdApi::delTrackFromGroup(int track, int group)
     mLOG(DEBUG);
     if (mpDiscHeader->delTrackFromGroup(group, track) == 0)
     {
-        return writeDiscHeader();
+        return writeRawDiscHeader();
     }
 
     return NETMDERR_PARAM;
@@ -545,7 +563,7 @@ int CNetMdApi::deleteGroup(int group)
     mLOG(DEBUG);
     if (mpDiscHeader->delGroup(group) == 0)
     {
-        return writeDiscHeader();
+        return writeRawDiscHeader();
     }
 
     return NETMDERR_PARAM;
@@ -580,7 +598,7 @@ int CNetMdApi::deleteTrack(uint16_t track)
             if (ret == NETMDERR_NO_ERROR)
             {
                 mpDiscHeader->delTrack(track);
-                writeDiscHeader();
+                writeRawDiscHeader();
             }
         }
         else

@@ -73,7 +73,7 @@ int main (int argc, char* argv[])
 
         if (argc > 1)
         {
-            pNetMD->writeDiscHeader(argv[1]);
+            pNetMD->setDiscTitle(argv[1]);
             if (pNetMD->discTitle(s) == NETMDERR_NO_ERROR)
             {
                 std::cout << "Title: " << s << std::endl;

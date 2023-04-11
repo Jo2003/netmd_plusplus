@@ -249,6 +249,15 @@ public:
     int trackTime(int trackNo, TrackTime& trackTime);
 
     //--------------------------------------------------------------------------
+    //! @brief      get raw disc header
+    //!
+    //! @param[out] header  The buffer for disc header
+    //!
+    //! @return     NetMdErr
+    //--------------------------------------------------------------------------
+    int rawDiscHeader(std::string& header);
+
+    //--------------------------------------------------------------------------
     //! @brief      get disc title
     //!
     //! @param[out] title  The title
@@ -258,13 +267,20 @@ public:
     int discTitle(std::string& title);
 
     //--------------------------------------------------------------------------
-    //! @brief      Writes a disc header.
+    //! @brief      Sets the disc title.
     //!
-    //! @param[in]  title  The title (optional)
+    //! @param[in]  title  The title
     //!
     //! @return     NetMdErr
     //--------------------------------------------------------------------------
-    int writeDiscHeader(const std::string& title = "");
+    int setDiscTitle(const std::string& title);
+
+    //--------------------------------------------------------------------------
+    //! @brief      Writes a disc header.
+    //!
+    //! @return     NetMdErr
+    //--------------------------------------------------------------------------
+    int writeRawDiscHeader();
 
     //--------------------------------------------------------------------------
     //! @brief      move a track (number)
