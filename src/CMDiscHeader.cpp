@@ -21,6 +21,8 @@
 #include "CMDiscHeader.h"
 #include "log.h"
 
+namespace netmd {
+
 //-----------------------------------------------------------------------------
 //! @brief      Constructs a new instance.
 //-----------------------------------------------------------------------------
@@ -92,7 +94,7 @@ int CMDiscHeader::fromString(const std::string& header)
 
         if (std::distance(start, end))
         {
-            Group_t                group;
+            Group                  group;
             std::string::size_type dash;
             std::smatch            match;
             std::string            numb;
@@ -152,11 +154,11 @@ int CMDiscHeader::fromString(const std::string& header)
 //!
 //! @return     0 -> all well; -1 -> error
 //-----------------------------------------------------------------------------
-int CMDiscHeader::sanityCheck(const Groups_t& grps) const
+int CMDiscHeader::sanityCheck(const Groups& grps) const
 {
     int last = 0, ret = 0;
 
-    Groups_t tmpGrps = grps;
+    Groups tmpGrps = grps;
 
     std::sort(tmpGrps.begin(), tmpGrps.end(), 
         &CMDiscHeader::groupCompare);
@@ -202,7 +204,7 @@ int CMDiscHeader::sanityCheck(const Groups_t& grps) const
 //!
 //! @return     true if a less b
 //-----------------------------------------------------------------------------
-bool CMDiscHeader::groupCompare(const Group_t& a, const Group_t& b)
+bool CMDiscHeader::groupCompare(const Group& a, const Group& b)
 {
     // empty groups (first == -1) must be last
     return ((a.mFirst < b.mFirst) && (a.mFirst != -1));
@@ -223,9 +225,9 @@ std::string CMDiscHeader::toString()
         mpCStringHeader = nullptr;
     }
 
-    Groups_t tmpGrps = mGroups;
+    Groups tmpGrps = mGroups;
 
-    Group_t& title = tmpGrps.at(0);
+    Group& title = tmpGrps.at(0);
 
     if (title.mFirst == 0)
     {
@@ -275,7 +277,7 @@ std::string CMDiscHeader::toString()
 //-----------------------------------------------------------------------------
 int CMDiscHeader::addGroup(const std::string& name, int16_t first, int16_t last)
 {
-    Groups_t tmpGrps = mGroups;
+    Groups tmpGrps = mGroups;
     tmpGrps.push_back({mGroupId++, first, last, name});
 
     if (sanityCheck(tmpGrps) == 0)
@@ -342,7 +344,7 @@ void CMDiscHeader::listGroups() const
 //-----------------------------------------------------------------------------
 int CMDiscHeader::addTrackToGroup(int gid, int16_t track)
 {
-    Groups_t tmpGrps = mGroups;
+    Groups tmpGrps = mGroups;
     int16_t first, last;
     bool changed = false;
 
@@ -393,11 +395,11 @@ int CMDiscHeader::addTrackToGroup(int gid, int16_t track)
 //-----------------------------------------------------------------------------
 int CMDiscHeader::delTrackFromGroup(int gid, int16_t track)
 {
-    Groups_t tmpGrps = mGroups;
+    Groups tmpGrps = mGroups;
     int16_t first, last;
     bool changed = false;
 
-    Groups_t::iterator it;
+    Groups::iterator it;
     for (it = tmpGrps.begin(); it != tmpGrps.end();)
     {
         first   = it->mFirst;
@@ -461,11 +463,11 @@ int CMDiscHeader::delTrackFromGroup(int gid, int16_t track)
 //-----------------------------------------------------------------------------
 int CMDiscHeader::delTrack(int16_t track)
 {
-    Groups_t tmpGrps = mGroups;
+    Groups tmpGrps = mGroups;
     int16_t first, last;
     bool changed = false;
 
-    Groups_t::iterator it;
+    Groups::iterator it;
 
     for (it = tmpGrps.begin(); it != tmpGrps.end();)
     {
@@ -524,7 +526,7 @@ int CMDiscHeader::delGroup(int gid)
 {
     int ret = -1;
 
-    Groups_t::const_iterator cit;
+    Groups::const_iterator cit;
 
     for (cit = mGroups.cbegin(); cit != mGroups.cend(); cit ++)
     {
@@ -677,9 +679,9 @@ int CMDiscHeader::unGroup(int16_t track)
 //!
 //! @return     const reference to groups
 //-----------------------------------------------------------------------------
-CMDiscHeader::Groups_t CMDiscHeader::groups() const
+Groups CMDiscHeader::groups() const
 {
-    Groups_t tmpGrps = mGroups;
+    Groups tmpGrps = mGroups;
     std::sort(tmpGrps.begin(), tmpGrps.end(), 
         &CMDiscHeader::groupCompare);
     return tmpGrps;
@@ -951,7 +953,7 @@ MDGroups* md_header_groups(HndMdHdr hdl)
     CMDiscHeader* pMDH = static_cast<CMDiscHeader*>(hdl);
     if (pMDH != nullptr)
     {
-        CMDiscHeader::Groups_t g = pMDH->groups();
+        Groups g = pMDH->groups();
         if (!g.empty())
         {
             groups = new MDGroups;
@@ -1011,3 +1013,5 @@ void md_header_free_groups(MDGroups** groups)
         *groups = nullptr;
     }
 }
+
+} //~namespace

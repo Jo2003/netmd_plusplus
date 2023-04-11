@@ -21,7 +21,9 @@
 #include <iomanip>
 #include <vector>
 #include <string>
+#include "netmd_defines.h"
 
+namespace netmd {
 
 //------------------------------------------------------------------------------
 //! @brief      This class describes a minidisc header
@@ -29,19 +31,6 @@
 class CMDiscHeader
 {
 public:
-    //-----------------------------------------------------------------------------
-    //! @brief      track group 
-    //-----------------------------------------------------------------------------
-    typedef struct
-    {
-        int      mGid;      //!< group id
-        int16_t  mFirst;    //!< first track
-        int16_t  mLast;     //!< last track
-        std::string mName;  //!< group name
-    } Group_t;
-
-    using Groups_t = std::vector<Group_t>;
-
     //-----------------------------------------------------------------------------
     //! @brief      Constructs a new instance.
     //-----------------------------------------------------------------------------
@@ -187,7 +176,7 @@ public:
     //!
     //! @return     true if a less b
     //-----------------------------------------------------------------------------
-    static bool groupCompare(const Group_t& a, const Group_t& b);
+    static bool groupCompare(const Group& a, const Group& b);
 
     //-----------------------------------------------------------------------------
     //! @brief      ungroup a track
@@ -203,7 +192,7 @@ public:
     //!
     //! @return     const reference to groups
     //-----------------------------------------------------------------------------
-    Groups_t groups() const;
+    Groups groups() const;
 
 protected:
     //-----------------------------------------------------------------------------
@@ -213,10 +202,10 @@ protected:
     //!
     //! @return     0 -> all well; -1 -> error
     //-----------------------------------------------------------------------------
-    int sanityCheck(const Groups_t& grps) const;
+    int sanityCheck(const Groups& grps) const;
 
 private:
-    Groups_t     mGroups;
+    Groups       mGroups;
     int          mGroupId;
     char*        mpCStringHeader;
     char*        mpLastString;
@@ -397,6 +386,8 @@ MDGroups* md_header_groups(HndMdHdr hdl);
 //! @param      groups  The groups
 //------------------------------------------------------------------------------
 void md_header_free_groups(MDGroups** groups);
+
+} //~namespace
 
 /* copy end */
 

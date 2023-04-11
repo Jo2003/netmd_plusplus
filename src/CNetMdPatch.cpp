@@ -597,7 +597,7 @@ int CNetMdPatch::safetyPatch()
     try
     {
         NetMDByteVector cur_patch_data;
-        uint32_t        cur_patch_addr;
+        uint32_t        cur_patch_addr = 0;
         int             safety_loaded = 0;
 
         if ((addr == 0) || patch_cnt.empty())

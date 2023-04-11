@@ -31,7 +31,7 @@
 #include <unistd.h>
 
 /// log configuration
-structlog LOGCFG = {false, false, DEBUG, &std::cout, {}};
+structlog LOGCFG = {true, true, DEBUG, &std::cout, {}};
 
 namespace netmd {
 
@@ -124,6 +124,7 @@ std::string CNetMdApi::getDeviceName()
 //--------------------------------------------------------------------------
 int CNetMdApi::cacheTOC()
 {
+    mLOG(DEBUG);
     unsigned char request[] = {0x00, 0x18, 0x08, 0x10, 0x18, 0x02, 0x03, 0x00};
     int ret = mpNetMd->exchange(request, sizeof(request));
 
@@ -139,6 +140,7 @@ int CNetMdApi::cacheTOC()
 //--------------------------------------------------------------------------
 int CNetMdApi::syncTOC()
 {
+    mLOG(DEBUG);
     unsigned char request[] = {0x00, 0x18, 0x08, 0x10, 0x18, 0x02, 0x00, 0x00};
     int ret = mpNetMd->exchange(request, sizeof(request));
 
@@ -154,6 +156,7 @@ int CNetMdApi::syncTOC()
 //--------------------------------------------------------------------------
 int CNetMdApi::trackCount()
 {
+    mLOG(DEBUG);
     unsigned char req[] = {0x00, 0x18, 0x06, 0x02, 0x10, 0x10,
                            0x01, 0x30, 0x00, 0x10, 0x00, 0xff,
                            0x00, 0x00, 0x00, 0x00, 0x00};
@@ -182,6 +185,7 @@ int CNetMdApi::trackCount()
 //--------------------------------------------------------------------------
 int CNetMdApi::discFlags()
 {
+    mLOG(DEBUG);
     unsigned char req[] = {0x00, 0x18, 0x06, 0x01, 0x10, 0x10,
                            0x00, 0xff, 0x00, 0x00, 0x01, 0x00,
                            0x0b};
@@ -210,6 +214,7 @@ int CNetMdApi::discFlags()
 //--------------------------------------------------------------------------
 int CNetMdApi::eraseDisc()
 {
+    mLOG(DEBUG);
     unsigned char request[] = {0x00, 0x18, 0x40, 0xff, 0x00, 0x00};
     int ret = mpNetMd->exchange(request, sizeof(request));
 
@@ -228,6 +233,7 @@ int CNetMdApi::eraseDisc()
 //--------------------------------------------------------------------------
 int CNetMdApi::trackTime(int trackNo, TrackTime& trackTime)
 {
+    mLOG(DEBUG);
     unsigned char hs[] = {0x00, 0x18, 0x08, 0x10, 0x10, 0x01, 0x01, 0x00};
 
     NetMDResp query, response;
@@ -260,6 +266,7 @@ int CNetMdApi::trackTime(int trackNo, TrackTime& trackTime)
 //--------------------------------------------------------------------------
 int CNetMdApi::discTitle(std::string& title)
 {
+    mLOG(DEBUG);
     title.clear();
 
     int ret;
@@ -331,6 +338,7 @@ int CNetMdApi::discTitle(std::string& title)
 //--------------------------------------------------------------------------
 int CNetMdApi::initDiscHeader()
 {
+    mLOG(DEBUG);
     std::string head;
 
     if (discTitle(head) == NETMDERR_NO_ERROR)
@@ -350,6 +358,7 @@ int CNetMdApi::initDiscHeader()
 //--------------------------------------------------------------------------
 int CNetMdApi::writeDiscHeader(const std::string& title)
 {
+    mLOG(DEBUG);
     const char* content;
     size_t contentSz = 0;
     std::string currHead;
@@ -360,8 +369,6 @@ int CNetMdApi::writeDiscHeader(const std::string& title)
     {
         return ret;
     }
-
-    ret = NETMDERR_OTHER;
 
     if (title.empty())
     {
@@ -422,6 +429,7 @@ int CNetMdApi::writeDiscHeader(const std::string& title)
 //--------------------------------------------------------------------------
 int CNetMdApi::moveTrack(uint16_t from, uint16_t to)
 {
+    mLOG(DEBUG);
     int ret = 0;
     unsigned char hs[] = {0x00, 0x18, 0x08, 0x10, 0x10, 0x01, 0x00, 0x00};
 
@@ -455,6 +463,7 @@ int CNetMdApi::moveTrack(uint16_t from, uint16_t to)
 //--------------------------------------------------------------------------
 int CNetMdApi::setGroupTitle(uint16_t group, const std::string& title)
 {
+    mLOG(DEBUG);
     if (mpDiscHeader->renameGroup(group, title) == 0)
     {
         return writeDiscHeader();
@@ -474,6 +483,7 @@ int CNetMdApi::setGroupTitle(uint16_t group, const std::string& title)
 //--------------------------------------------------------------------------
 int CNetMdApi::createGroup(const std::string& title, int first, int last)
 {
+    mLOG(DEBUG);
     if (mpDiscHeader->addGroup(title, first, last) == 0)
     {
         return writeDiscHeader();
@@ -492,6 +502,7 @@ int CNetMdApi::createGroup(const std::string& title, int first, int last)
 //--------------------------------------------------------------------------
 int CNetMdApi::addTrackToGroup(int track, int group)
 {
+    mLOG(DEBUG);
     // this might fail
     mpDiscHeader->delTrackFromGroup(group, track);
 
@@ -513,6 +524,7 @@ int CNetMdApi::addTrackToGroup(int track, int group)
 //--------------------------------------------------------------------------
 int CNetMdApi::delTrackFromGroup(int track, int group)
 {
+    mLOG(DEBUG);
     if (mpDiscHeader->delTrackFromGroup(group, track) == 0)
     {
         return writeDiscHeader();
@@ -530,6 +542,7 @@ int CNetMdApi::delTrackFromGroup(int track, int group)
 //--------------------------------------------------------------------------
 int CNetMdApi::deleteGroup(int group)
 {
+    mLOG(DEBUG);
     if (mpDiscHeader->delGroup(group) == 0)
     {
         return writeDiscHeader();
@@ -547,19 +560,33 @@ int CNetMdApi::deleteGroup(int group)
 //--------------------------------------------------------------------------
 int CNetMdApi::deleteTrack(uint16_t track)
 {
+    mLOG(DEBUG);
     int ret = 0;
-    const char* format = "00 1840 ff 01 00 20 10 01 %>w";
 
-    NetMDResp query;
-    if (((ret = formatQuery(format, {{track}}, query)) == 11) && (query != nullptr))
+    if (trackCount() > static_cast<int>(track))
     {
-        cacheTOC();
-        if ((ret = mpNetMd->exchange(query.get(), ret)) > 0)
+        const char* format = "00 1840 ff 01 00 20 10 01 %>w";
+        NetMDResp query;
+        if (((ret = formatQuery(format, {{track}}, query)) == 11) && (query != nullptr))
         {
-            mpNetMd->waitForSync();
-            ret = NETMDERR_NO_ERROR;
+            cacheTOC();
+            if ((ret = mpNetMd->exchange(query.get(), ret)) > 0)
+            {
+                mpNetMd->waitForSync();
+                ret = NETMDERR_NO_ERROR;
+            }
+            syncTOC();
+
+            if (ret == NETMDERR_NO_ERROR)
+            {
+                mpDiscHeader->delTrack(track);
+                writeDiscHeader();
+            }
         }
-        syncTOC();
+        else
+        {
+            ret = NETMDERR_PARAM;
+        }
     }
     else
     {
@@ -580,6 +607,7 @@ int CNetMdApi::deleteTrack(uint16_t track)
 //--------------------------------------------------------------------------
 int CNetMdApi::trackBitRate(uint16_t track, AudioEncoding& encoding, uint8_t& channel)
 {
+    mLOG(DEBUG);
     encoding = AudioEncoding::UNKNOWN;
     channel  = 0;
 
@@ -620,6 +648,7 @@ int CNetMdApi::trackBitRate(uint16_t track, AudioEncoding& encoding, uint8_t& ch
 //--------------------------------------------------------------------------
 int CNetMdApi::trackFlags(uint16_t track, TrackProtection& flags)
 {
+    mLOG(DEBUG);
     flags = TrackProtection::UNKNOWN;
     int ret;
 
@@ -656,6 +685,7 @@ int CNetMdApi::trackFlags(uint16_t track, TrackProtection& flags)
 //--------------------------------------------------------------------------
 int CNetMdApi::trackTitle(uint16_t track, std::string& title)
 {
+    mLOG(DEBUG);
     title.clear();
 
     int ret;
@@ -667,12 +697,12 @@ int CNetMdApi::trackTitle(uint16_t track, std::string& title)
     {
         if (((ret = mpNetMd->exchange(query.get(), ret, &response)) >= 25) && (response != nullptr))
         {
-            ret = NETMDERR_NO_ERROR;
-
             for (int i = 25; i < ret; i++)
             {
                 title.push_back(static_cast<char>(response[i]));
             }
+
+            ret = NETMDERR_NO_ERROR;
         }
         else
         {
@@ -694,6 +724,7 @@ int CNetMdApi::trackTitle(uint16_t track, std::string& title)
 //--------------------------------------------------------------------------
 bool CNetMdApi::spUploadSupported()
 {
+    mLOG(DEBUG);
     return mpSecure->spUploadSupported();
 }
 
@@ -708,52 +739,47 @@ bool CNetMdApi::spUploadSupported()
 //--------------------------------------------------------------------------
 int CNetMdApi::setTrackTitle(uint16_t trackNo, const std::string& title)
 {
-    int ret = 1;
+    mLOG(DEBUG);
+    int ret;
     std::string currTitle;
+    uint8_t oldSz = 0;
 
-    // handshakes for 780/980/etc
-    unsigned char hs2[] = {0x00, 0x18, 0x08, 0x10, 0x18, 0x02, 0x00, 0x00};
-    unsigned char hs3[] = {0x00, 0x18, 0x08, 0x10, 0x18, 0x02, 0x03, 0x00};
-
-    cacheTOC();
-    if ((ret = trackTitle(trackNo, currTitle)) == NETMDERR_NO_ERROR)
+    if (trackTitle(trackNo, currTitle) == NETMDERR_NO_ERROR)
     {
-        NetMDByteVector ba;
-        NetMDResp query;
-        addArrayData(ba, reinterpret_cast<const uint8_t*>(title.c_str()), title.size());
-        NetMDParams params = {
-            {trackNo                },
-            {mBYTE(title.size())    },
-            {mBYTE(currTitle.size())},
-            {ba                     }
-        };
+        oldSz = currTitle.size();
+    }
 
-        const char* format = "00 1807 02 20 18 02 %>w 30 00 0a 00 50 00 00 %b 00 00 00 %b %*";
+    NetMDByteVector ba;
+    NetMDResp query;
+    addArrayData(ba, reinterpret_cast<const uint8_t*>(title.c_str()), title.size());
+    NetMDParams params = {
+        {trackNo                },
+        {mBYTE(title.size())    },
+        {oldSz                  },
+        {ba                     }
+    };
 
-        if (((ret = formatQuery(format, params, query)) > 0) && (query != nullptr))
+    const char* format = "00 1807 02 20 18 02 %>w 30 00 0a 00 50 00 00 %b 00 00 00 %b %*";
+
+    if (((ret = formatQuery(format, params, query)) > 0) && (query != nullptr))
+    {
+        cacheTOC();
+        if ((ret = mpNetMd->exchange(query.get(), ret)) > 0)
         {
-            mpNetMd->exchange(hs2, sizeof(hs2));
-            mpNetMd->exchange(hs3, sizeof(hs3));
-
-            if ((ret = mpNetMd->exchange(query.get(), ret)) > 0)
-            {
-                return NETMDERR_NO_ERROR;
-            }
-            else
-            {
-                mLOG(CRITICAL) << "exchange() failed.";
-            }
+            ret = NETMDERR_NO_ERROR;
         }
         else
         {
             ret = NETMDERR_PARAM;
+            mLOG(CRITICAL) << "exchange() failed.";
         }
+        syncTOC();
     }
     else
     {
-        mLOG(CRITICAL) << "Can't get current ttrack title for track " << trackNo;
+        ret = NETMDERR_PARAM;
     }
-    syncTOC();
+
 
     return ret;
 }
@@ -770,15 +796,8 @@ int CNetMdApi::setTrackTitle(uint16_t trackNo, const std::string& title)
 //--------------------------------------------------------------------------
 int CNetMdApi::sendAudioFile(const std::string& filename, const std::string& title, DiskFormat otf)
 {
-    uint16_t trackNo = 0;
-    int ret;
-
-    if ((ret = mpSecure->sendAudioTrack(filename, otf, trackNo)) == NETMDERR_NO_ERROR)
-    {
-        ret = setTrackTitle(trackNo, title);
-    }
-
-    return ret;
+    mLOG(DEBUG);
+    return mpSecure->sendAudioTrack(filename, title, otf);
 }
 
 //--------------------------------------------------------------------------
@@ -801,6 +820,7 @@ bool CNetMdApi::otfEncodeSupported()
 //--------------------------------------------------------------------------
 int CNetMdApi::discCapacity(DiscCapacity& dcap)
 {
+    mLOG(DEBUG);
     int ret;
     uint8_t hs[] = {0x00, 0x18, 0x08, 0x10, 0x10, 0x00, 0x01, 0x00};
     uint8_t request[] = {0x00, 0x18, 0x06, 0x02, 0x10, 0x10,
@@ -822,6 +842,16 @@ int CNetMdApi::discCapacity(DiscCapacity& dcap)
         ret = NETMDERR_CMD_FAILED;
     }
     return ret;
+}
+
+//--------------------------------------------------------------------------
+//! @brief      get MD track groups
+//!
+//! @return     vector of group structures
+//--------------------------------------------------------------------------
+Groups CNetMdApi::groups()
+{
+    return mpDiscHeader->groups();
 }
 
 } // ~namespace

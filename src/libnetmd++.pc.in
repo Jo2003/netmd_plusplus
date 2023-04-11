@@ -8,5 +8,5 @@ Description: @PROJECT_DESCRIPTION@
 Version: @PROJECT_VERSION@
 
 Requires:
-Libs: -L${libdir} -lnetmd_pp -lusb-1.0 -lgcrypt -lgpg-error
+Libs: -L${libdir} -lnetmd++ -lusb-1.0 -lgcrypt -lgpg-error
 Cflags: -I${includedir}

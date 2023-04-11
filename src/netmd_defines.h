@@ -135,6 +135,19 @@ struct DiscCapacity
     NetMdTime available;
 };
 
+//-----------------------------------------------------------------------------
+//! @brief      track group
+//-----------------------------------------------------------------------------
+struct Group
+{
+    int      mGid;      //!< group id
+    int16_t  mFirst;    //!< first track
+    int16_t  mLast;     //!< last track
+    std::string mName;  //!< group name
+};
+
+using Groups = std::vector<Group>;
+
 constexpr uint8_t NETMD_CHANNELS_MONO   = 0x01;
 constexpr uint8_t NETMD_CHANNELS_STEREO = 0x00;
 

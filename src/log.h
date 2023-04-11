@@ -19,7 +19,8 @@ enum typelog
     DEBUG,
     INFO,
     WARN,
-    CRITICAL
+    CRITICAL,
+    CAPTURE //!< needed for log parcing!
 };
 
 struct structlog
@@ -46,13 +47,15 @@ public:
     LOG(int type)
     {
         msglevel = type;
-        if(LOGCFG.headers)
-        {
-            operator << ("["+getLabel(type)+"] ");
-        }
+
         if(LOGCFG.time)
         {
             operator << (timeStamp());
+        }
+
+        if(LOGCFG.headers)
+        {
+            operator << (getLabel(type) +"|");
         }
     }
 
@@ -152,7 +155,7 @@ public:
         auto time = std::time(nullptr);
 
         // ISO 8601: %Y-%m-%d %H:%M:%S, e.g. 2017-07-31 00:42:00+0200.
-        oss <<  std::put_time(std::localtime(&time), "%Y-%m-%d %H:%M:%S |");
+        oss <<  std::put_time(std::localtime(&time), "%Y-%m-%d %H:%M:%S|");
         return oss.str();
     }
 
@@ -163,10 +166,11 @@ private:
         std::string label;
         switch(type)
         {
-            case DEBUG:    label = " DEBUG  "; break;
-            case INFO:     label = "  INFO  "; break;
-            case WARN:     label = "  WARN  "; break;
+            case DEBUG:    label = "DEBUG"   ; break;
+            case INFO:     label = "INFO"    ; break;
+            case WARN:     label = "WARN"    ; break;
             case CRITICAL: label = "CRITICAL"; break;
+            case CAPTURE:  label = "CAPTURE" ; break;
         }
         return label;
     }

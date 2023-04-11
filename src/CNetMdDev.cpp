@@ -178,6 +178,12 @@ int CNetMdDev::initDevice()
         }
     }
 
+    // cleanup anything which might still be in "pipe"
+    if (ret == NETMDERR_NO_ERROR)
+    {
+        static_cast<void>(waitForSync());
+    }
+
     return ret;
 }
 
@@ -370,12 +376,12 @@ int CNetMdDev::exchange(unsigned char* cmd, size_t cmdLen, NetMDResp* response,
         else if (((*pResp)[0] == NETMD_STATUS_INTERIM) && (expected == NETMD_STATUS_INTERIM))
         {
             mLOG(DEBUG) << "Expected INTERIM return value: 0x" << std::hex << std::setw(2)
-                           << std::setfill('0') << (*pResp)[0] << std::dec;
+                           << std::setfill('0') << static_cast<int>((*pResp)[0]) << std::dec;
         }
         else if ((*pResp)[0] != NETMD_STATUS_ACCEPTED)
         {
-            mLOG(CRITICAL) << "### Bad return value: 0x" << std::hex << std::setw(2)
-                           << std::setfill('0') << (*pResp)[0] << std::dec;
+            mLOG(CRITICAL) << "Non accepted return value: 0x" << std::hex << std::setw(2)
+                           << std::setfill('0') << static_cast<int>((*pResp)[0]) << std::dec;
             ret = NETMDERR_CMD_FAILED;
         }
     }
@@ -491,6 +497,7 @@ int CNetMdDev::waitForSync()
 //--------------------------------------------------------------------------
 int CNetMdDev::aquireDev()
 {
+    mLOG(DEBUG);
     unsigned char request[] = {0x00, 0xff, 0x01, 0x0c, 0xff, 0xff, 0xff, 0xff,
                                0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff};
 
@@ -509,6 +516,7 @@ int CNetMdDev::aquireDev()
 //--------------------------------------------------------------------------
 int CNetMdDev::releaseDev()
 {
+    mLOG(DEBUG);
     unsigned char request[] = {0x00, 0xff, 0x01, 0x00, 0xff, 0xff, 0xff, 0xff,
                                0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff};
 
@@ -530,6 +538,7 @@ int CNetMdDev::releaseDev()
 //--------------------------------------------------------------------------
 int CNetMdDev::changeDscrtState(Descriptor d, DscrtAction a)
 {
+    mLOG(DEBUG);
     int ret = NETMDERR_OTHER;
     DscrtData::const_iterator cit = smDescrData.find(d);
 

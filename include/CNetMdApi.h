@@ -26,6 +26,7 @@
 #pragma once
 #include <cstdint>
 #include <sstream>
+#include <vector>
 
 namespace netmd {
 
@@ -85,7 +86,8 @@ enum typelog
     DEBUG,
     INFO,
     WARN,
-    CRITICAL
+    CRITICAL,
+    CAPTURE //!< needed for log parcing!
 };
 
 /// NetMD time
@@ -111,6 +113,19 @@ struct DiscCapacity
     /// recording settings.
     NetMdTime available;
 };
+
+//-----------------------------------------------------------------------------
+//! @brief      track group
+//-----------------------------------------------------------------------------
+struct Group
+{
+    int      mGid;      //!< group id
+    int16_t  mFirst;    //!< first track
+    int16_t  mLast;     //!< last track
+    std::string mName;  //!< group name
+};
+
+using Groups = std::vector<Group>;
 
 //--------------------------------------------------------------------------
 //! @brief      format helper for TrackTime
@@ -397,6 +412,13 @@ public:
     //! @see        NetMdErr
     //--------------------------------------------------------------------------
     int discCapacity(DiscCapacity& dcap);
+
+    //--------------------------------------------------------------------------
+    //! @brief      get MD track groups
+    //!
+    //! @return     vector of group structures
+    //--------------------------------------------------------------------------
+    Groups groups();
 
 private:
     /// disc header

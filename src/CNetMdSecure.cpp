@@ -38,37 +38,6 @@
 namespace netmd {
 
 //--------------------------------------------------------------------------
-//! @brief      check status
-//!
-//! @param[in]  status    The current status
-//! @param[in]  expected  The expected status
-//!
-//! @return     NetMdErr
-//! @see        NetMdErr
-//--------------------------------------------------------------------------
-int CNetMdSecure::checkStatus(uint8_t status, uint8_t expected)
-{
-    if (status == expected)
-    {
-        return NETMDERR_NO_ERROR;
-    }
-
-    switch (status)
-    {
-    case CNetMdDev::NETMD_STATUS_NOT_IMPLEMENTED:
-        return NETMDERR_NOT_SUPPORTED;
-
-    case CNetMdDev::NETMD_STATUS_REJECTED:
-        return NETMDERR_CMD_FAILED;
-
-    default:
-        break;
-    }
-
-    return NETMDERR_OTHER;
-}
-
-//--------------------------------------------------------------------------
 //! @brief      get payload position in response
 //!
 //! @param[in]  dataLen  The data length (optional)
@@ -110,6 +79,7 @@ int CNetMdSecure::chainLength(Keychain* chain)
 int CNetMdSecure::buildSendKeyDataCmd(const Ekb& ekb,
                                       NetMDResp& query)
 {
+    mLOG(DEBUG);
     uint16_t chainLen   = chainLength(ekb.chain);
     uint16_t expQuerySz = 22 + (chainLen * 16) + 24 ;
     uint16_t dataBytes  = expQuerySz - 6;
@@ -222,9 +192,9 @@ int CNetMdSecure::preparePackets(uint8_t* data, size_t dataLen, TrackPackets** p
     // We have no use for "security" (= DRM) so just use constant IV.
     // However, the key has to be randomized, because the device apparently checks
     // during track commit that the same key is not re-used during a single session.
-    unsigned char iv[8]      = {0,};
-    unsigned char raw_key[8] = {0,}; // data encryption key
-    unsigned char key[8]     = {0,}; // data encryption key wrapped with session key
+    uint8_t iv[8]      = {0,};
+    uint8_t raw_key[8] = {0,}; // data encryption key
+    uint8_t key[8]     = {0,}; // data encryption key wrapped with session key
 
     if(channels == NETMD_CHANNELS_MONO)
     {
@@ -690,7 +660,12 @@ int CNetMdSecure::secureReceive(uint8_t cmd, NetMDResp* response)
 //--------------------------------------------------------------------------
 int CNetMdSecure::enterSession()
 {
-    return secureExchange(0x80);
+    mLOG(DEBUG);
+    if (secureExchange(0x80) > NETMDERR_NO_ERROR)
+    {
+        return NETMDERR_NO_ERROR;
+    }
+    return NETMDERR_OTHER;
 }
 
 //--------------------------------------------------------------------------
@@ -701,7 +676,12 @@ int CNetMdSecure::enterSession()
 //--------------------------------------------------------------------------
 int CNetMdSecure::leaveSession()
 {
-    return secureExchange(0x81);
+    mLOG(DEBUG);
+    if (secureExchange(0x81) > NETMDERR_NO_ERROR)
+    {
+        return NETMDERR_NO_ERROR;
+    }
+    return NETMDERR_OTHER;
 }
 
 //--------------------------------------------------------------------------
@@ -714,6 +694,7 @@ int CNetMdSecure::leaveSession()
 //--------------------------------------------------------------------------
 int CNetMdSecure::leafId(uint64_t& playerId)
 {
+    mLOG(DEBUG);
     NetMDResp resp;
     int ret    = secureExchange(0x11, nullptr, 0, &resp);
     int offset = payloadOffset();
@@ -741,6 +722,7 @@ int CNetMdSecure::leafId(uint64_t& playerId)
 //--------------------------------------------------------------------------
 int CNetMdSecure::sendKeyData(const Ekb& ekb)
 {
+    mLOG(DEBUG);
     NetMDResp query, response;
     int size   = buildSendKeyDataCmd(ekb, query);
     int respSz = 0;
@@ -776,6 +758,7 @@ int CNetMdSecure::sendKeyData(const Ekb& ekb)
 //--------------------------------------------------------------------------
 int CNetMdSecure::sessionKeyExchange(uint8_t randIn[8], uint8_t randOut[8])
 {
+    mLOG(DEBUG);
     int ret;
 
     NetMDResp resp;
@@ -815,13 +798,14 @@ int CNetMdSecure::sessionKeyExchange(uint8_t randIn[8], uint8_t randOut[8])
 //--------------------------------------------------------------------------
 int CNetMdSecure::sessionKeyForget()
 {
+    mLOG(DEBUG);
     int ret;
 
     NetMDResp resp;
 
     uint8_t cmd[] = {0x00, 0x00, 0x00};
 
-    if (((ret = secureExchange(0x20, cmd, 3, &resp)) > 0) && (resp != nullptr))
+    if (((ret = secureExchange(0x21, cmd, 3, &resp)) > 0) && (resp != nullptr))
     {
         int offset = payloadOffset();
         if (ret >= (offset + 3))
@@ -848,11 +832,12 @@ int CNetMdSecure::sessionKeyForget()
 //--------------------------------------------------------------------------
 int CNetMdSecure::setupDownload(const uint8_t contentId[20], const uint8_t kek[8], const uint8_t sessionKey[8])
 {
+    mLOG(DEBUG);
     int ret;
 
-    unsigned char cmdhdr[] = { 0x00, 0x00 };
-    unsigned char data[32] = { 0x01, 0x01, 0x01, 0x01 /* ... */};
-    unsigned char cmd[sizeof(cmdhdr) + sizeof(data)];
+    uint8_t cmdhdr[] = { 0x00, 0x00 };
+    uint8_t data[32] = { 0x01, 0x01, 0x01, 0x01 /* ... */};
+    uint8_t cmd[sizeof(cmdhdr) + sizeof(data)];
 
     unsigned char iv[8] = { 0 };
     gcry_cipher_hd_t handle;
@@ -897,16 +882,17 @@ int CNetMdSecure::setupDownload(const uint8_t contentId[20], const uint8_t kek[8
 //--------------------------------------------------------------------------
 int CNetMdSecure::transferSongPackets(TrackPackets* packets, size_t fullLength)
 {
-    int ret;
+    mLOG(DEBUG);
+    int ret = NETMDERR_OTHER;
     TrackPackets *p;
     int packet_size;
     size_t total_transferred = 0, display_length = fullLength + 24;
     int transferred = 0;
     int first_packet = 1;
-    time_t start_time = time(NULL), duration;
+    time_t start_time = time(nullptr), duration;
 
     p = packets;
-    while (p != NULL)
+    while (p != nullptr)
     {
         // length + key + iv + data
         if(first_packet)
@@ -957,9 +943,9 @@ int CNetMdSecure::transferSongPackets(TrackPackets* packets, size_t fullLength)
 
         if (ret == NETMDERR_NO_ERROR)
         {
-            mLOG(DEBUG) << total_transferred << " of " << display_length << " bytes ("
-                        << (total_transferred * 100 / display_length) << "%) transferred ("
-                        << transferred << " of " << packet_size << " bytes in packet)";
+            mLOG(CAPTURE) << total_transferred << " of " << display_length << " bytes ("
+                          << (total_transferred * 100 / display_length) << "%) transferred ("
+                          << transferred << " of " << packet_size << " bytes in packet)";
 
             p = p->next;
         }
@@ -970,12 +956,12 @@ int CNetMdSecure::transferSongPackets(TrackPackets* packets, size_t fullLength)
     }
 
     // report statistics on successful transfer
-    duration = time(NULL) - start_time;
+    duration = time(nullptr) - start_time;
     if ((ret == NETMDERR_NO_ERROR) && (duration > 0))
     {
-        mLOG(DEBUG) << "transfer took " << duration << " seconds ("
-                    << (display_length / static_cast<size_t>(duration / 1024))
-                    << " kB/sec)";
+        mLOG(INFO) << "transfer took " << duration << " seconds ("
+                   << (static_cast<double>(display_length) / static_cast<double>(duration) / 1024.0)
+                   << " kB/sec)";
     }
 
     return ret;
@@ -1002,6 +988,7 @@ int CNetMdSecure::sendTrack(WireFormat wf, DiskFormat df, uint32_t frames,
                             uint8_t sessionKey[8], uint16_t& track,
                             uint8_t uuid[8], uint8_t contentId[20])
 {
+    mLOG(DEBUG);
     try
     {
         int ret;
@@ -1121,6 +1108,7 @@ int CNetMdSecure::sendTrack(WireFormat wf, DiskFormat df, uint32_t frames,
 //--------------------------------------------------------------------------
 int CNetMdSecure::commitTrack(uint16_t track, uint8_t sessionKey[8])
 {
+    mLOG(DEBUG);
     int ret;
     const char* format = "00 10 01 %>w %*";
 
@@ -1195,6 +1183,7 @@ int CNetMdSecure::commitTrack(uint16_t track, uint8_t sessionKey[8])
 //--------------------------------------------------------------------------
 int CNetMdSecure::setTrackProtection(uint8_t val)
 {
+    mLOG(DEBUG);
     int ret;
     uint8_t cmd[] = {0x00, 0x01, 0x00, 0x00, 0x00};
     cmd[sizeof(cmd) - 1] = val;
@@ -1218,14 +1207,15 @@ int CNetMdSecure::setTrackProtection(uint8_t val)
 //! @brief      Sends an audio track
 //!
 //! @param[in]  filename  The filename
+//! @param[in]  title     The title
 //! @param[in]  otf       The disk format
-//! @param[out] trackNo   The track no
 //!
 //! @return     NetMdErr
 //! @see        NetMdErr
 //--------------------------------------------------------------------------
-int CNetMdSecure::sendAudioTrack(const std::string& filename, DiskFormat otf, uint16_t& trackNo)
+int CNetMdSecure::sendAudioTrack(const std::string& filename, const std::string& title, DiskFormat otf)
 {
+    mLOG(DEBUG);
     int ret = NETMDERR_NO_ERROR;
     Ekb ekb = {0, nullptr, 0, {0,}};
 
@@ -1260,6 +1250,7 @@ int CNetMdSecure::sendAudioTrack(const std::string& filename, DiskFormat otf, ui
     uint8_t hostnonce[8] = {0,};
     uint8_t devnonce[8] = {0,};
     uint8_t sessionkey[8] = {0,};
+    uint16_t trackNo = 0;
 
     uint8_t kek[] =
     {
@@ -1483,6 +1474,12 @@ int CNetMdSecure::sendAudioTrack(const std::string& filename, DiskFormat otf, ui
             mNetMdThrow(NETMDERR_CMD_FAILED, "sendTrack() failed!");
         }
 
+        // set initial track title
+        if (setInitTrackTitle(trackNo, title) != NETMDERR_NO_ERROR)
+        {
+            mLOG(DEBUG) << "setInitTrackTitle() failed!";
+        }
+
         // commit
         if (commitTrack(trackNo, sessionkey) != NETMDERR_NO_ERROR)
         {
@@ -1525,7 +1522,7 @@ int CNetMdSecure::sendAudioTrack(const std::string& filename, DiskFormat otf, ui
     // leave session
     if (leaveSession() != NETMDERR_NO_ERROR)
     {
-        mLOG(DEBUG) << "sessionKeyForget() failed!";
+        mLOG(DEBUG) << "leaveSession() failed!";
     }
 
     if (audio_patch == SP)
@@ -1548,5 +1545,59 @@ bool CNetMdSecure::spUploadSupported()
 {
     return mPatch.supportsSpUpload();
 }
+
+//--------------------------------------------------------------------------
+//! @brief      Sets the initial track title.
+//!
+//! @param[in]  trackNo  The track no
+//! @param[in]  title    The title
+//!
+//! @return     NetMdErr
+//! @see        NetMdErr
+//--------------------------------------------------------------------------
+int CNetMdSecure::setInitTrackTitle(uint16_t trackNo, const std::string& title)
+{
+    mLOG(DEBUG);
+    int ret = 1;
+
+    // handshakes for 780/980/etc
+    uint8_t cache[] = {0x00, 0x18, 0x08, 0x10, 0x18, 0x02, 0x03, 0x00};
+    uint8_t sync[]  = {0x00, 0x18, 0x08, 0x10, 0x18, 0x02, 0x00, 0x00};
+
+
+    NetMDByteVector ba;
+    NetMDResp query;
+    addArrayData(ba, reinterpret_cast<const uint8_t*>(title.c_str()), title.size());
+    NetMDParams params = {
+        {trackNo                },
+        {mBYTE(title.size())    },
+        {mBYTE(0)},
+        {ba                     }
+    };
+
+    const char* format = "00 1807 02 20 18 02 %>w 30 00 0a 00 50 00 00 %b 00 00 00 %b %*";
+
+    if (((ret = formatQuery(format, params, query)) > 0) && (query != nullptr))
+    {
+        mNetMd.exchange(cache, sizeof(cache));
+        if ((ret = mNetMd.exchange(query.get(), ret)) > 0)
+        {
+            ret = NETMDERR_NO_ERROR;
+        }
+        else
+        {
+            ret = NETMDERR_PARAM;
+            mLOG(CRITICAL) << "exchange() failed.";
+        }
+        mNetMd.exchange(sync, sizeof(sync));
+    }
+    else
+    {
+        ret = NETMDERR_PARAM;
+    }
+
+    return ret;
+}
+
 
 } // ~namespace

@@ -124,17 +124,6 @@ class CNetMdSecure
     {}
 
     //--------------------------------------------------------------------------
-    //! @brief      check status
-    //!
-    //! @param[in]  status    The current status
-    //! @param[in]  expected  The expected status
-    //!
-    //! @return     NetMdErr
-    //! @see        NetMdErr
-    //--------------------------------------------------------------------------
-    static int checkStatus(uint8_t status, uint8_t expected);
-
-    //--------------------------------------------------------------------------
     //! @brief      get payload position in response
     //!
     //! @param[in]  dataLen  The data length (optional)
@@ -398,13 +387,14 @@ class CNetMdSecure
     //! @brief      Sends an audio track
     //!
     //! @param[in]  filename  The filename
+    //! @param[in]  title     The title
     //! @param[in]  otf       The disk format
-    //! @param[out] trackNo   The track no
     //!
     //! @return     NetMdErr
     //! @see        NetMdErr
     //--------------------------------------------------------------------------
-    int sendAudioTrack(const std::string& filename, DiskFormat otf, uint16_t& trackNo);
+    int sendAudioTrack(const std::string& filename, const std::string& title,
+                       DiskFormat otf);
 
     //--------------------------------------------------------------------------
     //! @brief      is SP upload supported?
@@ -412,6 +402,17 @@ class CNetMdSecure
     //! @return     true if yes
     //--------------------------------------------------------------------------
     bool spUploadSupported();
+
+    //--------------------------------------------------------------------------
+    //! @brief      Sets the initial track title.
+    //!
+    //! @param[in]  trackNo  The track no
+    //! @param[in]  title    The title
+    //!
+    //! @return     NetMdErr
+    //! @see        NetMdErr
+    //--------------------------------------------------------------------------
+    int setInitTrackTitle(uint16_t trackNo, const std::string& title);
 
     CNetMdDev& mNetMd;
 

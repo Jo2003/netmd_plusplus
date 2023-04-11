@@ -123,7 +123,6 @@ T& byteSwop(T& val)
     case 4:
     case 8:
         {
-            // In case this is to cryptic, use algorithm below!
             T   trg = 0;
             int i, j;
 
@@ -239,7 +238,6 @@ T toLittleEndian(const T& val)
 template <typename T>
 NetMDByteVector toLittleEndianByteVector(const T& val)
 {
-
     NetMDByteVector ret;
     uint8_t data[sizeof(val)];
     *reinterpret_cast<T*>(data) = toLittleEndian(val);
