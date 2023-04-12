@@ -101,6 +101,31 @@ class CNetMdDev
         NETMD_STATUS_INTERIM         = 0x0f,
     };
 
+    //--------------------------------------------------------------------------
+    //! @brief      helper function to print netmd status return
+    //!
+    //! @param      os      ostream reference
+    //! @param[in]  ntmdst  netmd status
+    //!
+    //! @return     ostream reference
+    //--------------------------------------------------------------------------
+    friend std::ostream& operator<<(std::ostream& os, const NetMdStatus& ntmdst)
+    {
+#define mkCase(x_) case x_: os << #x_; break
+        switch(ntmdst)
+        {
+            mkCase(NETMD_STATUS_NOT_IMPLEMENTED);
+            mkCase(NETMD_STATUS_ACCEPTED       );
+            mkCase(NETMD_STATUS_REJECTED       );
+            mkCase(NETMD_STATUS_IN_TRANSITION  );
+            mkCase(NETMD_STATUS_IMPLEMENTED    );
+            mkCase(NETMD_STATUS_CHANGED        );
+            mkCase(NETMD_STATUS_INTERIM        );
+        }
+        return os;
+#undef mkCase
+    }
+
     /// descriptor types
     enum class Descriptor : uint8_t
     {

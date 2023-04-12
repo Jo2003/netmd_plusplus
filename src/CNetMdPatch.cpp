@@ -248,14 +248,10 @@ int CNetMdPatch::changeMemState(uint32_t addr, uint8_t size, MemAcc acc)
 //------------------------------------------------------------------------------
 int CNetMdPatch::cleanRead(uint32_t addr, uint8_t sz, NetMDByteVector& data)
 {
-    int ret = NETMDERR_OTHER;
-    if ((changeMemState(addr, sz, MemAcc::NETMD_MEM_READ) == NETMDERR_NO_ERROR)
-        && ((ret = patchRead(addr, sz, data)) == NETMDERR_NO_ERROR)
-        && (changeMemState(addr, sz, MemAcc::NETMD_MEM_CLOSE) == NETMDERR_NO_ERROR))
-    {
-        return NETMDERR_NO_ERROR;
-    }
-
+    int ret;
+    static_cast<void>(changeMemState(addr, sz, MemAcc::NETMD_MEM_READ));
+    ret = patchRead(addr, sz, data);
+    static_cast<void>(changeMemState(addr, sz, MemAcc::NETMD_MEM_CLOSE));
     return ret;
 }
 
@@ -270,14 +266,10 @@ int CNetMdPatch::cleanRead(uint32_t addr, uint8_t sz, NetMDByteVector& data)
 //------------------------------------------------------------------------------
 int CNetMdPatch::cleanWrite(uint32_t addr, const NetMDByteVector& data)
 {
-    int ret = NETMDERR_OTHER;
-    if ((changeMemState(addr, data.size(), MemAcc::NETMD_MEM_WRITE) == NETMDERR_NO_ERROR)
-        && ((ret = patchWrite(addr, data)) == NETMDERR_NO_ERROR)
-        && (changeMemState(addr, data.size(), MemAcc::NETMD_MEM_CLOSE) == NETMDERR_NO_ERROR))
-    {
-        return NETMDERR_NO_ERROR;
-    }
-
+    int ret;
+    static_cast<void>(changeMemState(addr, data.size(), MemAcc::NETMD_MEM_WRITE));
+    ret = patchWrite(addr, data);
+    static_cast<void>(changeMemState(addr, data.size(), MemAcc::NETMD_MEM_CLOSE));
     return ret;
 }
 

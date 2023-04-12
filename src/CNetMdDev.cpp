@@ -317,8 +317,8 @@ int CNetMdDev::getResponse(NetMDResp& response)
     }
 
     mLOG(INFO)  << "Response: 0x" << std::hex << std::setw(2) << std::setfill('0')
-                << static_cast<int>(response[0]) << std::dec
-                << LOG::hexFormat(DEBUG, response.get(), ret);
+                << static_cast<int>(response[0]) << " / " << static_cast<NetMdStatus>(response[0])
+                << std::dec << LOG::hexFormat(DEBUG, response.get(), ret);
 
     // return length
     return ret;
@@ -346,13 +346,7 @@ int CNetMdDev::exchange(unsigned char* cmd, size_t cmdLen, NetMDResp* response,
 
     int ret = 0;
     NetMDResp tmpRsp;
-    NetMDResp* pResp = response;
-
-
-    if (response == nullptr)
-    {
-        pResp = &tmpRsp;
-    }
+    NetMDResp* pResp = (response == nullptr) ? &tmpRsp : response;
 
     if ((ret = sendCmd(cmd, cmdLen, factory)) == NETMDERR_NO_ERROR)
     {
@@ -380,8 +374,6 @@ int CNetMdDev::exchange(unsigned char* cmd, size_t cmdLen, NetMDResp* response,
         }
         else if ((*pResp)[0] != NETMD_STATUS_ACCEPTED)
         {
-            mLOG(CRITICAL) << "Non accepted return value: 0x" << std::hex << std::setw(2)
-                           << std::setfill('0') << static_cast<int>((*pResp)[0]) << std::dec;
             ret = NETMDERR_CMD_FAILED;
         }
     }
