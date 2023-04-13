@@ -1000,7 +1000,7 @@ int CNetMdSecure::sendTrack(WireFormat wf, DiskFormat df, uint32_t frames,
         mLOG(DEBUG) << "total transfer size : " << totalbytes << " bytes, "
                     << frames << " frames of " << frameSize(wf) << " bytes.";
 
-        if (((ret = formatQuery(format, {{wf}, {df}, {frames}, {totalbytes}}, query)) < 0) || (query == nullptr))
+        if (((ret = formatQuery(format, {{mBYTE(wf)}, {mBYTE(df)}, {frames}, {totalbytes}}, query)) < 0) || (query == nullptr))
         {
             mNetMdThrow(NETMDERR_PARAM, "Error while formatting query!");
         }

@@ -163,11 +163,47 @@ int CNetMdDev::initDevice()
                 {
                     if ((cit = smKnownDevices.find(vendorDev(descr.idVendor, descr.idProduct))) != smKnownDevices.cend())
                     {
+                        mLOG(DEBUG) << "Found supported device: " << cit->second.mModel;
                         mDevice.mKnownDev = cit->second;
+                        bool success = false;
+                        int cycle    = 5;
 
-                        if ((libusb_open(devs[i], &mDevice.mDevHdl) == 0) && (libusb_claim_interface(mDevice.mDevHdl, 0) == 0))
+                        do
                         {
-                            ret = NETMDERR_NO_ERROR;
+                            if (libusb_open(devs[i], &mDevice.mDevHdl) == 0)
+                            {
+                                if ((ret = libusb_reset_device(mDevice.mDevHdl)) == 0)
+                                {
+                                    if (libusb_claim_interface(mDevice.mDevHdl, 0) == 0)
+                                    {
+                                        success = true;
+                                        ret     = NETMDERR_NO_ERROR;
+                                        break;
+                                    }
+                                }
+                                else if (ret == LIBUSB_ERROR_NOT_FOUND)
+                                {
+                                    mLOG(DEBUG) << "Can't reset " << cit->second.mModel;
+                                }
+                            }
+                            
+                            if (!success && mDevice.mDevHdl)
+                            {
+                                libusb_close(mDevice.mDevHdl);
+                                mDevice.mDevHdl = nullptr;
+                            }
+                            
+                            usleep(100'000);
+                        } 
+                        while(!success && cycle--);
+
+                        if (success)
+                        {
+                            static_cast<void>(waitForSync());
+                        }
+                        else
+                        {
+                            mLOG(CRITICAL) << "Can't init usb device!" << libusb_strerror(static_cast<libusb_error>(ret));
                         }
                     }
                 }
@@ -178,12 +214,6 @@ int CNetMdDev::initDevice()
         {
             libusb_free_device_list(devs, 1);
         }
-    }
-
-    // cleanup anything which might still be in "pipe"
-    if (ret == NETMDERR_NO_ERROR)
-    {
-        static_cast<void>(waitForSync());
     }
 
     return ret;
@@ -417,7 +447,7 @@ int CNetMdDev::bulkTransfer(unsigned char* cmd, size_t cmdLen, int timeOut)
             if ((err != LIBUSB_ERROR_INTERRUPTED) && (err != LIBUSB_SUCCESS))
             {
                 mLOG(CRITICAL) << "USB transfer error while transffering "
-                               << cmdLen << " bytes: " << libusb_strerror(err);
+                               << cmdLen << " bytes: " << libusb_strerror(static_cast<libusb_error>(err));
                 return NETMDERR_USB;
             }
         }
@@ -451,7 +481,7 @@ int CNetMdDev::waitForSync()
                                       LIBUSB_ENDPOINT_IN | LIBUSB_REQUEST_TYPE_VENDOR | LIBUSB_RECIPIENT_INTERFACE,
                                       0x01, 0, 0,
                                       syncmsg, 0x04,
-                                      NETMD_POLL_TIMEOUT * 5);
+                                      NETMD_POLL_TIMEOUT);
         tries --;
         if (ret < 0)
         {
