@@ -273,7 +273,7 @@ int CNetMdDev::sendCmd(unsigned char* cmd, size_t cmdLen, bool factory)
     }
 
     // send data
-    mLOG(INFO) << (factory ? "factory " : "") << "command:" << LOG::hexFormat(INFO, cmd, cmdLen);
+    mLOG(DEBUG) << (factory ? "factory " : "") << "command:" << LOG::hexFormat(DEBUG, cmd, cmdLen);
 
     if (libusb_control_transfer(mDevice.mDevHdl,
                                 LIBUSB_ENDPOINT_OUT | LIBUSB_REQUEST_TYPE_VENDOR | LIBUSB_RECIPIENT_INTERFACE,
@@ -318,9 +318,9 @@ int CNetMdDev::getResponse(NetMDResp& response)
         return NETMDERR_USB;
     }
 
-    mLOG(INFO)  << "Response: 0x" << std::hex << std::setw(2) << std::setfill('0')
-                << static_cast<int>(response[0]) << " / " << static_cast<NetMdStatus>(response[0])
-                << std::dec << LOG::hexFormat(DEBUG, response.get(), ret);
+    mLOG(DEBUG)  << "Response: 0x" << std::hex << std::setw(2) << std::setfill('0')
+                 << static_cast<int>(response[0]) << " / " << static_cast<NetMdStatus>(response[0])
+                 << std::dec << LOG::hexFormat(DEBUG, response.get(), ret);
 
     // return length
     return ret;
