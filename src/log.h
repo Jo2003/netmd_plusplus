@@ -50,12 +50,12 @@ public:
 
         if(LOGCFG.time)
         {
-            operator << (timeStamp());
+            *this << timeStamp();
         }
 
         if(LOGCFG.headers)
         {
-            operator << (getLabel(type) +"|");
+            *this  << getLabel(type) << "|";
         }
     }
 

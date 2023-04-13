@@ -6,6 +6,8 @@
  * It makes use of knowledge / code collected by Marc Britten and
  * Alexander Sulfrian for the Linux Minidisc project.
  *
+ * Asivery helped to make this possible!
+ *
  * Copyright (C) 2023 Jo2003 (olenka.joerg@gmail.com)
  *
  * This library is free software; you can redistribute it and/or
@@ -271,7 +273,7 @@ int CNetMdDev::sendCmd(unsigned char* cmd, size_t cmdLen, bool factory)
     }
 
     // send data
-    mLOG(DEBUG) << (factory ? "factory " : "") << "command:" << LOG::hexFormat(DEBUG, cmd, cmdLen);
+    mLOG(INFO) << (factory ? "factory " : "") << "command:" << LOG::hexFormat(INFO, cmd, cmdLen);
 
     if (libusb_control_transfer(mDevice.mDevHdl,
                                 LIBUSB_ENDPOINT_OUT | LIBUSB_REQUEST_TYPE_VENDOR | LIBUSB_RECIPIENT_INTERFACE,
@@ -294,7 +296,7 @@ int CNetMdDev::sendCmd(unsigned char* cmd, size_t cmdLen, bool factory)
 //--------------------------------------------------------------------------
 int CNetMdDev::getResponse(NetMDResp& response)
 {
-    unsigned char pollbuf[4];
+    uint8_t pollbuf[4];
 
     // poll for data that minidisc wants to send
     int ret = poll(pollbuf, NETMD_RECV_TRIES);

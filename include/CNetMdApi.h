@@ -6,6 +6,8 @@
  * It makes use of knowledge / code collected by Marc Britten and
  * Alexander Sulfrian for the Linux Minidisc project.
  *
+ * Asivery helped to make this possible!
+ *
  * Copyright (C) 2023 Jo2003 (olenka.joerg@gmail.com)
  *
  * This library is free software; you can redistribute it and/or

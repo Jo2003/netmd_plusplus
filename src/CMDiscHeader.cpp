@@ -330,7 +330,7 @@ void CMDiscHeader::listGroups() const
             oss << " - " << g.mLast;
         }
 
-        mLOG(CRITICAL) << oss.str();
+        mLOG(DEBUG) << oss.str();
     }
 }
 
