@@ -66,7 +66,7 @@ int scanQuery(const uint8_t data[], size_t size, const char* format, NetMDParams
 //!
 //! @return     The checksum.
 //--------------------------------------------------------------------------
-unsigned int calculateChecksum(const NetMDByteVector& data);
+uint16_t calculateChecksum(const NetMDByteVector& data);
 
 //--------------------------------------------------------------------------
 //! @brief      format helper for TrackTime

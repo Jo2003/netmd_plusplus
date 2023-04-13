@@ -35,7 +35,7 @@ namespace netmd {
 //!
 //! @return     The checksum.
 //--------------------------------------------------------------------------
-unsigned int calculateChecksum(const NetMDByteVector& data)
+uint16_t calculateChecksum(const NetMDByteVector& data)
 {
     unsigned int crc  = 0;
     unsigned int temp = data.size();
@@ -56,7 +56,7 @@ unsigned int calculateChecksum(const NetMDByteVector& data)
         }
     }
 
-    return (crc & 0xffff);
+    return static_cast<uint16_t>(crc & 0xffff);
 }
 
 //--------------------------------------------------------------------------

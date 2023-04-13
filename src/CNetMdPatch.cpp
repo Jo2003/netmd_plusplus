@@ -134,6 +134,7 @@ NetMDByteVector CNetMdPatch::patchPayload(SonyDevInfo devinfo, PatchId pid)
 //------------------------------------------------------------------------------
 int CNetMdPatch::patchWrite(uint32_t addr, const NetMDByteVector& data)
 {
+    mLOG(DEBUG);
     int ret;
     const char* format = "00 1822 ff 00 %<d %b 0000 %* %<w";
 
@@ -167,6 +168,7 @@ int CNetMdPatch::patchWrite(uint32_t addr, const NetMDByteVector& data)
 //------------------------------------------------------------------------------
 int CNetMdPatch::patchRead(uint32_t addr, uint8_t size, NetMDByteVector& data)
 {
+    mLOG(DEBUG);
     int ret;
     const char* format  = "00 1821 ff 00 %<d %b";
     const char* capture = "%? 1821 00 %? %?%?%?%? %? %?%? %*";
@@ -214,6 +216,7 @@ int CNetMdPatch::patchRead(uint32_t addr, uint8_t size, NetMDByteVector& data)
 //--------------------------------------------------------------------------
 int CNetMdPatch::changeMemState(uint32_t addr, uint8_t size, MemAcc acc)
 {
+    mLOG(DEBUG);
     int ret;
     const char* format = "00 1820 ff 00 %<d %b %b 00";
 
@@ -248,6 +251,7 @@ int CNetMdPatch::changeMemState(uint32_t addr, uint8_t size, MemAcc acc)
 //------------------------------------------------------------------------------
 int CNetMdPatch::cleanRead(uint32_t addr, uint8_t sz, NetMDByteVector& data)
 {
+    mLOG(DEBUG);
     int ret;
     static_cast<void>(changeMemState(addr, sz, MemAcc::NETMD_MEM_READ));
     ret = patchRead(addr, sz, data);
@@ -266,6 +270,7 @@ int CNetMdPatch::cleanRead(uint32_t addr, uint8_t sz, NetMDByteVector& data)
 //------------------------------------------------------------------------------
 int CNetMdPatch::cleanWrite(uint32_t addr, const NetMDByteVector& data)
 {
+    mLOG(DEBUG);
     int ret;
     static_cast<void>(changeMemState(addr, data.size(), MemAcc::NETMD_MEM_WRITE));
     ret = patchWrite(addr, data);
@@ -281,6 +286,7 @@ int CNetMdPatch::cleanWrite(uint32_t addr, const NetMDByteVector& data)
 //--------------------------------------------------------------------------
 CNetMdPatch::SonyDevInfo CNetMdPatch::devCodeEx()
 {
+    mLOG(DEBUG);
     SonyDevInfo ret = SonyDevInfo::SDI_UNKNOWN;
     uint8_t query[] = {0x00, 0x18, 0x12, 0xff};
     uint8_t chip    = 255, hwid = 255, version = 255;
@@ -356,6 +362,7 @@ CNetMdPatch::SonyDevInfo CNetMdPatch::devCodeEx()
 //--------------------------------------------------------------------------
 int CNetMdPatch::readPatchData(int patchNo, uint32_t& addr, NetMDByteVector& patch)
 {
+    mLOG(DEBUG);
     int            ret   = NETMDERR_NO_ERROR;
     const uint32_t base  = PERIPHERAL_BASE + patchNo * 0x10;
     NetMDByteVector reply;
@@ -385,6 +392,7 @@ int CNetMdPatch::readPatchData(int patchNo, uint32_t& addr, NetMDByteVector& pat
 //--------------------------------------------------------------------------
 int CNetMdPatch::patch(uint32_t addr, const NetMDByteVector& data, int patchNo)
 {
+    mLOG(DEBUG);
     // Original method written by Sir68k.
 
     try
@@ -502,6 +510,7 @@ int CNetMdPatch::patch(uint32_t addr, const NetMDByteVector& data, int patchNo)
 //--------------------------------------------------------------------------
 int CNetMdPatch::unpatch(PatchId pid)
 {
+    mLOG(DEBUG);
     try
     {
         int patch_number = -1;
@@ -582,6 +591,7 @@ int CNetMdPatch::unpatch(PatchId pid)
 //--------------------------------------------------------------------------
 int CNetMdPatch::safetyPatch()
 {
+    mLOG(DEBUG);
     SonyDevInfo     devcode   = devCodeEx();
     uint32_t        addr      = patchAddress(devcode, PID_SAFETY);
     NetMDByteVector patch_cnt = patchPayload(devcode, PID_SAFETY);
@@ -659,6 +669,7 @@ int CNetMdPatch::safetyPatch()
 //--------------------------------------------------------------------------
 int CNetMdPatch::enableFactory()
 {
+    mLOG(DEBUG);
     int ret = NETMDERR_NO_ERROR;
     uint8_t p1[]  = {0x00, 0x18, 0x09, 0x00, 0xff, 0x00, 0x00, 0x00,
                      0x00, 0x00};
@@ -696,6 +707,7 @@ int CNetMdPatch::enableFactory()
 //--------------------------------------------------------------------------
 int CNetMdPatch::applySpPatch(int chanNo)
 {
+    mLOG(DEBUG);
     if (!mNetMd.itsASony())
     {
         return NETMDERR_NOT_SUPPORTED;
@@ -809,6 +821,7 @@ int CNetMdPatch::applySpPatch(int chanNo)
 //--------------------------------------------------------------------------
 void CNetMdPatch::undoSpPatch()
 {
+    mLOG(DEBUG);
     if (!mNetMd.itsASony())
     {
         return;
@@ -837,6 +850,7 @@ void CNetMdPatch::undoSpPatch()
 //--------------------------------------------------------------------------
 bool CNetMdPatch::supportsSpUpload()
 {
+    mLOG(DEBUG);
     bool ret = false;
 
     // only available on Sony devices!
