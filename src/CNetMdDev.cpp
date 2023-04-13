@@ -186,15 +186,15 @@ int CNetMdDev::initDevice()
                                     mLOG(DEBUG) << "Can't reset " << cit->second.mModel;
                                 }
                             }
-                            
+
                             if (!success && mDevice.mDevHdl)
                             {
                                 libusb_close(mDevice.mDevHdl);
                                 mDevice.mDevHdl = nullptr;
                             }
-                            
+
                             usleep(100'000);
-                        } 
+                        }
                         while(!success && cycle--);
 
                         if (success)
@@ -203,7 +203,7 @@ int CNetMdDev::initDevice()
                         }
                         else
                         {
-                            mLOG(CRITICAL) << "Can't init usb device!" << libusb_strerror(static_cast<libusb_error>(ret));
+                            mLOG(CRITICAL) << "Can't init usb device! " << libusb_strerror(static_cast<libusb_error>(ret));
                         }
                     }
                 }
@@ -245,18 +245,18 @@ int CNetMdDev::poll(uint8_t buf[4], int tries)
         return NETMDERR_NOTREADY;
     }
 
-    int sleepytime = 5;
+    int sleepytime = 5, ret;
 
     for (int i = 0; i < tries; i++)
     {
         // send a poll message
         memset(buf, 0, 4);
 
-        if (libusb_control_transfer(mDevice.mDevHdl,
-                                    LIBUSB_ENDPOINT_IN | LIBUSB_REQUEST_TYPE_VENDOR | LIBUSB_RECIPIENT_INTERFACE,
-                                    0x01, 0, 0, buf, 4, NETMD_POLL_TIMEOUT) < 0)
+        if ((ret = libusb_control_transfer(mDevice.mDevHdl,
+                                           LIBUSB_ENDPOINT_IN | LIBUSB_REQUEST_TYPE_VENDOR | LIBUSB_RECIPIENT_INTERFACE,
+                                           0x01, 0, 0, buf, 4, NETMD_POLL_TIMEOUT)) < 0)
         {
-            mLOG(CRITICAL) << "libusb_control_transfer failed!";
+            mLOG(CRITICAL) << "libusb_control_transfer failed! " << libusb_strerror(static_cast<libusb_error>(ret));
             return NETMDERR_USB;
         }
 
@@ -292,7 +292,7 @@ int CNetMdDev::poll(uint8_t buf[4], int tries)
 int CNetMdDev::sendCmd(unsigned char* cmd, size_t cmdLen, bool factory)
 {
     unsigned char pollbuf[4];
-    int len;
+    int len, ret;
 
     // poll to see if we can send data
     len = poll(pollbuf, 1);
@@ -305,12 +305,12 @@ int CNetMdDev::sendCmd(unsigned char* cmd, size_t cmdLen, bool factory)
     // send data
     mLOG(DEBUG) << (factory ? "factory " : "") << "command:" << LOG::hexFormat(DEBUG, cmd, cmdLen);
 
-    if (libusb_control_transfer(mDevice.mDevHdl,
-                                LIBUSB_ENDPOINT_OUT | LIBUSB_REQUEST_TYPE_VENDOR | LIBUSB_RECIPIENT_INTERFACE,
-                                factory ? 0xff : 0x80, 0, 0, cmd, cmdLen,
-                                NETMD_SEND_TIMEOUT) < 0)
+    if ((ret = libusb_control_transfer(mDevice.mDevHdl,
+                                       LIBUSB_ENDPOINT_OUT | LIBUSB_REQUEST_TYPE_VENDOR | LIBUSB_RECIPIENT_INTERFACE,
+                                       factory ? 0xff : 0x80, 0, 0, cmd, cmdLen,
+                                       NETMD_SEND_TIMEOUT)) < 0)
     {
-        mLOG(CRITICAL) << "libusb_control_transfer failed!";
+        mLOG(CRITICAL) << "libusb_control_transfer failed! " << libusb_strerror(static_cast<libusb_error>(ret));
         return NETMDERR_USB;
     }
 
@@ -339,12 +339,12 @@ int CNetMdDev::getResponse(NetMDResp& response)
     response = NetMDResp(new unsigned char[ret]);
 
     // receive data
-    if (libusb_control_transfer(mDevice.mDevHdl,
-                                LIBUSB_ENDPOINT_IN | LIBUSB_REQUEST_TYPE_VENDOR | LIBUSB_RECIPIENT_INTERFACE,
-                                pollbuf[1], 0, 0, response.get(), ret,
-                                NETMD_RECV_TIMEOUT) < 0)
+    if ((ret = libusb_control_transfer(mDevice.mDevHdl,
+                                       LIBUSB_ENDPOINT_IN | LIBUSB_REQUEST_TYPE_VENDOR | LIBUSB_RECIPIENT_INTERFACE,
+                                       pollbuf[1], 0, 0, response.get(), ret,
+                                       NETMD_RECV_TIMEOUT)) < 0)
     {
-        mLOG(CRITICAL) << "libusb_control_transfer failed!";
+        mLOG(CRITICAL) << "libusb_control_transfer failed! " << libusb_strerror(static_cast<libusb_error>(ret));
         return NETMDERR_USB;
     }
 
@@ -485,7 +485,7 @@ int CNetMdDev::waitForSync()
         tries --;
         if (ret < 0)
         {
-            mLOG(DEBUG) << "libusb error " << ret << " waiting for control transfer!";
+            mLOG(DEBUG) << "libusb_control_transfer failed! " << libusb_strerror(static_cast<libusb_error>(ret));
         }
         else if (ret != 4)
         {
