@@ -166,8 +166,8 @@ int CNetMdDev::initDevice()
                         mLOG(DEBUG) << "Found supported device: " << cit->second.mModel;
                         mDevice.mKnownDev = cit->second;
                         bool success = false;
+#ifdef __linux__
                         int cycle    = 5;
-
                         do
                         {
                             if (libusb_open(devs[i], &mDevice.mDevHdl) == 0)
@@ -197,13 +197,34 @@ int CNetMdDev::initDevice()
                         }
                         while(!success && cycle--);
 
+#else // not linux
+                        if ((ret = libusb_open(devs[i], &mDevice.mDevHdl)) == 0)
+                        {
+                            if ((ret = libusb_claim_interface(mDevice.mDevHdl, 0)) == 0)
+                            {
+                                success = true;
+                                ret     = NETMDERR_NO_ERROR;
+                            }
+                            else
+                            {
+                                mLOG(CRITICAL) << "Can't claim USB device: " << libusb_strerror(static_cast<libusb_error>(ret));
+                                libusb_close(mDevice.mDevHdl);
+                                mDevice.mDevHdl = nullptr;
+                            }
+                        }
+                        else
+                        {
+                            mLOG(CRITICAL) << "Can't open USB device: " << libusb_strerror(static_cast<libusb_error>(ret));
+                        }
+#endif // __linux__
                         if (success)
                         {
                             static_cast<void>(waitForSync());
                         }
                         else
                         {
-                            mLOG(CRITICAL) << "Can't init usb device! " << libusb_strerror(static_cast<libusb_error>(ret));
+                            ret = NETMDERR_USB;
+                            mLOG(CRITICAL) << "Can't init usb device!";
                         }
                     }
                 }
