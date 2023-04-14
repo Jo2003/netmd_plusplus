@@ -174,6 +174,8 @@ int CNetMdDev::initDevice()
                             {
                                 if ((ret = libusb_reset_device(mDevice.mDevHdl)) == 0)
                                 {
+                                    usleep(100'000);
+
                                     if (libusb_claim_interface(mDevice.mDevHdl, 0) == 0)
                                     {
                                         success = true;
