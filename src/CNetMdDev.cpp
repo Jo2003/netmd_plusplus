@@ -504,7 +504,7 @@ int CNetMdDev::waitForSync()
                                       LIBUSB_ENDPOINT_IN | LIBUSB_REQUEST_TYPE_VENDOR | LIBUSB_RECIPIENT_INTERFACE,
                                       0x01, 0, 0,
                                       syncmsg, 0x04,
-                                      NETMD_POLL_TIMEOUT);
+                                      NETMD_POLL_TIMEOUT * 5);
         tries --;
         if (ret < 0)
         {

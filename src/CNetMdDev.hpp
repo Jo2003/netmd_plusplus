@@ -88,7 +88,7 @@ class CNetMdDev
     static constexpr unsigned int NETMD_SEND_TIMEOUT = 1000;
     static constexpr unsigned int NETMD_RECV_TIMEOUT = 1000;
     static constexpr unsigned int NETMD_RECV_TRIES   =   30;
-    static constexpr unsigned int NETMD_SYNC_TRIES   =   10;
+    static constexpr unsigned int NETMD_SYNC_TRIES   =    5;
     static constexpr uint8_t    NETMD_STATUS_CONTROL = 0x00;
 
     /// NetMD status
