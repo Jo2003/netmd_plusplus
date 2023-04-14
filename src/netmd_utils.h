@@ -422,5 +422,34 @@ inline unsigned int bcd_to_proper(unsigned char* value, size_t len)
 //------------------------------------------------------------------------------
 void parse_time(uint8_t* src, NetMdTime& time);
 
+//------------------------------------------------------------------------------
+//! @brief      extract from variant (wrapper for Mac)
+//!
+//! @param[in]  p     variant to extract from
+//! @param      err   The error value (optional)
+//!
+//! @tparam     T     type to extract
+//!
+//! @return     extracted value
+//------------------------------------------------------------------------------
+template <typename T>
+T simple_get(const NetMDParam& p, int *err = nullptr)
+{
+#ifdef __APPLE__
+    // workaround for unsupported std::get<std::variant<>> in MacOS 10.13
+    T* pp = std::get_if<T>(const_cast<NetMDParam*>(&p));
+    if (pp)
+    {
+        if (err) *err = 0;
+        return *pp;
+    }
+    if (err) *err = -1;
+    return T{0};
+#else
+    if (err) *err = 0;
+    return std::get<T>(p);
+#endif
+}
+
 
 } // ~namespace

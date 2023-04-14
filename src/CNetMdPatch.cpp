@@ -185,7 +185,7 @@ int CNetMdPatch::patchRead(uint32_t addr, uint8_t size, NetMDByteVector& data)
             {
                 if (params.at(0).index() == BYTE_VECTOR)
                 {
-                    data = std::get<NetMDByteVector>(params.at(0));
+                    data = simple_get<NetMDByteVector>(params.at(0));
 
                     // ignore last two bytes (checksum)
                     data.pop_back();

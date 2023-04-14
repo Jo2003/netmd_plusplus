@@ -1053,7 +1053,7 @@ int CNetMdSecure::sendTrack(WireFormat wf, DiskFormat df, uint32_t frames,
             mNetMdThrow(NETMDERR_USB, "1st captured data isn't uint16_t!");
         }
 
-        track = std::get<uint16_t>(capParams.at(0));
+        track = simple_get<uint16_t>(capParams.at(0));
 
         if (capParams.at(1).index() != BYTE_VECTOR)
         {
@@ -1061,7 +1061,7 @@ int CNetMdSecure::sendTrack(WireFormat wf, DiskFormat df, uint32_t frames,
         }
 
         uint8_t encryptedreply[32] = {0,};
-        NetMDByteVector ba = std::get<NetMDByteVector>(capParams.at(1));
+        NetMDByteVector ba = simple_get<NetMDByteVector>(capParams.at(1));
         if (ba.size() < sizeof(encryptedreply))
         {
             mNetMdThrow(NETMDERR_USB, "2nd captured data isn't long enough. Have: "

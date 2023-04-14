@@ -139,7 +139,7 @@ int formatQuery(const char* format, const NetMDParams& params, NetMDResp& query)
             case 'b':
                 if (params.at(argno).index() == UINT8_T)
                 {
-                    queryBuffer.push_back(std::get<uint8_t>(params.at(argno++)));
+                    queryBuffer.push_back(simple_get<uint8_t>(params.at(argno++)));
                     esc = 0;
                     bigE = false;
                 }
@@ -154,7 +154,7 @@ int formatQuery(const char* format, const NetMDParams& params, NetMDResp& query)
                 if (params.at(argno).index() == UINT16_T)
                 {
                     auto f = bigE ? toBigEndian<uint16_t> : toLittleEndian<uint16_t>;
-                    *reinterpret_cast<uint16_t*>(wordBuff) = f(std::get<uint16_t>(params.at(argno++)));
+                    *reinterpret_cast<uint16_t*>(wordBuff) = f(simple_get<uint16_t>(params.at(argno++)));
                     for (size_t s = 0; s < sizeof(uint16_t); s++)
                     {
                         queryBuffer.push_back(wordBuff[s]);
@@ -173,7 +173,7 @@ int formatQuery(const char* format, const NetMDParams& params, NetMDResp& query)
                 if (params.at(argno).index() == UINT32_T)
                 {
                     auto f = bigE ? toBigEndian<uint32_t> : toLittleEndian<uint32_t>;
-                    *reinterpret_cast<uint32_t*>(wordBuff) = f(std::get<uint32_t>(params.at(argno++)));
+                    *reinterpret_cast<uint32_t*>(wordBuff) = f(simple_get<uint32_t>(params.at(argno++)));
                     for (size_t s = 0; s < sizeof(uint32_t); s++)
                     {
                         queryBuffer.push_back(wordBuff[s]);
@@ -192,7 +192,7 @@ int formatQuery(const char* format, const NetMDParams& params, NetMDResp& query)
                 if (params.at(argno).index() == UINT64_T)
                 {
                     auto f = bigE ? toBigEndian<uint64_t> : toLittleEndian<uint64_t>;
-                    *reinterpret_cast<uint64_t*>(wordBuff) = f(std::get<uint64_t>(params.at(argno++)));
+                    *reinterpret_cast<uint64_t*>(wordBuff) = f(simple_get<uint64_t>(params.at(argno++)));
                     for (size_t s = 0; s < sizeof(uint64_t); s++)
                     {
                         queryBuffer.push_back(wordBuff[s]);
@@ -210,7 +210,7 @@ int formatQuery(const char* format, const NetMDParams& params, NetMDResp& query)
             case '*':
                 if (params.at(argno).index() == BYTE_VECTOR)
                 {
-                    NetMDByteVector ba = std::get<NetMDByteVector>(params.at(argno++));
+                    NetMDByteVector ba = simple_get<NetMDByteVector>(params.at(argno++));
                     for (const auto& v : ba)
                     {
                         queryBuffer.push_back(v);
