@@ -1,5 +1,3 @@
-cmake_minimum_required(VERSION 3.9)
-project("netmd++" VERSION 1.0.1 DESCRIPTION "NetMD C++ library")
 set(CMAKE_BUILD_TYPE Release)
 set (CMAKE_CXX_STANDARD 17)
 set (CMAKE_VERBOSE_BUILD 1)
@@ -52,8 +50,7 @@ endif()
 
 set(MYCFLAGS -W -Wall)
 
-target_compile_options("netmd++" PRIVATE $<$<CONFIG:Release>:${MYCFLAGS}>
-)
+target_compile_options( "netmd++" PRIVATE $<$<CONFIG:Release>:${MYCFLAGS}> )
 
 if (BUILD_SHARED_LIBS)
     target_compile_options("netmd++" PRIVATE -fPIC)
@@ -75,26 +72,6 @@ set_target_properties("netmd++" PROPERTIES
 
 target_include_directories("netmd++" PRIVATE .)
 
-add_executable(testnetmd 
-    ../test.cpp 
-)
- 
-target_link_libraries(testnetmd usb-1.0 gcrypt gpg-error netmd++)
-if (APPLE)
-    target_include_directories(testnetmd PRIVATE
-        /usr/local/Cellar/libusb/1.0.24/include
-        /usr/local/Cellar/libgcrypt/1.9.4_1/include
-        /usr/local/Cellar/libgpg-error/1.43/include
-        /usr/local/include
-    )
-    target_link_directories(testnetmd PRIVATE
-        /usr/local/Cellar/libusb/1.0.24/lib
-        /usr/local/Cellar/libgcrypt/1.9.4_1/lib
-        /usr/local/Cellar/libgpg-error/1.43/lib
-        /usr/local/lib
-    )
-endif()
-
 include(GNUInstallDirs)
 
 install(TARGETS "netmd++"
@@ -104,4 +81,4 @@ install(TARGETS "netmd++"
     PUBLIC_HEADER DESTINATION ${CMAKE_INSTALL_INCLUDEDIR})
 
 configure_file(libnetmd++.pc.in libnetmd++.pc @ONLY)
-install(FILES ${CMAKE_BINARY_DIR}/libnetmd++.pc DESTINATION ${CMAKE_INSTALL_LIBDIR}/pkgconfig)
+install(FILES ${CMAKE_BINARY_DIR}/src/libnetmd++.pc DESTINATION ${CMAKE_INSTALL_LIBDIR}/pkgconfig)

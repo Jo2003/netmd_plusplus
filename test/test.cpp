@@ -24,7 +24,7 @@
  *
  */
 #include <iostream>
-#include "include/CNetMdApi.h"
+#include <CNetMdApi.h>
 
 using namespace netmd;
 
