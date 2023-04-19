@@ -710,7 +710,7 @@ int CNetMdPatch::enableFactory()
 int CNetMdPatch::applySpPatch(int chanNo)
 {
     mLOG(DEBUG);
-    if (!mNetMd.itsASony())
+    if (!mNetMd.isMaybePatchable())
     {
         return NETMDERR_NOT_SUPPORTED;
     }
@@ -824,7 +824,7 @@ int CNetMdPatch::applySpPatch(int chanNo)
 void CNetMdPatch::undoSpPatch()
 {
     mLOG(DEBUG);
-    if (!mNetMd.itsASony())
+    if (!mNetMd.isMaybePatchable())
     {
         return;
     }
@@ -856,7 +856,7 @@ bool CNetMdPatch::supportsSpUpload()
     bool ret = false;
 
     // only available on Sony devices!
-    if (mNetMd.itsASony())
+    if (mNetMd.isMaybePatchable())
     {
         mLOG(DEBUG) << "Enable factory ...";
         if (enableFactory() == NETMDERR_NO_ERROR)

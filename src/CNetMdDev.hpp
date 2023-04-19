@@ -60,6 +60,7 @@ class CNetMdDev
         uint16_t mDeviceID;     ///< device id
         const char* mModel;     ///< model name
         bool mOtfEncode;        ///< device supports on-the-fly LP encoding
+        bool mPatchAble;        ///< is the device (maybe) patchable?
     };
 
     /// dev handle is a pointer to libusb_device_handle
@@ -70,6 +71,7 @@ class CNetMdDev
     {
         SKnownDevice mKnownDev;         ///< known device info
         std::string mName;              ///< name
+        std::string mSerial;            ///< serial number
         netmd_dev_handle mDevHdl;       ///< device handle
     };
 
@@ -281,20 +283,26 @@ class CNetMdDev
     int changeDscrtState(Descriptor d, DscrtAction a);
 
     //--------------------------------------------------------------------------
-    //! @brief      check for Sony device
+    //! @brief      Gets the strings.from the NetMD device
     //!
-    //! @return     true if Sony
+    //! @param[in]  descr  The descriptor
+    //!
+    //! @return     NetMdErr
     //--------------------------------------------------------------------------
-    bool itsASony() const
-    {
-        return mDevice.mKnownDev.mVendorID == 0x054c;
-    }
+    int getStrings(const libusb_device_descriptor& descr);
+
+    //--------------------------------------------------------------------------
+    //! @brief      check for this device might be patchable
+    //!
+    //! @return     true if so
+    //--------------------------------------------------------------------------
+    bool isMaybePatchable() const;
 
     /// init marker
     bool mInitialized = false;
 
     /// NetMD device
-    NetMDDevice mDevice = {{0, 0, nullptr, false}, "", nullptr};
+    NetMDDevice mDevice = {{0, 0, nullptr, false, false}, "", "", nullptr};
 
     /// descriptor data
     static const DscrtData smDescrData;

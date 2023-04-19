@@ -38,53 +38,53 @@
 
 namespace netmd {
 
-#define mkDevEntry(a_, b_, c_, d_) CNetMdDev::vendorDev(a_, b_), {a_, b_, c_, d_}
+#define mkDevEntry(a_, b_, c_, d_, e_) CNetMdDev::vendorDev(a_, b_), {a_, b_, c_, d_, e_}
 
 /// map with known / supported NetMD devices
 const CNetMdDev::KnownDevices CNetMdDev::smKnownDevices = {
-    { mkDevEntry(0x054c, 0x0034, "Sony PCLK-XX"                                  , false) },
-    { mkDevEntry(0x054c, 0x0036, "Sony (unknown model)"                          , false) },
-    { mkDevEntry(0x054c, 0x006F, "Sony NW-E7"                                    , false) },
-    { mkDevEntry(0x054c, 0x0075, "Sony MZ-N1"                                    , false) },
-    { mkDevEntry(0x054c, 0x007c, "Sony (unknown model)"                          , false) },
-    { mkDevEntry(0x054c, 0x0080, "Sony LAM-1"                                    , false) },
-    { mkDevEntry(0x054c, 0x0081, "Sony MDS-JE780/JB980"                          , true ) },
-    { mkDevEntry(0x054c, 0x0084, "Sony MZ-N505"                                  , false) },
-    { mkDevEntry(0x054c, 0x0085, "Sony MZ-S1"                                    , false) },
-    { mkDevEntry(0x054c, 0x0086, "Sony MZ-N707"                                  , false) },
-    { mkDevEntry(0x054c, 0x008e, "Sony CMT-C7NT"                                 , false) },
-    { mkDevEntry(0x054c, 0x0097, "Sony PCGA-MDN1"                                , false) },
-    { mkDevEntry(0x054c, 0x00ad, "Sony CMT-L7HD"                                 , false) },
-    { mkDevEntry(0x054c, 0x00c6, "Sony MZ-N10"                                   , false) },
-    { mkDevEntry(0x054c, 0x00c7, "Sony MZ-N910"                                  , false) },
-    { mkDevEntry(0x054c, 0x00c8, "Sony MZ-N710/NE810/NF810"                      , false) },
-    { mkDevEntry(0x054c, 0x00c9, "Sony MZ-N510/NF610"                            , false) },
-    { mkDevEntry(0x054c, 0x00ca, "Sony MZ-NE410/DN430/NF520"                     , false) },
-    { mkDevEntry(0x054c, 0x00eb, "Sony MZ-NE810/NE910"                           , false) },
-    { mkDevEntry(0x054c, 0x00e7, "Sony CMT-M333NT/M373NT"                        , false) },
-    { mkDevEntry(0x054c, 0x0101, "Sony LAM-10"                                   , false) },
-    { mkDevEntry(0x054c, 0x0113, "Aiwa AM-NX1"                                   , false) },
-    { mkDevEntry(0x054c, 0x0119, "Sony CMT-SE9"                                  , false) },
-    { mkDevEntry(0x054c, 0x013f, "Sony MDS-S500"                                 , false) },
-    { mkDevEntry(0x054c, 0x014c, "Aiwa AM-NX9"                                   , false) },
-    { mkDevEntry(0x054c, 0x017e, "Sony MZ-NH1"                                   , false) },
-    { mkDevEntry(0x054c, 0x0180, "Sony MZ-NH3D"                                  , false) },
-    { mkDevEntry(0x054c, 0x0182, "Sony MZ-NH900"                                 , false) },
-    { mkDevEntry(0x054c, 0x0184, "Sony MZ-NH700/800"                             , false) },
-    { mkDevEntry(0x054c, 0x0186, "Sony MZ-NH600/600D"                            , false) },
-    { mkDevEntry(0x054c, 0x0188, "Sony MZ-N920"                                  , false) },
-    { mkDevEntry(0x054c, 0x018a, "Sony LAM-3"                                    , false) },
-    { mkDevEntry(0x054c, 0x01e9, "Sony MZ-DH10P"                                 , false) },
-    { mkDevEntry(0x054c, 0x0219, "Sony MZ-RH10"                                  , false) },
-    { mkDevEntry(0x054c, 0x021b, "Sony MZ-RH910"                                 , false) },
-    { mkDevEntry(0x054c, 0x021d, "Sony CMT-AH10"                                 , false) },
-    { mkDevEntry(0x054c, 0x022c, "Sony CMT-AH10"                                 , false) },
-    { mkDevEntry(0x054c, 0x023c, "Sony DS-HMD1"                                  , false) },
-    { mkDevEntry(0x054c, 0x0286, "Sony MZ-RH1"                                   , false) },
-    { mkDevEntry(0x04dd, 0x7202, "Sharp IM-MT880H/MT899H"                        , false) },
-    { mkDevEntry(0x04dd, 0x9013, "Sharp IM-DR400/DR410"                          , true ) },
-    { mkDevEntry(0x04dd, 0x9014, "Sharp IM-DR80/DR420/DR580 or Kenwood DMC-S9NET", false) },
-    { mkDevEntry(0x0004, 0x23b3, "Panasonic SJ-MR250"                            , false) },
+    { mkDevEntry(0x054c, 0x0034, "Sony PCLK-XX"                                  , false, false) },
+    { mkDevEntry(0x054c, 0x0036, "Sony (unknown model)"                          , false, false) },
+    { mkDevEntry(0x054c, 0x006F, "Sony NW-E7"                                    , false, false) },
+    { mkDevEntry(0x054c, 0x0075, "Sony MZ-N1"                                    , false, true ) },
+    { mkDevEntry(0x054c, 0x007c, "Sony (unknown model)"                          , false, false) },
+    { mkDevEntry(0x054c, 0x0080, "Sony LAM-1"                                    , false, false) },
+    { mkDevEntry(0x054c, 0x0081, "Sony MDS-JE780/JB980"                          , true , false) },
+    { mkDevEntry(0x054c, 0x0084, "Sony MZ-N505"                                  , false, true ) },
+    { mkDevEntry(0x054c, 0x0085, "Sony MZ-S1"                                    , false, true ) },
+    { mkDevEntry(0x054c, 0x0086, "Sony MZ-N707"                                  , false, true ) },
+    { mkDevEntry(0x054c, 0x008e, "Sony CMT-C7NT"                                 , false, false) },
+    { mkDevEntry(0x054c, 0x0097, "Sony PCGA-MDN1"                                , false, false) },
+    { mkDevEntry(0x054c, 0x00ad, "Sony CMT-L7HD"                                 , false, false) },
+    { mkDevEntry(0x054c, 0x00c6, "Sony MZ-N10"                                   , false, true ) },
+    { mkDevEntry(0x054c, 0x00c7, "Sony MZ-N910"                                  , false, true ) },
+    { mkDevEntry(0x054c, 0x00c8, "Sony MZ-N710/NE810/NF810"                      , false, true ) },
+    { mkDevEntry(0x054c, 0x00c9, "Sony MZ-N510/NF610"                            , false, true ) },
+    { mkDevEntry(0x054c, 0x00ca, "Sony MZ-NE410/DN430/NF520"                     , false, true ) },
+    { mkDevEntry(0x054c, 0x00eb, "Sony MZ-NE810/NE910"                           , false, true ) },
+    { mkDevEntry(0x054c, 0x00e7, "Sony CMT-M333NT/M373NT"                        , false, false) },
+    { mkDevEntry(0x054c, 0x0101, "Sony LAM-10"                                   , false, false) },
+    { mkDevEntry(0x054c, 0x0113, "Aiwa AM-NX1"                                   , false, false) },
+    { mkDevEntry(0x054c, 0x0119, "Sony CMT-SE9"                                  , false, false) },
+    { mkDevEntry(0x054c, 0x013f, "Sony MDS-S500"                                 , false, false) },
+    { mkDevEntry(0x054c, 0x014c, "Aiwa AM-NX9"                                   , false, false) },
+    { mkDevEntry(0x054c, 0x017e, "Sony MZ-NH1"                                   , false, true ) },
+    { mkDevEntry(0x054c, 0x0180, "Sony MZ-NH3D"                                  , false, true ) },
+    { mkDevEntry(0x054c, 0x0182, "Sony MZ-NH900"                                 , false, true ) },
+    { mkDevEntry(0x054c, 0x0184, "Sony MZ-NH700/800"                             , false, true ) },
+    { mkDevEntry(0x054c, 0x0186, "Sony MZ-NH600/600D"                            , false, true ) },
+    { mkDevEntry(0x054c, 0x0188, "Sony MZ-N920"                                  , false, true ) },
+    { mkDevEntry(0x054c, 0x018a, "Sony LAM-3"                                    , false, false) },
+    { mkDevEntry(0x054c, 0x01e9, "Sony MZ-DH10P"                                 , false, true ) },
+    { mkDevEntry(0x054c, 0x0219, "Sony MZ-RH10"                                  , false, true ) },
+    { mkDevEntry(0x054c, 0x021b, "Sony MZ-RH910"                                 , false, true ) },
+    { mkDevEntry(0x054c, 0x021d, "Sony CMT-AH10"                                 , false, false) },
+    { mkDevEntry(0x054c, 0x022c, "Sony CMT-AH10"                                 , false, false) },
+    { mkDevEntry(0x054c, 0x023c, "Sony DS-HMD1"                                  , false, true ) },
+    { mkDevEntry(0x054c, 0x0286, "Sony MZ-RH1"                                   , false, true ) },
+    { mkDevEntry(0x04dd, 0x7202, "Sharp IM-MT880H/MT899H"                        , false, false) },
+    { mkDevEntry(0x04dd, 0x9013, "Sharp IM-DR400/DR410"                          , true , false) },
+    { mkDevEntry(0x04dd, 0x9014, "Sharp IM-DR80/DR420/DR580 or Kenwood DMC-S9NET", false, false) },
+    { mkDevEntry(0x0004, 0x23b3, "Panasonic SJ-MR250"                            , false, false) },
 };
 
 #undef mkDevEntry
@@ -221,6 +221,11 @@ int CNetMdDev::initDevice()
                         if (success)
                         {
                             static_cast<void>(waitForSync());
+
+                            if (getStrings(descr) == NETMDERR_NO_ERROR)
+                            {
+                                mLOG(INFO) << "Product name: " << mDevice.mName << ", serial number: " << mDevice.mSerial;
+                            }
                         }
                         else
                         {
@@ -235,6 +240,46 @@ int CNetMdDev::initDevice()
         if (devs != nullptr)
         {
             libusb_free_device_list(devs, 1);
+        }
+    }
+
+    return ret;
+}
+
+//--------------------------------------------------------------------------
+//! @brief      Gets the strings.from the NetMD device
+//!
+//! @param[in]  descr  The descriptor
+//!
+//! @return     NetMdErr
+//--------------------------------------------------------------------------
+int CNetMdDev::getStrings(const libusb_device_descriptor& descr)
+{
+    uint8_t buff[255] = {0,};
+    int ret = NETMDERR_NO_ERROR;
+    int sz;
+
+    mDevice.mName   = "";
+    mDevice.mSerial = "";
+
+    int          vals[] = {descr.iProduct, descr.iSerialNumber};
+    std::string* s[]    = {&mDevice.mName, &mDevice.mSerial};
+
+    for(int i = 0; i < 2; i++)
+    {
+        if (vals[i] > -1)
+        {
+            if ((sz = libusb_get_string_descriptor_ascii(mDevice.mDevHdl, vals[i], buff, 255)) < 0)
+            {
+                ret = NETMDERR_USB;
+            }
+            else
+            {
+                for(int j = 0; j < sz; j++)
+                {
+                    s[i]->push_back(static_cast<char>(buff[j]));
+                }
+            }
         }
     }
 
@@ -602,5 +647,16 @@ int CNetMdDev::changeDscrtState(Descriptor d, DscrtAction a)
     }
     return ret;
 }
+
+//--------------------------------------------------------------------------
+//! @brief      check for this device might be patchable
+//!
+//! @return     true if so
+//--------------------------------------------------------------------------
+bool CNetMdDev::isMaybePatchable() const
+{
+    return mDevice.mKnownDev.mPatchAble;
+}
+
 
 } // namespace netmd
