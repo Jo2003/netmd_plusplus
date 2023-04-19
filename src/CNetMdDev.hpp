@@ -179,7 +179,7 @@ class CNetMdDev
     //!
     //! @return     The device name.
     //--------------------------------------------------------------------------
-    std::string getDeviceName();
+    std::string getDeviceName() const;
 
     //--------------------------------------------------------------------------
     //! @brief      create unique id from vendor and device

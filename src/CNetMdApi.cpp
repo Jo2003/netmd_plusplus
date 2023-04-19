@@ -114,7 +114,7 @@ int CNetMdApi::initDevice()
 //!
 //! @return     The device name.
 //--------------------------------------------------------------------------
-std::string CNetMdApi::getDeviceName()
+std::string CNetMdApi::getDeviceName() const
 {
     return mpNetMd->getDeviceName();
 }

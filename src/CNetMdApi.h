@@ -70,7 +70,7 @@ public:
     //!
     //! @return     The device name.
     //--------------------------------------------------------------------------
-    std::string getDeviceName();
+    std::string getDeviceName() const;
 
     //--------------------------------------------------------------------------
     //! @brief      Sets the log level.

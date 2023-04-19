@@ -291,7 +291,7 @@ int CNetMdDev::getStrings(const libusb_device_descriptor& descr)
 //!
 //! @return     The device name.
 //--------------------------------------------------------------------------
-std::string CNetMdDev::getDeviceName()
+std::string CNetMdDev::getDeviceName() const
 {
     return {mDevice.mKnownDev.mModel == nullptr ? "" : mDevice.mKnownDev.mModel};
 }
