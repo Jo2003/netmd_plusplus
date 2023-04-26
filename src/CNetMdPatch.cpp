@@ -29,31 +29,233 @@
 #include "CNetMdPatch.h"
 #include "CNetMdDev.hpp"
 #include "log.h"
+#include "netmd_defines.h"
 #include "netmd_utils.h"
 #include <sstream>
+#include <utility>
 
 namespace netmd {
 
 /// patch addresses
-const CNetMdPatch::PatchAdrrTab CNetMdPatch::smPatchAddrTab = {
-    {PID_DEVTYPE    , {{SDI_S1600, 0x02003fcf},{SDI_S1500, 0x02003fc7},{SDI_S1400, 0x03000220},{SDI_S1300, 0x02003e97}}},
-    {PID_PATCH_0_A  , {{SDI_S1600, 0x0007f408},{SDI_S1500, 0x0007e988},{SDI_S1400, 0x0007e2c8},{SDI_S1300, 0x0007aa00}}},
-    {PID_PATCH_0_B  , {{SDI_S1600, 0x0007efec},{SDI_S1500, 0x0007e56c},{SDI_S1400, 0x0007deac},{SDI_S1300, 0x0007a5e4},{SDI_S1200, 0x00078dcc}}},
-    {PID_PREP_PATCH , {{SDI_S1600, 0x00077c04},{SDI_S1500, 0x0007720c},{SDI_S1400, 0x00076b38},{SDI_S1300, 0x00073488},{SDI_S1200, 0x00071e5c}}},
-    {PID_PATCH_CMN_1, {{SDI_S1600, 0x0007f4e8},{SDI_S1500, 0x0007ea68},{SDI_S1400, 0x0007e3a8},{SDI_S1300, 0x0007aae0},{SDI_S1200, 0x00078eac}}},
-    {PID_PATCH_CMN_2, {{SDI_S1600, 0x0007f4ec},{SDI_S1500, 0x0007ea6c},{SDI_S1400, 0x0007e3ac},{SDI_S1300, 0x0007aae4},{SDI_S1200, 0x00078eb0}}},
-    {PID_TRACK_TYPE , {{SDI_S1600, 0x000852b0},{SDI_S1500, 0x00084820},{SDI_S1400, 0x00084160},{SDI_S1300, 0x00080798},{SDI_S1200, 0x0007ea9c}}},
-    {PID_SAFETY     , {{SDI_S1600, 0x000000c4},{SDI_S1500, 0x000000c4},{SDI_S1400, 0x000000c4},{SDI_S1300, 0x000000c4}}}, //< anti brick patch
+const CNetMdPatch::PatchAdrrTab CNetMdPatch::smPatchAddrTab =
+{
+    {
+        PID_DEVTYPE,
+        {
+            {SDI_S1600, 0x02003fcf},
+            {SDI_S1500, 0x02003fc7},
+            {SDI_S1400, 0x03000220},
+            {SDI_S1300, 0x02003e97},
+            {SDI_S1000, 0x0200401b}
+        }
+    },
+    {
+        PID_PATCH_0_A,
+        {
+            {SDI_S1600, 0x0007f408},
+            {SDI_S1500, 0x0007e988},
+            {SDI_S1400, 0x0007e2c8},
+            {SDI_S1300, 0x0007aa00},
+            {SDI_S1000, 0x0007f59c}
+        }
+    },
+    {
+        PID_PATCH_0_B,
+        {
+            {SDI_S1600, 0x0007efec},
+            {SDI_S1500, 0x0007e56c},
+            {SDI_S1400, 0x0007deac},
+            {SDI_S1300, 0x0007a5e4},
+            {SDI_S1200, 0x00078dcc},
+            {SDI_S1100, 0x000783c0},
+            {SDI_S1000, 0x0007f180}
+        }
+    },
+    {
+        PID_PREP_PATCH,
+        {
+            {SDI_S1600, 0x00077c04},
+            {SDI_S1500, 0x0007720c},
+            {SDI_S1400, 0x00076b38},
+            {SDI_S1300, 0x00073488},
+            {SDI_S1200, 0x00071e5c},
+            {SDI_S1100, 0x000714d4},
+            {SDI_S1000, 0x00077d6c}
+        }
+    },
+    {
+        PID_PATCH_CMN_1,
+        {
+            {SDI_S1600, 0x0007f4e8},
+            {SDI_S1500, 0x0007ea68},
+            {SDI_S1400, 0x0007e3a8},
+            {SDI_S1300, 0x0007aae0},
+            {SDI_S1200, 0x00078eac},
+            {SDI_S1100, 0x000784a0},
+            {SDI_S1000, 0x0007f67c}
+        }
+    },
+    {
+        PID_PATCH_CMN_2,
+        {
+            {SDI_S1600, 0x0007f4ec},
+            {SDI_S1500, 0x0007ea6c},
+            {SDI_S1400, 0x0007e3ac},
+            {SDI_S1300, 0x0007aae4},
+            {SDI_S1200, 0x00078eb0},
+            {SDI_S1100, 0x000784a0},
+            {SDI_S1000, 0x0007f680}
+        }
+    },
+    {
+        PID_TRACK_TYPE,
+        {
+            {SDI_S1600, 0x000852b0},
+            {SDI_S1500, 0x00084820},
+            {SDI_S1400, 0x00084160},
+            {SDI_S1300, 0x00080798},
+            {SDI_S1200, 0x0007ea9c},
+            {SDI_S1100, 0x0007e084},
+            {SDI_S1000, 0x00085444}
+        }
+    },
+    {   /// anti brick patch
+        PID_SAFETY,
+        {
+            {SDI_S1600, 0x000000c4},
+            {SDI_S1500, 0x000000c4},
+            {SDI_S1400, 0x000000c4},
+            {SDI_S1300, 0x000000c4}
+        }
+    },
+    {
+        PID_USB_EXE,
+        {
+            {SDI_R1000, 0x00056228},
+            {SDI_R1100, 0x00056aac},
+            {SDI_R1200, 0x000577f8},
+            {SDI_R1300, 0x00057b48},
+            {SDI_R1400, 0x00057be8},
+            {SDI_S1000, 0x0000e784},
+            {SDI_S1100, 0x0000d784},
+            {SDI_S1200, 0x0000d834},
+            {SDI_S1300, 0x0000daa8},
+            {SDI_S1400, 0x0000e4c4},
+            {SDI_S1500, 0x0000e538},
+            {SDI_S1600, 0x0000e69c}
+        }
+    }
 };
 
 /// patch payload
-const CNetMdPatch::PatchPayloadTab CNetMdPatch::smPatchPayloadTab = {
-    {PID_PATCH_0    , {SDI_S1200 | SDI_S1300 | SDI_S1400 | SDI_S1500 | SDI_S1600, {0x00,0x00,0xa0,0xe1}}},
-    {PID_PREP_PATCH , {SDI_S1200 | SDI_S1300 | SDI_S1400 | SDI_S1500 | SDI_S1600, {0x0D,0x31,0x01,0x60}}},
-    {PID_PATCH_CMN_1, {SDI_S1200 | SDI_S1300 | SDI_S1400 | SDI_S1500 | SDI_S1600, {0x14,0x80,0x80,0x03}}},
-    {PID_PATCH_CMN_2, {SDI_S1200 | SDI_S1300 | SDI_S1400 | SDI_S1500 | SDI_S1600, {0x14,0x90,0x80,0x03}}},
-    {PID_TRACK_TYPE , {SDI_S1200 | SDI_S1300 | SDI_S1400 | SDI_S1500 | SDI_S1600, {0x06,0x02,0x00,0x04}}},
-    {PID_SAFETY     , {                        SDI_S1400 | SDI_S1500 | SDI_S1600, {0xdc,0xff,0xff,0xea}}}, //< anti brick patch
+const CNetMdPatch::PatchPayloadTab CNetMdPatch::smPatchPayloadTab =
+{
+    {
+        PID_PATCH_0,
+        {
+            {SDI_S1000 | SDI_S1100 | SDI_S1200 | SDI_S1300 | SDI_S1400 | SDI_S1500 | SDI_S1600, {0x00,0x00,0xa0,0xe1}}
+        }
+    },
+    {
+        PID_PREP_PATCH,
+        {
+            {SDI_S1000 | SDI_S1100 | SDI_S1200 | SDI_S1300 | SDI_S1400 | SDI_S1500 | SDI_S1600, {0x0D,0x31,0x01,0x60}}
+        }
+    },
+    {
+        PID_PATCH_CMN_1,
+        {
+            {SDI_S1000 | SDI_S1100 | SDI_S1200 | SDI_S1300 | SDI_S1400 | SDI_S1500 | SDI_S1600, {0x14,0x80,0x80,0x03}}
+        }
+    },
+    {
+        PID_PATCH_CMN_2,
+        {
+            {SDI_S1000 | SDI_S1100 | SDI_S1200 | SDI_S1300 | SDI_S1400 | SDI_S1500 | SDI_S1600, {0x14,0x90,0x80,0x03}}
+        }
+    },
+    {
+        PID_TRACK_TYPE,
+        {
+            {SDI_S1000 | SDI_S1100 | SDI_S1200 | SDI_S1300 | SDI_S1400 | SDI_S1500 | SDI_S1600, {0x06,0x02,0x00,0x04}}
+        }
+    },
+    {   //! anti brick patch
+        PID_SAFETY,
+        {
+            {SDI_S1400 | SDI_S1500 | SDI_S1600, {0xdc,0xff,0xff,0xea}}
+        }
+    },
+    {
+        PID_USB_EXE,
+        {
+            {SDI_S1000 | SDI_S1100 | SDI_S1200 | SDI_S1300 | SDI_S1400 | SDI_S1500 | SDI_S1600, {0x13,0x48,0x00,0x47}},
+            {SDI_R1000 | SDI_R1100 | SDI_R1200 | SDI_R1300 | SDI_R1400                        , {0x1a,0x48,0x00,0x47}},
+        }
+    }
+};
+
+/// exploit command lookup
+const CNetMdPatch::ExploitCmds CNetMdPatch::smExploidCmds =
+{
+    {SDI_S1000 | SDI_S1100 | SDI_S1200 | SDI_S1300 | SDI_S1400 | SDI_S1500 | SDI_S1600, 0xd2},
+    {SDI_R1000 | SDI_R1100 | SDI_R1200 | SDI_R1300 | SDI_R1400                        , 0xd3}
+};
+
+/// exploit payload
+const CNetMdPatch::ExploitPayloadTab CNetMdPatch::smExplPayloadTab =
+{
+    {
+        EID_LOWER_HEAD,
+        {
+            {SDI_R1000, {0x02, 0x00, 0xa0, 0xe3, 0x00, 0x10, 0x9f, 0xe5, 0x11, 0xff, 0x2f, 0xe1, 0xb1, 0xe5, 0x03, 0x00}},
+            {SDI_R1100, {0x02, 0x00, 0xa0, 0xe3, 0x00, 0x10, 0x9f, 0xe5, 0x11, 0xff, 0x2f, 0xe1, 0xbd, 0xec, 0x03, 0x00}},
+            {SDI_R1200, {0x02, 0x00, 0xa0, 0xe3, 0x00, 0x10, 0x9f, 0xe5, 0x11, 0xff, 0x2f, 0xe1, 0xe9, 0xf4, 0x03, 0x00}},
+            {SDI_R1300, {0x02, 0x00, 0xa0, 0xe3, 0x00, 0x10, 0x9f, 0xe5, 0x11, 0xff, 0x2f, 0xe1, 0x3d, 0xf6, 0x03, 0x00}},
+            {SDI_R1400, {0x02, 0x00, 0xa0, 0xe3, 0x00, 0x10, 0x9f, 0xe5, 0x11, 0xff, 0x2f, 0xe1, 0xdd, 0xf6, 0x03, 0x00}},
+            {SDI_S1000, {0x02, 0x00, 0xa0, 0xe3, 0x00, 0x10, 0x9f, 0xe5, 0x11, 0xff, 0x2f, 0xe1, 0x51, 0x2f, 0x05, 0x00}},
+            {SDI_S1100, {0x02, 0x00, 0xa0, 0xe3, 0x00, 0x10, 0x9f, 0xe5, 0x11, 0xff, 0x2f, 0xe1, 0xc5, 0xd2, 0x04, 0x00}},
+            {SDI_S1200, {0x02, 0x00, 0xa0, 0xe3, 0x00, 0x10, 0x9f, 0xe5, 0x11, 0xff, 0x2f, 0xe1, 0xf1, 0xd9, 0x04, 0x00}},
+            {SDI_S1300, {0x02, 0x00, 0xa0, 0xe3, 0x00, 0x10, 0x9f, 0xe5, 0x11, 0xff, 0x2f, 0xe1, 0xa1, 0xe9, 0x04, 0x00}},
+            {SDI_S1400, {0x02, 0x00, 0xa0, 0xe3, 0x00, 0x10, 0x9f, 0xe5, 0x11, 0xff, 0x2f, 0xe1, 0x9d, 0x1d, 0x05, 0x00}},
+            {SDI_S1500, {0x02, 0x00, 0xa0, 0xe3, 0x00, 0x10, 0x9f, 0xe5, 0x11, 0xff, 0x2f, 0xe1, 0x6d, 0x24, 0x05, 0x00}},
+            {SDI_S1600, {0x02, 0x00, 0xa0, 0xe3, 0x00, 0x10, 0x9f, 0xe5, 0x11, 0xff, 0x2f, 0xe1, 0x01, 0x2e, 0x05, 0x00}}
+        }
+    },
+    {
+        EID_RAISE_HEAD,
+        {
+            {SDI_R1000, {0x01, 0x00, 0xa0, 0xe3, 0x00, 0x10, 0x9f, 0xe5, 0x11, 0xff, 0x2f, 0xe1, 0xb1, 0xe5, 0x03, 0x00}},
+            {SDI_R1100, {0x01, 0x00, 0xa0, 0xe3, 0x00, 0x10, 0x9f, 0xe5, 0x11, 0xff, 0x2f, 0xe1, 0xbd, 0xec, 0x03, 0x00}},
+            {SDI_R1200, {0x01, 0x00, 0xa0, 0xe3, 0x00, 0x10, 0x9f, 0xe5, 0x11, 0xff, 0x2f, 0xe1, 0xe9, 0xf4, 0x03, 0x00}},
+            {SDI_R1300, {0x01, 0x00, 0xa0, 0xe3, 0x00, 0x10, 0x9f, 0xe5, 0x11, 0xff, 0x2f, 0xe1, 0x3d, 0xf6, 0x03, 0x00}},
+            {SDI_R1400, {0x01, 0x00, 0xa0, 0xe3, 0x00, 0x10, 0x9f, 0xe5, 0x11, 0xff, 0x2f, 0xe1, 0xdd, 0xf6, 0x03, 0x00}},
+            {SDI_S1000, {0x01, 0x00, 0xa0, 0xe3, 0x00, 0x10, 0x9f, 0xe5, 0x11, 0xff, 0x2f, 0xe1, 0x51, 0x2f, 0x05, 0x00}},
+            {SDI_S1100, {0x01, 0x00, 0xa0, 0xe3, 0x00, 0x10, 0x9f, 0xe5, 0x11, 0xff, 0x2f, 0xe1, 0xc5, 0xd2, 0x04, 0x00}},
+            {SDI_S1200, {0x01, 0x00, 0xa0, 0xe3, 0x00, 0x10, 0x9f, 0xe5, 0x11, 0xff, 0x2f, 0xe1, 0xf1, 0xd9, 0x04, 0x00}},
+            {SDI_S1300, {0x01, 0x00, 0xa0, 0xe3, 0x00, 0x10, 0x9f, 0xe5, 0x11, 0xff, 0x2f, 0xe1, 0xa1, 0xe9, 0x04, 0x00}},
+            {SDI_S1400, {0x01, 0x00, 0xa0, 0xe3, 0x00, 0x10, 0x9f, 0xe5, 0x11, 0xff, 0x2f, 0xe1, 0x9d, 0x1d, 0x05, 0x00}},
+            {SDI_S1500, {0x01, 0x00, 0xa0, 0xe3, 0x00, 0x10, 0x9f, 0xe5, 0x11, 0xff, 0x2f, 0xe1, 0x6d, 0x24, 0x05, 0x00}},
+            {SDI_S1600, {0x01, 0x00, 0xa0, 0xe3, 0x00, 0x10, 0x9f, 0xe5, 0x11, 0xff, 0x2f, 0xe1, 0x01, 0x2e, 0x05, 0x00}}
+        }
+    },
+    {
+        EID_TRIGGER,
+        {
+            {SDI_R1000, {0x01, 0x00, 0xa0, 0xe3, 0x00, 0x10, 0x9f, 0xe5, 0x11, 0xff, 0x2f, 0xe1, 0x8d, 0xf4, 0x01, 0x00}},
+            {SDI_R1100, {0x01, 0x00, 0xa0, 0xe3, 0x00, 0x10, 0x9f, 0xe5, 0x11, 0xff, 0x2f, 0xe1, 0x99, 0xf6, 0x01, 0x00}},
+            {SDI_R1200, {0x01, 0x00, 0xa0, 0xe3, 0x00, 0x10, 0x9f, 0xe5, 0x11, 0xff, 0x2f, 0xe1, 0xc1, 0xf9, 0x01, 0x00}},
+            {SDI_R1300, {0x01, 0x00, 0xa0, 0xe3, 0x00, 0x10, 0x9f, 0xe5, 0x11, 0xff, 0x2f, 0xe1, 0x3d, 0xfa, 0x01, 0x00}},
+            {SDI_R1400, {0x01, 0x00, 0xa0, 0xe3, 0x00, 0x10, 0x9f, 0xe5, 0x11, 0xff, 0x2f, 0xe1, 0xbd, 0xfa, 0x01, 0x00}},
+            {SDI_S1000, {0x01, 0x00, 0xa0, 0xe3, 0x00, 0x10, 0x9f, 0xe5, 0x11, 0xff, 0x2f, 0xe1, 0x63, 0x6c, 0x01, 0x00}},
+            {SDI_S1100, {0x01, 0x00, 0xa0, 0xe3, 0x00, 0x10, 0x9f, 0xe5, 0x11, 0xff, 0x2f, 0xe1, 0x43, 0x4f, 0x01, 0x00}},
+            {SDI_S1200, {0x01, 0x00, 0xa0, 0xe3, 0x00, 0x10, 0x9f, 0xe5, 0x11, 0xff, 0x2f, 0xe1, 0xe3, 0x50, 0x01, 0x00}},
+            {SDI_S1300, {0x01, 0x00, 0xa0, 0xe3, 0x00, 0x10, 0x9f, 0xe5, 0x11, 0xff, 0x2f, 0xe1, 0x5f, 0x53, 0x01, 0x00}},
+            {SDI_S1400, {0x01, 0x00, 0xa0, 0xe3, 0x00, 0x10, 0x9f, 0xe5, 0x11, 0xff, 0x2f, 0xe1, 0x77, 0x62, 0x01, 0x00}},
+            {SDI_S1500, {0x01, 0x00, 0xa0, 0xe3, 0x00, 0x10, 0x9f, 0xe5, 0x11, 0xff, 0x2f, 0xe1, 0x83, 0x69, 0x01, 0x00}},
+            {SDI_S1600, {0x01, 0x00, 0xa0, 0xe3, 0x00, 0x10, 0x9f, 0xe5, 0x11, 0xff, 0x2f, 0xe1, 0x6f, 0x6b, 0x01, 0x00}}
+        }
+    }
 };
 
 /// used patches
@@ -116,9 +318,55 @@ NetMDByteVector CNetMdPatch::patchPayload(SonyDevInfo devinfo, PatchId pid)
     const auto pl = smPatchPayloadTab.find(pid);
     if (pl != smPatchPayloadTab.cend())
     {
-        if (devinfo & pl->second.mDevs)
+        for(const auto& pld : pl->second)
         {
-            return pl->second.mPtData;
+            if (devinfo & pld.mDevs)
+            {
+                return pld.mPtData;
+            }
+        }
+    }
+
+    return NetMDByteVector{};
+}
+
+//--------------------------------------------------------------------------
+//! @brief      get exploit command
+//!
+//! @param[in]  devinfo  The devinfo
+//!
+//! @return     the exploit command; 0 on error
+//--------------------------------------------------------------------------
+uint8_t CNetMdPatch::exploitCmd(SonyDevInfo devinfo)
+{
+    for(const auto& cmd : smExploidCmds)
+    {
+        if(cmd.first & devinfo)
+        {
+            return cmd.second;
+        }
+    }
+    return 0;
+}
+
+//--------------------------------------------------------------------------
+//! @brief      get exploit data
+//!
+//! @param[in]  devinfo  The device info
+//! @param[in]  eid      The exploit id
+//!
+//! @return     on error: empty byte vector
+//--------------------------------------------------------------------------
+NetMDByteVector CNetMdPatch::exploitData(SonyDevInfo devinfo, ExploitId eid)
+{
+    const auto cit = smExplPayloadTab.find(eid);
+
+    if (cit != smExplPayloadTab.cend())
+    {
+        const auto data = cit->second.find(devinfo);
+        if (data != cit->second.cend())
+        {
+            return data->second;
         }
     }
 
@@ -326,9 +574,29 @@ CNetMdPatch::SonyDevInfo CNetMdPatch::devCodeEx()
 
             mLOG(DEBUG) << "Found device info: " << code.str();
 
-            if (code.str() == "S1.600")
+            if (code.str() == "R1.000")
             {
-                ret = SonyDevInfo::SDI_S1600;
+                ret = SonyDevInfo::SDI_R1000;
+            }
+            else if (code.str() == "R1.100")
+            {
+                ret = SonyDevInfo::SDI_R1100;
+            }
+            else if (code.str() == "R1.200")
+            {
+                ret = SonyDevInfo::SDI_R1200;
+            }
+            else if (code.str() == "R1.300")
+            {
+                ret = SonyDevInfo::SDI_R1300;
+            }
+            else if (code.str() == "S1.000")
+            {
+                ret = SonyDevInfo::SDI_S1000;
+            }
+            else if (code.str() == "S1.100")
+            {
+                ret = SonyDevInfo::SDI_S1100;
             }
             else if (code.str() == "S1.200")
             {
@@ -345,6 +613,10 @@ CNetMdPatch::SonyDevInfo CNetMdPatch::devCodeEx()
             else if (code.str() == "S1.500")
             {
                 ret = SonyDevInfo::SDI_S1500;
+            }
+            else if (code.str() == "S1.600")
+            {
+                ret = SonyDevInfo::SDI_S1600;
             }
         }
     }
@@ -735,11 +1007,12 @@ int CNetMdPatch::applySpPatch(int chanNo)
         }
 
         mLOG(DEBUG) << "Try to get device code ...";
-        if ((devcode = devCodeEx()) == SDI_S1200)
+        devcode = devCodeEx();
+        if ((devcode == SDI_S1100) || (devcode == SDI_S1200))
         {
             patch0 = PID_PATCH_0_B;
         }
-        else if (devcode != SDI_UNKNOWN)
+        if ((devcode >= SDI_S_START) && (devcode <= SDI_S_END))
         {
             if ((addr = patchAddress(devcode, PID_DEVTYPE)) != 0)
             {
@@ -862,7 +1135,8 @@ bool CNetMdPatch::supportsSpUpload()
         if (enableFactory() == NETMDERR_NO_ERROR)
         {
             mLOG(DEBUG) << "Get extended device info!";
-            if (devCodeEx() != SDI_UNKNOWN)
+            SonyDevInfo devCode = devCodeEx();
+            if ((devCode >= SDI_S_START) && (devCode <= SDI_S_END))
             {
                 mLOG(DEBUG) << "Supported device!";
                 ret = true;

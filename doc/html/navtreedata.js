@@ -25,7 +25,7 @@
 var NAVTREE =
 [
   [ "netmd++", "index.html", [
-    [ "CNetMdApi", "index.html#autotoc_md0", [
+    [ "netmd++", "index.html#autotoc_md0", [
       [ "Namespace", "index.html#autotoc_md1", null ],
       [ "Usage", "index.html#autotoc_md2", null ],
       [ "Examples", "index.html#autotoc_md3", [
@@ -60,7 +60,7 @@ var NAVTREE =
 
 var NAVTREEINDEX =
 [
-"_c_net_md_api_8h.html"
+"annotated.html"
 ];
 
 var SYNCONMSG = 'click to disable panel synchronisation';

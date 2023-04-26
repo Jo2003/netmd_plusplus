@@ -24,13 +24,13 @@
  *
  */
 #include <iostream>
-#include <CNetMdApi.h>
+#include <netmd++.h>
 
 using namespace netmd;
 
 int main (int argc, char* argv[])
 {
-    CNetMdApi* pNetMD = new CNetMdApi();
+    netmd_pp* pNetMD = new netmd_pp();
 
     if (pNetMD)
     {

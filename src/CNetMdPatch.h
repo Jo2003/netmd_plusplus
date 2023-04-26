@@ -28,6 +28,7 @@
  */
 #pragma once
 #include "CNetMdDev.hpp"
+#include "netmd_defines.h"
 #include <cstdint>
 
 namespace netmd {
@@ -48,11 +49,22 @@ class CNetMdPatch
     /// device info flags
     enum SonyDevInfo : uint32_t
     {
-        SDI_S1200   = (1ul <<  0),    //!< S1.200 version
-        SDI_S1300   = (1ul <<  1),    //!< S1.300 version
-        SDI_S1400   = (1ul <<  2),    //!< S1.400 version
-        SDI_S1500   = (1ul <<  3),    //!< S1.500 version
-        SDI_S1600   = (1ul <<  4),    //!< S1.600 version
+        SDI_R1000   = (1ul <<  0),    //!< R1.000 version
+        SDI_R1100   = (1ul <<  1),    //!< R1.100 version
+        SDI_R1200   = (1ul <<  2),    //!< R1.200 version
+        SDI_R1300   = (1ul <<  3),    //!< R1.300 version
+        SDI_R1400   = (1ul <<  4),    //!< R1.400 version
+        SDI_R_START = SDI_R1000,
+        SDI_R_END   = SDI_R1400,
+        SDI_S1000   = (1ul <<  5),    //!< S1.000 version
+        SDI_S1100   = (1ul <<  6),    //!< S1.100 version
+        SDI_S1200   = (1ul <<  7),    //!< S1.200 version
+        SDI_S1300   = (1ul <<  8),    //!< S1.300 version
+        SDI_S1400   = (1ul <<  9),    //!< S1.400 version
+        SDI_S1500   = (1ul << 10),    //!< S1.500 version
+        SDI_S1600   = (1ul << 11),    //!< S1.600 version
+        SDI_S_START = SDI_S1000,
+        SDI_S_END   = SDI_S1600,
         SDI_UNKNOWN = (1ul << 31),    //!< unsupported or unknown
     };
 
@@ -69,6 +81,15 @@ class CNetMdPatch
         PID_PATCH_CMN_2,
         PID_TRACK_TYPE,
         PID_SAFETY,
+        PID_USB_EXE,
+    };
+
+    /// exploit ID
+    enum ExploitId : uint8_t
+    {
+        EID_LOWER_HEAD,
+        EID_RAISE_HEAD,
+        EID_TRIGGER,
     };
 
     /// memory access
@@ -88,15 +109,24 @@ class CNetMdPatch
     };
 
     /// type defines
-    using PatchAddr       = std::map<SonyDevInfo, uint32_t>;
-    using PatchAdrrTab    = std::map<PatchId, PatchAddr>;
-    using PatchPayloadTab = std::map<PatchId, PayLoad>;
+    using PatchAddr         = std::map<SonyDevInfo, uint32_t>;
+    using PatchAdrrTab      = std::map<PatchId, PatchAddr>;
+    using PatchPayloadTab   = std::map<PatchId, std::vector<PayLoad>>;
+    using ExploitPayload    = std::map<SonyDevInfo, NetMDByteVector>;
+    using ExploitPayloadTab = std::map<ExploitId, ExploitPayload>;
+    using ExploitCmds        = std::map<uint32_t, uint8_t>;
 
     /// patch addresses with for devices
     static const PatchAdrrTab    smPatchAddrTab;
 
     /// patch payload for devices
     static const PatchPayloadTab smPatchPayloadTab;
+
+    /// exploit payload tab
+    static const ExploitPayloadTab smExplPayloadTab;
+
+    /// exmploit command lookup
+    static const ExploitCmds smExploidCmds;
 
     //! @brief patch areas used
     static PatchId smUsedPatches[MAX_PATCH];
@@ -137,6 +167,25 @@ class CNetMdPatch
     //! @return     empty vector -> error; else -> patch content
     //------------------------------------------------------------------------------
     static NetMDByteVector patchPayload(SonyDevInfo devinfo, PatchId pid);
+
+    //--------------------------------------------------------------------------
+    //! @brief      get exploit command
+    //!
+    //! @param[in]  devinfo  The devinfo
+    //!
+    //! @return     the exploit command; 0 on error
+    //--------------------------------------------------------------------------
+    static uint8_t exploitCmd(SonyDevInfo devinfo);
+
+    //--------------------------------------------------------------------------
+    //! @brief      get exploit data
+    //!
+    //! @param[in]  devinfo  The device info
+    //! @param[in]  eid      The exploit id
+    //!
+    //! @return     on error: empty byte vector
+    //--------------------------------------------------------------------------
+    static NetMDByteVector exploitData(SonyDevInfo devinfo, ExploitId eid);
 
     //------------------------------------------------------------------------------
     //! @brief      write patch data

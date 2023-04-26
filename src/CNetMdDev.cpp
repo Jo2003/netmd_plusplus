@@ -221,11 +221,8 @@ int CNetMdDev::initDevice()
                         if (success)
                         {
                             static_cast<void>(waitForSync());
-
-                            if (getStrings(descr) == NETMDERR_NO_ERROR)
-                            {
-                                mLOG(INFO) << "Product name: " << mDevice.mName << ", serial number: " << mDevice.mSerial;
-                            }
+                            static_cast<void>(getStrings(descr));
+                            mLOG(INFO) << "Product name: " << mDevice.mName << ", serial number: " << mDevice.mSerial;
                         }
                         else
                         {
@@ -262,8 +259,9 @@ int CNetMdDev::getStrings(const libusb_device_descriptor& descr)
     mDevice.mName   = "";
     mDevice.mSerial = "";
 
-    int          vals[] = {descr.iProduct, descr.iSerialNumber};
-    std::string* s[]    = {&mDevice.mName, &mDevice.mSerial};
+    int          vals[]  = {descr.iProduct, descr.iSerialNumber};
+    std::string* s[]     = {&mDevice.mName, &mDevice.mSerial};
+    const char* strErr[] = {"product name", "serial number"};
 
     for(int i = 0; i < 2; i++)
     {
@@ -271,6 +269,7 @@ int CNetMdDev::getStrings(const libusb_device_descriptor& descr)
         {
             if ((sz = libusb_get_string_descriptor_ascii(mDevice.mDevHdl, vals[i], buff, 255)) < 0)
             {
+                mLOG(DEBUG) << "Can't read " << strErr[i] << ": " << libusb_strerror(static_cast<libusb_error>(sz));
                 ret = NETMDERR_USB;
             }
             else

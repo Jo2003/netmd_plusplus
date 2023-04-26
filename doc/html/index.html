@@ -89,7 +89,7 @@ $(document).ready(function(){initNavTree('index.html',''); initResizable(); });
 </div><!--header-->
 <div class="contents">
 <div class="textblock"><h1><a class="anchor" id="autotoc_md0"></a>
-CNetMdApi</h1>
+netmd++</h1>
 <p>This C++ API was written to ease the handling of NetMD devices. It is a synchronous API. So, function calls might block your program flow. If you want to use this API in an GUI app, better put the API calls into a background thread.</p>
 <h2><a class="anchor" id="autotoc_md1"></a>
 Namespace</h2>
@@ -98,11 +98,12 @@ Namespace</h2>
 Usage</h2>
 <ul>
 <li>include the header file into your project: <div class="fragment"><div class="line"> {c++}</div>
-<div class="line"><span class="preprocessor">#include &quot;path/to/CNetMdApi.h&quot;</span></div>
+<div class="line"><span class="preprocessor">#include &quot;path/to/netmd++.h&quot;</span></div>
 </div><!-- fragment --></li>
 <li>create an instance of the API: <div class="fragment"><div class="line"> {c++}</div>
-<div class="line"><a class="code" href="classnetmd_1_1_c_net_md_api.html">netmd::CNetMdApi</a>* pNetMd = <span class="keyword">new</span> <a class="code" href="classnetmd_1_1_c_net_md_api.html">netmd::CNetMdApi</a>();</div>
-<div class="ttc" id="aclassnetmd_1_1_c_net_md_api_html"><div class="ttname"><a href="classnetmd_1_1_c_net_md_api.html">netmd::CNetMdApi</a></div><div class="ttdoc">This class describes a C++ NetMD access library.</div><div class="ttdef"><b>Definition:</b> CNetMdApi.h:259</div></div>
+<div class="line"><a class="code" href="classnetmd_1_1_c_net_md_api.html">netmd::netmd_pp</a>* pNetMd = <span class="keyword">new</span> <a class="code" href="namespacenetmd.html#a8bc42e14d176e366d3d70a1e43963856">netmd::netmd_pp</a>();</div>
+<div class="ttc" id="aclassnetmd_1_1_c_net_md_api_html"><div class="ttname"><a href="classnetmd_1_1_c_net_md_api.html">netmd::CNetMdApi</a></div><div class="ttdoc">This class describes a C++ NetMD access library.</div><div class="ttdef"><b>Definition:</b> netmd++.h:265</div></div>
+<div class="ttc" id="anamespacenetmd_html_a8bc42e14d176e366d3d70a1e43963856"><div class="ttname"><a href="namespacenetmd.html#a8bc42e14d176e366d3d70a1e43963856">netmd::netmd_pp</a></div><div class="ttdeci">CNetMdApi netmd_pp</div><div class="ttdoc">use netmd_pp instead of CNetMdApi</div><div class="ttdef"><b>Definition:</b> netmd++.h:259</div></div>
 </div><!-- fragment --></li>
 <li>initialize the first found NetMD device: <div class="fragment"><div class="line"> {c++}</div>
 <div class="line"><span class="keywordflow">if</span> ((pNetMd != <span class="keyword">nullptr</span>) &amp;&amp; (pNetMd-&gt;<a class="code" href="classnetmd_1_1_c_net_md_api.html#abf0c795194e0e617c5a4f44687ad9a12">initDevice</a>() == <a class="code" href="namespacenetmd.html#a7f6ad6ca6ff713af5d26f8ffc816421bac6236f63c09822b1900f9a14a63233e0">netmd::NETMDERR_NO_ERROR</a>))</div>
@@ -111,7 +112,7 @@ Usage</h2>
 <div class="line">}</div>
 <div class="ttc" id="aclassnetmd_1_1_c_net_md_api_html_abf0c795194e0e617c5a4f44687ad9a12"><div class="ttname"><a href="classnetmd_1_1_c_net_md_api.html#abf0c795194e0e617c5a4f44687ad9a12">netmd::CNetMdApi::initDevice</a></div><div class="ttdeci">int initDevice()</div><div class="ttdoc">Initializes the device.</div></div>
 <div class="ttc" id="aclassnetmd_1_1_c_net_md_api_html_ac3f8fd8a5517e4a34f5a8c0471d5ba7c"><div class="ttname"><a href="classnetmd_1_1_c_net_md_api.html#ac3f8fd8a5517e4a34f5a8c0471d5ba7c">netmd::CNetMdApi::initDiscHeader</a></div><div class="ttdeci">int initDiscHeader()</div><div class="ttdoc">Initializes the disc header.</div></div>
-<div class="ttc" id="anamespacenetmd_html_a7f6ad6ca6ff713af5d26f8ffc816421bac6236f63c09822b1900f9a14a63233e0"><div class="ttname"><a href="namespacenetmd.html#a7f6ad6ca6ff713af5d26f8ffc816421bac6236f63c09822b1900f9a14a63233e0">netmd::NETMDERR_NO_ERROR</a></div><div class="ttdeci">@ NETMDERR_NO_ERROR</div><div class="ttdoc">success</div><div class="ttdef"><b>Definition:</b> CNetMdApi.h:131</div></div>
+<div class="ttc" id="anamespacenetmd_html_a7f6ad6ca6ff713af5d26f8ffc816421bac6236f63c09822b1900f9a14a63233e0"><div class="ttname"><a href="namespacenetmd.html#a7f6ad6ca6ff713af5d26f8ffc816421bac6236f63c09822b1900f9a14a63233e0">netmd::NETMDERR_NO_ERROR</a></div><div class="ttdeci">@ NETMDERR_NO_ERROR</div><div class="ttdoc">success</div><div class="ttdef"><b>Definition:</b> netmd++.h:131</div></div>
 </div><!-- fragment --></li>
 <li>If you change or re-plug the device, simply run above code (init) again!</li>
 </ul>
@@ -121,11 +122,11 @@ Examples</h2>
 Track transfer</h3>
 <p>Check for on-the-fly support and transfer a WAVE file to NetMD with on-the-fly encoding (LP2) or w/o encoding (SP).</p>
 <div class="fragment"><div class="line"> {c++}</div>
-<div class="line"><span class="preprocessor">#include &lt;<a class="code" href="_c_net_md_api_8h.html">CNetMdApi.h</a>&gt;</span></div>
+<div class="line"><span class="preprocessor">#include &lt;<a class="code" href="netmd_09_09_8h.html">netmd++.h</a>&gt;</span></div>
 <div class="line"> </div>
 <div class="line"><span class="keywordtype">int</span> main()</div>
 <div class="line">{</div>
-<div class="line">    <a class="code" href="classnetmd_1_1_c_net_md_api.html">netmd::CNetMdApi</a>* pNetMd = <span class="keyword">new</span> <a class="code" href="classnetmd_1_1_c_net_md_api.html">netmd::CNetMdApi</a>();</div>
+<div class="line">    <a class="code" href="classnetmd_1_1_c_net_md_api.html">netmd::netmd_pp</a>* pNetMd = <span class="keyword">new</span> <a class="code" href="namespacenetmd.html#a8bc42e14d176e366d3d70a1e43963856">netmd::netmd_pp</a>();</div>
 <div class="line"> </div>
 <div class="line">    <span class="keywordflow">if</span> ((pNetMd != <span class="keyword">nullptr</span>) &amp;&amp; (pNetMd-&gt;<a class="code" href="classnetmd_1_1_c_net_md_api.html#abf0c795194e0e617c5a4f44687ad9a12">initDevice</a>() == <a class="code" href="namespacenetmd.html#a7f6ad6ca6ff713af5d26f8ffc816421bac6236f63c09822b1900f9a14a63233e0">netmd::NETMDERR_NO_ERROR</a>))</div>
 <div class="line">    {</div>
@@ -142,19 +143,19 @@ Track transfer</h3>
 <div class="line">    }</div>
 <div class="line">    <span class="keywordflow">return</span> 0;</div>
 <div class="line">}</div>
-<div class="ttc" id="a_c_net_md_api_8h_html"><div class="ttname"><a href="_c_net_md_api_8h.html">CNetMdApi.h</a></div></div>
 <div class="ttc" id="aclassnetmd_1_1_c_net_md_api_html_a587bfc4a87f306cc78623af0aaa856a0"><div class="ttname"><a href="classnetmd_1_1_c_net_md_api.html#a587bfc4a87f306cc78623af0aaa856a0">netmd::CNetMdApi::otfEncodeSupported</a></div><div class="ttdeci">bool otfEncodeSupported()</div><div class="ttdoc">is on the fly encoding supported by device</div></div>
 <div class="ttc" id="aclassnetmd_1_1_c_net_md_api_html_aed63b256e38db624e595a5057530858f"><div class="ttname"><a href="classnetmd_1_1_c_net_md_api.html#aed63b256e38db624e595a5057530858f">netmd::CNetMdApi::sendAudioFile</a></div><div class="ttdeci">int sendAudioFile(const std::string &amp;filename, const std::string &amp;title, DiskFormat otf)</div><div class="ttdoc">Sends an audio track.</div></div>
-<div class="ttc" id="anamespacenetmd_html_abe72764632e8fa864f691a2a752c6b03ab9402b9cf1ec53af5362b80c15af09ec"><div class="ttname"><a href="namespacenetmd.html#abe72764632e8fa864f691a2a752c6b03ab9402b9cf1ec53af5362b80c15af09ec">netmd::NETMD_DISKFORMAT_LP2</a></div><div class="ttdeci">@ NETMD_DISKFORMAT_LP2</div><div class="ttdoc">LP2.</div><div class="ttdef"><b>Definition:</b> CNetMdApi.h:122</div></div>
-<div class="ttc" id="anamespacenetmd_html_abe72764632e8fa864f691a2a752c6b03af43db39c04b1593fa9ec35e6c33919d0"><div class="ttname"><a href="namespacenetmd.html#abe72764632e8fa864f691a2a752c6b03af43db39c04b1593fa9ec35e6c33919d0">netmd::NO_ONTHEFLY_CONVERSION</a></div><div class="ttdeci">@ NO_ONTHEFLY_CONVERSION</div><div class="ttdoc">dont do on-the-fly encoding</div><div class="ttdef"><b>Definition:</b> CNetMdApi.h:125</div></div>
+<div class="ttc" id="anamespacenetmd_html_abe72764632e8fa864f691a2a752c6b03ab9402b9cf1ec53af5362b80c15af09ec"><div class="ttname"><a href="namespacenetmd.html#abe72764632e8fa864f691a2a752c6b03ab9402b9cf1ec53af5362b80c15af09ec">netmd::NETMD_DISKFORMAT_LP2</a></div><div class="ttdeci">@ NETMD_DISKFORMAT_LP2</div><div class="ttdoc">LP2.</div><div class="ttdef"><b>Definition:</b> netmd++.h:122</div></div>
+<div class="ttc" id="anamespacenetmd_html_abe72764632e8fa864f691a2a752c6b03af43db39c04b1593fa9ec35e6c33919d0"><div class="ttname"><a href="namespacenetmd.html#abe72764632e8fa864f691a2a752c6b03af43db39c04b1593fa9ec35e6c33919d0">netmd::NO_ONTHEFLY_CONVERSION</a></div><div class="ttdeci">@ NO_ONTHEFLY_CONVERSION</div><div class="ttdoc">dont do on-the-fly encoding</div><div class="ttdef"><b>Definition:</b> netmd++.h:125</div></div>
+<div class="ttc" id="anetmd_09_09_8h_html"><div class="ttname"><a href="netmd_09_09_8h.html">netmd++.h</a></div></div>
 </div><!-- fragment --><h3><a class="anchor" id="autotoc_md5"></a>
 Erase disc and set new title</h3>
 <div class="fragment"><div class="line"> {c++}</div>
-<div class="line"><span class="preprocessor">#include &lt;<a class="code" href="_c_net_md_api_8h.html">CNetMdApi.h</a>&gt;</span></div>
+<div class="line"><span class="preprocessor">#include &lt;<a class="code" href="netmd_09_09_8h.html">netmd++.h</a>&gt;</span></div>
 <div class="line"> </div>
 <div class="line"><span class="keywordtype">int</span> main()</div>
 <div class="line">{</div>
-<div class="line">    <a class="code" href="classnetmd_1_1_c_net_md_api.html">netmd::CNetMdApi</a>* pNetMd = <span class="keyword">new</span> <a class="code" href="classnetmd_1_1_c_net_md_api.html">netmd::CNetMdApi</a>();</div>
+<div class="line">    <a class="code" href="classnetmd_1_1_c_net_md_api.html">netmd::netmd_pp</a>* pNetMd = <span class="keyword">new</span> <a class="code" href="namespacenetmd.html#a8bc42e14d176e366d3d70a1e43963856">netmd::netmd_pp</a>();</div>
 <div class="line"> </div>
 <div class="line">    <span class="keywordflow">if</span> ((pNetMd != <span class="keyword">nullptr</span>) &amp;&amp; (pNetMd-&gt;<a class="code" href="classnetmd_1_1_c_net_md_api.html#abf0c795194e0e617c5a4f44687ad9a12">initDevice</a>() == <a class="code" href="namespacenetmd.html#a7f6ad6ca6ff713af5d26f8ffc816421bac6236f63c09822b1900f9a14a63233e0">netmd::NETMDERR_NO_ERROR</a>))</div>
 <div class="line">    {</div>

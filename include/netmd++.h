@@ -1,5 +1,5 @@
 /*
- * CNetMdApi.h
+ * netmd++.h
  *
  * This file is part of netmd++, a library for accessing NetMD devices.
  *
@@ -28,9 +28,9 @@
  */
 
 /**
-@file CNetMdApi.h
+@file netmd++.h
 @mainpage
-# CNetMdApi
+# netmd++
 This C++ API was written to ease the handling of NetMD devices. It is a synchronous API.
 So, function calls might block your program flow. If you want to use this API in an GUI app,
 better put the API calls into a background thread.
@@ -42,12 +42,12 @@ This API uses the namespace *netmd*.
 
  - include the header file into your project:
 ~~~{c++}
-#include "path/to/CNetMdApi.h"
+#include "path/to/netmd++.h"
 ~~~
 
  - create an instance of the API:
 ~~~{c++}
-netmd::CNetMdApi* pNetMd = new netmd::CNetMdApi();
+netmd::netmd_pp* pNetMd = new netmd::netmd_pp();
 ~~~
 
  - initialize the first found NetMD device:
@@ -65,11 +65,11 @@ if ((pNetMd != nullptr) && (pNetMd->initDevice() == netmd::NETMDERR_NO_ERROR))
 Check for on-the-fly support and transfer a WAVE file to NetMD with on-the-fly encoding (LP2) or w/o encoding (SP).
 
 ~~~{c++}
-#include <CNetMdApi.h>
+#include <netmd++.h>
 
 int main()
 {
-    netmd::CNetMdApi* pNetMd = new netmd::CNetMdApi();
+    netmd::netmd_pp* pNetMd = new netmd::netmd_pp();
 
     if ((pNetMd != nullptr) && (pNetMd->initDevice() == netmd::NETMDERR_NO_ERROR))
     {
@@ -90,11 +90,11 @@ int main()
 
 ### Erase disc and set new title
 ~~~{c++}
-#include <CNetMdApi.h>
+#include <netmd++.h>
 
 int main()
 {
-    netmd::CNetMdApi* pNetMd = new netmd::CNetMdApi();
+    netmd::netmd_pp* pNetMd = new netmd::netmd_pp();
 
     if ((pNetMd != nullptr) && (pNetMd->initDevice() == netmd::NETMDERR_NO_ERROR))
     {
@@ -249,8 +249,14 @@ class CMDiscHeader;
 /// access device class
 class CNetMdDev;
 
-/// secure implmentation
+/// secure implementation
 class CNetMdSecure;
+
+/// the API class
+class CNetMdApi;
+
+/// use netmd_pp instead of CNetMdApi
+using  netmd_pp = CNetMdApi;
 
 //------------------------------------------------------------------------------
 //! @brief      This class describes a C++ NetMD access library
@@ -335,15 +341,6 @@ public:
     int trackTime(int trackNo, TrackTime& trackTime);
 
     //--------------------------------------------------------------------------
-    //! @brief      get raw disc header
-    //!
-    //! @param[out] header  The buffer for disc header
-    //!
-    //! @return     @ref NetMdErr
-    //--------------------------------------------------------------------------
-    int rawDiscHeader(std::string& header);
-
-    //--------------------------------------------------------------------------
     //! @brief      get disc title
     //!
     //! @param[out] title  The title
@@ -360,13 +357,6 @@ public:
     //! @return     @ref NetMdErr
     //--------------------------------------------------------------------------
     int setDiscTitle(const std::string& title);
-
-    //--------------------------------------------------------------------------
-    //! @brief      Writes a disc header.
-    //!
-    //! @return     @ref NetMdErr
-    //--------------------------------------------------------------------------
-    int writeRawDiscHeader();
 
     //--------------------------------------------------------------------------
     //! @brief      move a track (number)
@@ -536,7 +526,7 @@ private:
     /// access device class
     CNetMdDev* mpNetMd;
 
-    /// secure implmentation
+    /// secure implementation
     CNetMdSecure* mpSecure;
 };
 

@@ -6,6 +6,7 @@ var namespacenetmd =
     [ "Group", "structnetmd_1_1_group.html", "structnetmd_1_1_group" ],
     [ "CNetMdApi", "classnetmd_1_1_c_net_md_api.html", "classnetmd_1_1_c_net_md_api" ],
     [ "Groups", "namespacenetmd.html#a3d51bef57e5495eae342cad0efe022bf", null ],
+    [ "netmd_pp", "namespacenetmd.html#a8bc42e14d176e366d3d70a1e43963856", null ],
     [ "AudioEncoding", "namespacenetmd.html#a12419608ab3cea377632a2485d3f5e5e", [
       [ "SP", "namespacenetmd.html#a12419608ab3cea377632a2485d3f5e5ea674769e3326f8cf937af4282f2815c02", null ],
       [ "LP2", "namespacenetmd.html#a12419608ab3cea377632a2485d3f5e5ea44f4aa36580f79cc4bf4e0cf32284d8e", null ],

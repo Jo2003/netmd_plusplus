@@ -14,6 +14,7 @@ set(LIB_SRC
     CNetMdSecure.cpp
     CNetMdDev.cpp
     CNetMdPatch.cpp
+    CNetMdTOC.cpp
 )
 
 if (NOT BUILD_SHARED_LIBS)
@@ -67,7 +68,7 @@ endif()
 set_target_properties("netmd++" PROPERTIES 
     VERSION ${PROJECT_VERSION}
     SOVERSION 1
-    PUBLIC_HEADER ../include/CNetMdApi.h
+    PUBLIC_HEADER ../include/netmd++.h
     POSITION_INDEPENDENT_CODE ${BUILD_SHARED_LIBS})
 
 target_include_directories("netmd++" PRIVATE .)
