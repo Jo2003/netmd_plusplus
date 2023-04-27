@@ -509,5 +509,44 @@ void parse_time(uint8_t* src, NetMdTime& time)
     time.frame = bcd_to_proper(src + 4, 1) & 0xff;
 }
 
+//------------------------------------------------------------------------------
+//! @brief      Addition assignment operator for NetMDByteVector.
+//!
+//! @param      a     byte vector 1
+//! @param[in]  b     byte vector 2
+//!
+//! @return     The result of the addition assignment
+//------------------------------------------------------------------------------
+NetMDByteVector& operator+=(NetMDByteVector& a, const NetMDByteVector& b)
+{
+    for(const auto& c : b)
+    {
+        a.push_back(c);
+    }
+    return a;
+}
+
+//------------------------------------------------------------------------------
+//! @brief      extract a sub vector from vector
+//!
+//! @param[in]  src     The source vector
+//! @param[in]  offset  The offset
+//! @param[in]  count   The byte count to extract
+//!
+//! @return     sub vector
+//------------------------------------------------------------------------------
+NetMDByteVector subVec(const NetMDByteVector& src, size_t offset, size_t count)
+{
+    NetMDByteVector ret;
+
+    size_t limit = ((offset + count) > src.size()) ? src.size() : (offset + count);
+
+    for (size_t i = offset; i < limit; i++)
+    {
+        ret.push_back(src.at(i));
+    }
+    return ret;
+}
+
 
 } // ~namespace

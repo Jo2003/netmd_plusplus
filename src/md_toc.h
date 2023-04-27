@@ -76,10 +76,10 @@ namespace toc
         uint8_t link;           //!< if non-zero, gives next fragment
     };
 
-    //! UTOC sector #0 (Address info). 2336 bytes
+    //! UTOC sector #0 (Address info). 2352 bytes
     struct UTOC_0
     {
-        uint8_t unknown_0[0xc];
+        uint8_t unknown_0[0x1c];
         uint16_t sign;            //!< signature of last UTOC updater
         uint8_t nonempty;         //!< ?flag indicating disc is not blank
         uint8_t ntracks;          //!< number of tracks on disc
@@ -96,10 +96,10 @@ namespace toc
         uint8_t link;         //!< if non-zero, title continues at this titlelist entry
     };
 
-    //! UTOC sector #1 (Title info). 2336 bytes */
+    //! UTOC sector #1 (Title info). 2352 bytes
     struct UTOC_1
     {
-        uint8_t unknown[0x1f];
+        uint8_t unknown[0x2f];
         uint8_t free_title_slot;    //!< next free titlelist slot
         uint8_t titlemap[256];      //!< map track no. to slot in titlelist
         titlecell titlelist[256];
@@ -112,10 +112,10 @@ namespace toc
         uint16_t signature;         //!< "signature" of machine that wrote this track
     };
 
-    //! UTOC sector #2 (Date and Time info). 2336 bytes
+    //! UTOC sector #2 (Date and Time info). 2352 bytes
     struct  UTOC_2
     {
-        uint8_t unknown[0x1f];
+        uint8_t unknown[0x2f];
         uint8_t free_time_slot;     //!< next free timelist slot
         uint8_t timemap[256];       //!< map track no. to slot in timelist
         timestamp timelist[256];
@@ -124,7 +124,7 @@ namespace toc
     //! unsupported UTOC sector. 7104 bytes
     struct UTOC_3
     {
-        uint8_t unknown[64 * 111];
+        uint8_t unknown[2352];
     };
 
     //! structure with the whole TOC data mapped.

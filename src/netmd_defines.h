@@ -114,6 +114,15 @@ struct ThrownData
     std::string mErrDescr;
 };
 
+/// TOC sector names
+enum UTOCSector : uint16_t
+{
+    POS_ADDR,   //!< position and addresses of audio data
+    HW_TITLES,  //!< half width titles
+    TSTAMPS,    //!< time stamps
+    FW_TITLES,  //!< full width titles
+};
+
 /// NetMD time
 struct NetMdTime
 {

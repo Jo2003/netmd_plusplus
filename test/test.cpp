@@ -25,6 +25,7 @@
  */
 #include <iostream>
 #include <netmd++.h>
+#include "../src/CNetMdTOC.h"
 
 using namespace netmd;
 
@@ -34,8 +35,9 @@ int main (int argc, char* argv[])
 
     if (pNetMD)
     {
-
+        pNetMD->setLogLevel(INFO);
         pNetMD->initDevice();
+        pNetMD->initDiscHeader();
 
         std::string s;
 
@@ -83,6 +85,46 @@ int main (int argc, char* argv[])
         bool support = pNetMD->spUploadSupported();
 
         std::cout << "Supports SP upload: " << support << std::endl;
+
+        if (pNetMD->prepareTOCManip() == NETMDERR_NO_ERROR)
+        {
+            NetMDByteVector toc = pNetMD->readUTOCSector(UTOCSector::POS_ADDR);
+            toc += pNetMD->readUTOCSector(UTOCSector::HW_TITLES);
+            toc += pNetMD->readUTOCSector(UTOCSector::TSTAMPS);
+            toc += pNetMD->readUTOCSector(UTOCSector::FW_TITLES);
+
+            if (toc.size() == (4 * 2352))
+            {
+                std::cout << "TOC data read!" << std::endl;
+                uint8_t *pData = new uint8_t[toc.size()];
+
+                for(size_t i = 0; i < toc.size(); i++)
+                {
+                    pData[i] = toc.at(i);
+                }
+
+                CNetMdTOC toc;
+                toc.import(pData);
+
+                i = toc.trackCount();
+
+                std::cout << "TOC tracks: " << i << std::endl;
+                std::cout << "TOC disc info:  " << toc.discInfo() << std::endl;
+
+                for (int j = 1; j <= i; j++)
+                {
+                    std::cout << "TOC track #" << j << ": " << toc.trackInfo(j) << std::endl;
+                }
+            }
+            else
+            {
+                std::cout << "read " << toc.size() << " TOC bytes" << std::endl;
+            }
+        }
+        else
+        {
+            std::cout << "Can't prepare TOC manip!" << std::endl;
+        }
 
         delete pNetMD;
     }

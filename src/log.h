@@ -13,6 +13,7 @@
 #include <string>
 #include <sstream>
 #include <mutex>
+#include <vector>
 
 enum typelog
 {
@@ -91,6 +92,75 @@ public:
         std::ostringstream oss;
         std::size_t i;
         std::size_t j = 0;
+        int breakpoint = 0;
+
+        oss << std::endl;
+
+        for (i = 0; i < dataLen; i++)
+        {
+            oss << std::hex << std::setw(2) << std::setfill('0')
+                << static_cast<int>(data[i]) << std::dec << " ";
+
+            breakpoint++;
+
+            if(!((i + 1) % 16) && i)
+            {
+                oss << "\t\t";
+
+                for(j = ((i + 1) - 16); j < ((i + 1) / 16) * 16; j++)
+                {
+                    if(data[j] < 30)
+                    {
+                        oss << ".";
+                    }
+                    else
+                    {
+                        oss << data[j];
+                    }
+                }
+                oss << std::endl;
+                breakpoint = 0;
+            }
+        }
+
+        if(breakpoint == 16)
+        {
+            return oss.str();
+        }
+
+        for(; breakpoint < 16; breakpoint++)
+        {
+            oss << "   ";
+        }
+
+        oss << "\t\t";
+
+        for(j = dataLen - (dataLen % 16); j < dataLen; j++)
+        {
+            if(data[j] < 30)
+            {
+                oss << ".";
+            }
+            else
+            {
+                oss << data[j];
+            }
+        }
+
+        return oss.str();
+    }
+
+    static std::string hexFormat(int sev, const std::vector<uint8_t>& data)
+    {
+        if (sev < LOGCFG.level)
+        {
+            return std::string{};
+        }
+
+        std::ostringstream oss;
+        std::size_t i;
+        std::size_t j = 0;
+        std::size_t dataLen = data.size();
         int breakpoint = 0;
 
         oss << std::endl;

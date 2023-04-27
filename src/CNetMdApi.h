@@ -332,6 +332,23 @@ public:
     //--------------------------------------------------------------------------
     Groups groups();
 
+    //--------------------------------------------------------------------------
+    //! @brief      prepare TOC manipulation
+    //!
+    //! @return     NetMdErr
+    //! @see        NetMdErr
+    //--------------------------------------------------------------------------
+    int prepareTOCManip();
+
+    //--------------------------------------------------------------------------
+    //! @brief      Reads an utoc sector.
+    //!
+    //! @param[in]  s     sector number
+    //!
+    //! @return     TOC sector data. (error if empty)
+    //--------------------------------------------------------------------------
+    NetMDByteVector readUTOCSector(UTOCSector s);
+
 protected:
 
 

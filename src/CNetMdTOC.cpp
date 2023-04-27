@@ -224,4 +224,117 @@ int CNetMdTOC::setDiscTitle(const std::string& title)
     return 0;
 }
 
+//--------------------------------------------------------------------------
+//! @brief      get track count
+//!
+//! @return     number of tracks
+//--------------------------------------------------------------------------
+int CNetMdTOC::trackCount() const
+{
+    if (mpToc)
+    {
+        return mpToc->mTracks.ntracks;
+    }
+    return -1;
+}
+
+//--------------------------------------------------------------------------
+//! @brief      get MD title
+//!
+//! @return     title
+//--------------------------------------------------------------------------
+std::string CNetMdTOC::discTitle() const
+{
+    return trackTitle(0);
+}
+
+//--------------------------------------------------------------------------
+//! @brief      get track title
+//!
+//! @param[in]  trackNo  The track number
+//!
+//! @return     title
+//--------------------------------------------------------------------------
+std::string CNetMdTOC::trackTitle(int trackNo) const
+{
+    std::string s;
+    if (mpToc)
+    {
+        int cell = mpToc->mTitles.titlemap[trackNo];
+        do
+        {
+            for (int i = 0; i < 7; i++)
+            {
+                if (mpToc->mTitles.titlelist[cell].title[i] != '\0')
+                {
+                    s.push_back(mpToc->mTitles.titlelist[cell].title[i]);
+                }
+                else
+                {
+                    break;
+                }
+            }
+            cell = mpToc->mTitles.titlelist[cell].link;
+        }
+        while(cell != 0);
+    }
+    return s;
+}
+
+//--------------------------------------------------------------------------
+//! @brief      get track info
+//!
+//! @param[in]  trackNo  The track number
+//!
+//! @return     track info
+//--------------------------------------------------------------------------
+std::string CNetMdTOC::trackInfo(int trackNo) const
+{
+    std::ostringstream oss;
+
+    if (mpToc)
+    {
+        oss << trackTitle(trackNo) << std::endl;
+
+        int fragment = mpToc->mTracks.trackmap[trackNo];
+
+        do
+        {
+            CSG begin(mpToc->mTracks.fraglist[fragment].start);
+            CSG end(mpToc->mTracks.fraglist[fragment].end);
+
+            oss << "Fragment #" << fragment << ": begin=" << static_cast<uint32_t>(begin)
+                << ", end=" << static_cast<uint32_t>(end) << ", mode=0x" << std::hex
+                << static_cast<int>(mpToc->mTracks.fraglist[fragment].mode) << std::dec
+                << std::endl;
+
+            fragment = mpToc->mTracks.fraglist[fragment].link;
+        }
+        while(fragment != 0);
+    }
+
+    return oss.str();
+}
+
+//--------------------------------------------------------------------------
+//! @brief      get disc info
+//!
+//! @return     disc info
+//--------------------------------------------------------------------------
+std::string CNetMdTOC::discInfo() const
+{
+    std::ostringstream oss;
+
+    if (mpToc)
+    {
+        oss << discTitle() << std::endl;
+        oss << "Track Count: " << static_cast<int>(mpToc->mTracks.ntracks)
+            << ", next free: " << static_cast<int>(mpToc->mTracks.free_track_slot)
+            << ", non empty: 0x" << std::hex << static_cast<int>(mpToc->mTracks.nonempty) << std::dec
+            << ", signature: 0x" << std::hex << fromBigEndian(mpToc->mTracks.sign);
+    }
+
+    return oss.str();
+}
+
 } // ~netmd

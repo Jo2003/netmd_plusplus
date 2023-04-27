@@ -102,6 +102,27 @@ std::ostream& operator<<(std::ostream& o, const AudioEncoding& ae);
 std::ostream& operator<<(std::ostream& o, const TrackProtection& tp);
 
 //------------------------------------------------------------------------------
+//! @brief      Addition assignment operator for NetMDByteVector.
+//!
+//! @param      a     byte vector 1
+//! @param[in]  b     byte vector 2
+//!
+//! @return     The result of the addition assignment
+//------------------------------------------------------------------------------
+NetMDByteVector& operator+=(NetMDByteVector& a, const NetMDByteVector& b);
+
+//------------------------------------------------------------------------------
+//! @brief      extract a sub vector from vector
+//!
+//! @param[in]  src     The source vector
+//! @param[in]  offset  The offset
+//! @param[in]  count   The byte count to extract
+//!
+//! @return     sub vector
+//------------------------------------------------------------------------------
+NetMDByteVector subVec(const NetMDByteVector& src, size_t offset, size_t count);
+
+//------------------------------------------------------------------------------
 //! @brief      swop bytes
 //!
 //! @param      val   The value

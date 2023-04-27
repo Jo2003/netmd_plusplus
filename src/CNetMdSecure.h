@@ -416,6 +416,23 @@ class CNetMdSecure
     //--------------------------------------------------------------------------
     int setInitTrackTitle(uint16_t trackNo, const std::string& title);
 
+    //--------------------------------------------------------------------------
+    //! @brief      prepare TOC manipulation
+    //!
+    //! @return     NetMdErr
+    //! @see        NetMdErr
+    //--------------------------------------------------------------------------
+    int prepareTOCManip();
+
+    //--------------------------------------------------------------------------
+    //! @brief      Reads an utoc sector.
+    //!
+    //! @param[in]  s     sector name
+    //!
+    //! @return     TOC sector data. (error if empty)
+    //--------------------------------------------------------------------------
+    NetMDByteVector readUTOCSector(UTOCSector s);
+
     CNetMdDev& mNetMd;
 
     /// patch support class

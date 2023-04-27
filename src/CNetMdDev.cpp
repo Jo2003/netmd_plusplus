@@ -470,6 +470,11 @@ int CNetMdDev::exchange(unsigned char* cmd, size_t cmdLen, NetMDResp* response,
             mLOG(DEBUG) << "Expected INTERIM return value: 0x" << std::hex << std::setw(2)
                            << std::setfill('0') << static_cast<int>((*pResp)[0]) << std::dec;
         }
+        else if (((*pResp)[0] == NETMD_STATUS_NOT_IMPLEMENTED) && (expected == NETMD_STATUS_NOT_IMPLEMENTED))
+        {
+            mLOG(DEBUG) << "Expected status 'NOT IMPLEMENTED' return value: 0x" << std::hex << std::setw(2)
+                           << std::setfill('0') << static_cast<int>((*pResp)[0]) << std::dec;
+        }
         else if ((*pResp)[0] != NETMD_STATUS_ACCEPTED)
         {
             ret = NETMDERR_CMD_FAILED;

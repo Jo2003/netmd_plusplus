@@ -187,6 +187,87 @@ class CNetMdPatch
     //--------------------------------------------------------------------------
     static NetMDByteVector exploitData(SonyDevInfo devinfo, ExploitId eid);
 
+    //--------------------------------------------------------------------------
+    //! @brief      check if patch is active
+    //!
+    //! @param[in]  pid      The patch id
+    //! @param[in]  devinfo  The device info
+    //!
+    //! @return     1 -> patch is active; 0 -> not active
+    //--------------------------------------------------------------------------
+    int checkPatch(PatchId pid, SonyDevInfo devinfo);
+
+    //--------------------------------------------------------------------------
+    //! @brief      Reads metadata peripheral.
+    //!
+    //! @param[in]  sector  The sector
+    //! @param[in]  offset  The offset
+    //! @param[in]  length  The length
+    //!
+    //! @return     NetMDByteVector
+    //--------------------------------------------------------------------------
+    NetMDByteVector readMetadataPeripheral(uint16_t sector, uint16_t offset, uint8_t length);
+
+    //--------------------------------------------------------------------------
+    //! @brief      Writes metadata peripheral.
+    //!
+    //! @param[in]  sector  The sector
+    //! @param[in]  offset  The offset
+    //! @param[in]  data    The data
+    //!
+    //! @return     NetMdErr
+    //! @see        NetMdErr
+    //--------------------------------------------------------------------------
+    int writeMetadataPeripheral(uint16_t sector, uint16_t offset, const NetMDByteVector& data);
+
+    //--------------------------------------------------------------------------
+    //! @brief      Reads an utoc sector.
+    //!
+    //! @param[in]  s     sector name
+    //!
+    //! @return     TOC sector data. (error if empty)
+    //--------------------------------------------------------------------------
+    NetMDByteVector readUTOCSector(UTOCSector s);
+
+    //--------------------------------------------------------------------------
+    //! @brief      Writes an utoc sector.
+    //!
+    //! @param[in]  s     sector names
+    //! @param[in]  data  The data to be written
+    //!
+    //! @return     NetMdErr
+    //! @see        NetMdErr
+    //--------------------------------------------------------------------------
+    int writeUTOCSector(UTOCSector s, const NetMDByteVector& data);
+
+    //--------------------------------------------------------------------------
+    //! @brief      prepare TOC manipulation
+    //!
+    //! @return     NetMdErr
+    //! @see        NetMdErr
+    //--------------------------------------------------------------------------
+    int prepareTOCManip();
+
+    //--------------------------------------------------------------------------
+    //! @brief      finalize TOC though exploit
+    //!
+    //! @return     NetMdErr
+    //! @see        NetMdErr
+    //--------------------------------------------------------------------------
+    int finalizeTOC();
+
+    //--------------------------------------------------------------------------
+    //! @brief      USB execution (run exploit)
+    //!
+    //! @param[in]  devInfo   The device information
+    //! @param[in]  execData  The data to USBExecute
+    //! @param[out] pResp     The optional response pointer
+    //!
+    //! @return     NetMdErr
+    //! @see        NetMdErr
+    //--------------------------------------------------------------------------
+    int USBExecute(SonyDevInfo devInfo, const NetMDByteVector& execData, NetMDResp* pResp = nullptr);
+
     //------------------------------------------------------------------------------
     //! @brief      write patch data
     //!

@@ -1601,5 +1601,28 @@ int CNetMdSecure::setInitTrackTitle(uint16_t trackNo, const std::string& title)
     return ret;
 }
 
+//--------------------------------------------------------------------------
+//! @brief      prepare TOC manipulation
+//!
+//! @return     NetMdErr
+//! @see        NetMdErr
+//--------------------------------------------------------------------------
+int CNetMdSecure::prepareTOCManip()
+{
+    return mPatch.prepareTOCManip();
+}
+
+//--------------------------------------------------------------------------
+//! @brief      Reads an utoc sector.
+//!
+//! @param[in]  s     sector name
+//!
+//! @return     TOC sector data. (error if empty)
+//--------------------------------------------------------------------------
+NetMDByteVector CNetMdSecure::readUTOCSector(UTOCSector s)
+{
+    return mPatch.readUTOCSector(s);
+}
+
 
 } // ~namespace

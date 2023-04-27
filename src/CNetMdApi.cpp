@@ -875,4 +875,27 @@ Groups CNetMdApi::groups()
     return mpDiscHeader->groups();
 }
 
+//--------------------------------------------------------------------------
+//! @brief      prepare TOC manipulation
+//!
+//! @return     NetMdErr
+//! @see        NetMdErr
+//--------------------------------------------------------------------------
+int CNetMdApi::prepareTOCManip()
+{
+    return mpSecure->prepareTOCManip();
+}
+
+//--------------------------------------------------------------------------
+//! @brief      Reads an utoc sector.
+//!
+//! @param[in]  s     sector number
+//!
+//! @return     TOC sector data. (error if empty)
+//--------------------------------------------------------------------------
+NetMDByteVector CNetMdApi::readUTOCSector(UTOCSector s)
+{
+    return mpSecure->readUTOCSector(s);
+}
+
 } // ~namespace

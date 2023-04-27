@@ -32,6 +32,7 @@
 #include "netmd_defines.h"
 #include "netmd_utils.h"
 #include <sstream>
+#include <unistd.h>
 #include <utility>
 
 namespace netmd {
@@ -272,7 +273,7 @@ int CNetMdPatch::nextFreePatch(PatchId pid)
 {
     for (int i = 0; i < MAX_PATCH; i++)
     {
-        if (smUsedPatches[i] == PID_UNUSED)
+        if ((smUsedPatches[i] == pid) || (smUsedPatches[i] == PID_UNUSED))
         {
             smUsedPatches[i] = pid;
             return i;
@@ -371,6 +372,324 @@ NetMDByteVector CNetMdPatch::exploitData(SonyDevInfo devinfo, ExploitId eid)
     }
 
     return NetMDByteVector{};
+}
+
+//--------------------------------------------------------------------------
+//! @brief      check if patch is active
+//!
+//! @param[in]  pid      The patch id
+//! @param[in]  devinfo  The device info
+//!
+//! @return     1 -> patch is active; 0 -> not active
+//--------------------------------------------------------------------------
+int CNetMdPatch::checkPatch(PatchId pid, SonyDevInfo devinfo)
+{
+    mLOG(DEBUG);
+    uint32_t        addr      = patchAddress(devinfo, pid);
+    NetMDByteVector patch_cnt = patchPayload(devinfo, pid);
+
+    try
+    {
+        NetMDByteVector cur_patch_data;
+        uint32_t        cur_patch_addr = 0;
+
+        if ((addr == 0) || patch_cnt.empty())
+        {
+            mNetMdThrow(NETMDERR_NO_ERROR, "Patch data not found!");
+        }
+
+        for (int i = 0; i < MAX_PATCH; i++)
+        {
+            if (readPatchData(i, cur_patch_addr, cur_patch_data) != NETMDERR_NO_ERROR)
+            {
+                mNetMdThrow(NETMDERR_USB, "Can't read patch data for patch #" << i << ".");
+            }
+
+            if ((cur_patch_addr == addr) && (cur_patch_data == patch_cnt))
+            {
+                mLOG(DEBUG) << "patch " << static_cast<int>(pid) << " found at patch slot #" << i << ".";
+                smUsedPatches[i] = pid;
+                return 1;
+            }
+        }
+    }
+    catch(const ThrownData& e)
+    {
+        if (e.mErr == NETMDERR_NO_ERROR)
+        {
+            LOG(DEBUG) << e.mErrDescr;
+        }
+        else
+        {
+            LOG(CRITICAL) << e.mErrDescr;
+        }
+        return 0;
+    }
+    catch(...)
+    {
+        mLOG(CRITICAL) << "Unknown error while patching NetMD Device!";
+        return 0;
+    }
+
+    return 0;
+}
+
+//--------------------------------------------------------------------------
+//! @brief      Reads metadata peripheral.
+//!
+//! @param[in]  sector  The sector
+//! @param[in]  offset  The offset
+//! @param[in]  length  The length
+//!
+//! @return     NetMDByteVector
+//--------------------------------------------------------------------------
+NetMDByteVector CNetMdPatch::readMetadataPeripheral(uint16_t sector, uint16_t offset, uint8_t length)
+{
+    int ret;
+    NetMDResp query, resp;
+    NetMDParams params;
+
+    // mLOG(INFO) << "Read sector " << sector << ", offset " << offset << ", lebgth: " << static_cast<int>(length);
+
+    if ((ret = formatQuery("00 1824 ff %<w %<w %b 00", {{sector}, {offset}, {length}}, query)) == 10)
+    {
+        if ((ret = mNetMd.exchange(query.get(), ret, &resp, true)) > 8)
+        {
+            if (scanQuery(resp.get(), ret, "%? 1824 00 %?%?%?%? %? %*", params) == NETMDERR_NO_ERROR)
+            {
+                if ((params.size() == 1) && (params.at(0).index() == BYTE_VECTOR))
+                {
+                    return simple_get<NetMDByteVector>(params.at(0));
+                }
+            }
+        }
+    }
+    return NetMDByteVector{};
+}
+
+//--------------------------------------------------------------------------
+//! @brief      Writes metadata peripheral.
+//!
+//! @param[in]  sector  The sector
+//! @param[in]  offset  The offset
+//! @param[in]  data    The data
+//!
+//! @return     NetMdErr
+//! @see        NetMdErr
+//--------------------------------------------------------------------------
+int CNetMdPatch::writeMetadataPeripheral(uint16_t sector, uint16_t offset, const NetMDByteVector& data)
+{
+    int ret;
+    NetMDResp query;
+    if ((ret = formatQuery("00 1825 ff %<w %<w %*", {{sector}, {offset}, {data}}, query)) >= 8)
+    {
+        ret = mNetMd.exchange(query.get(), ret, nullptr, true);
+        return (ret >= 0) ? NETMDERR_NO_ERROR : ret;
+    }
+    return NETMDERR_PARAM;
+}
+
+//--------------------------------------------------------------------------
+//! @brief      Reads an utoc sector.
+//!
+//! @param[in]  s     sector name
+//!
+//! @return     TOC sector data. (error if empty)
+//--------------------------------------------------------------------------
+NetMDByteVector CNetMdPatch::readUTOCSector(UTOCSector s)
+{
+    constexpr uint16_t RD_SIZE = 0x10;
+    NetMDByteVector ret, part;
+
+    for (int i = 0; i < 147; i++)
+    {
+        // 147 * 16 = 2352 -> sector length
+        part = readMetadataPeripheral(s, i * RD_SIZE, RD_SIZE);
+        if (!part.empty())
+        {
+            ret += part;
+            // mLOG(INFO) << "Read part of " << part.size() << " Bytes, sector is now " << ret.size() << " Bytes";
+        }
+        else
+        {
+            mLOG(CRITICAL) << "Can't read TOC data for sector " << static_cast<int>(s);
+            return NetMDByteVector{};
+        }
+    }
+
+    mLOG(INFO) << "Sector " << static_cast<int>(s) << LOG::hexFormat(INFO, ret);
+    return ret;
+}
+
+//--------------------------------------------------------------------------
+//! @brief      Writes an utoc sector.
+//!
+//! @param[in]  s     sector names
+//! @param[in]  data  The data to be written
+//!
+//! @return     NetMdErr
+//! @see        NetMdErr
+//--------------------------------------------------------------------------
+int CNetMdPatch::writeUTOCSector(UTOCSector s, const NetMDByteVector& data)
+{
+    int err = 0;
+    constexpr uint16_t WR_SIZE = 0x10;
+    if (data.size() !=  2352)
+    {
+        mLOG(CRITICAL) << "The TOC data provided is not a valid TOC Sector!";
+        return NETMDERR_PARAM;
+    }
+
+    for (int i = 0; i < 147; i++)
+    {
+        if ((err = writeMetadataPeripheral(s, i * WR_SIZE, subVec(data, i * WR_SIZE, WR_SIZE))) != NETMDERR_NO_ERROR)
+        {
+            mLOG(CRITICAL) << "Can't write TOC data for sector " << static_cast<int>(s);
+            return err;
+        }
+    }
+
+    return NETMDERR_NO_ERROR;
+}
+
+//--------------------------------------------------------------------------
+//! @brief      prepare TOC manipulation
+//!
+//! @return     NetMdErr
+//! @see        NetMdErr
+//--------------------------------------------------------------------------
+int CNetMdPatch::prepareTOCManip()
+{
+    mLOG(DEBUG);
+    if (!mNetMd.isMaybePatchable())
+    {
+        return NETMDERR_NOT_SUPPORTED;
+    }
+
+    try
+    {
+        mLOG(DEBUG) << "Enable factory ...";
+        if (enableFactory() != NETMDERR_NO_ERROR)
+        {
+            mNetMdThrow(NETMDERR_USB, "Can't enable factory mode!");
+        }
+
+        mLOG(DEBUG) << "Apply safety patch ...";
+        if (safetyPatch() != NETMDERR_NO_ERROR)
+        {
+            mNetMdThrow(NETMDERR_USB, "Can't enable safety patch!");
+        }
+
+        mLOG(DEBUG) << "Try to get device code ...";
+        SonyDevInfo devcode = devCodeEx();
+        if (devcode == SDI_UNKNOWN)
+        {
+            mNetMdThrow(NETMDERR_OTHER, "Unknown or unsupported NetMD device!");
+        }
+
+        // check, if patch is already active ...
+        if (checkPatch(PID_USB_EXE, devcode) == 0)
+        {
+            // patch ...
+            mLOG(DEBUG) << "=== Apply USB code execution patch ===";
+            if (patch(patchAddress(devcode, PID_USB_EXE),
+                      patchPayload(devcode, PID_USB_EXE),
+                      nextFreePatch(PID_USB_EXE)) != NETMDERR_NO_ERROR)
+            {
+                mNetMdThrow(NETMDERR_USB, "Can't apply USB code execution patch!");
+            }
+        }
+    }
+    catch(const ThrownData& e)
+    {
+        if (e.mErr == NETMDERR_NO_ERROR)
+        {
+            LOG(DEBUG) << e.mErrDescr;
+        }
+        else
+        {
+            LOG(CRITICAL) << e.mErrDescr;
+        }
+        return e.mErr;
+    }
+    catch(...)
+    {
+        mLOG(CRITICAL) << "Unknown error while patching NetMD Device!";
+        return NETMDERR_OTHER;
+    }
+
+    return NETMDERR_NO_ERROR;
+}
+
+//--------------------------------------------------------------------------
+//! @brief      USB execution (run exploit)
+//!
+//! @param[in]  devInfo   The device information
+//! @param[in]  execData  The data to USBExecute
+//!
+//! @return     NetMdErr
+//! @see        NetMdErr
+//--------------------------------------------------------------------------
+int CNetMdPatch::USBExecute(SonyDevInfo devInfo, const NetMDByteVector& execData, NetMDResp* pResp)
+{
+    NetMDResp query, resp;
+    NetMDParams params;
+    int ret;
+
+    if ((ret = formatQuery("00 18%b ff %*", {{exploitCmd(devInfo)}, {execData}}, query)) > 0)
+    {
+        if ((ret = mNetMd.exchange(query.get(), ret, &resp, true, CNetMdDev::NETMD_STATUS_NOT_IMPLEMENTED)) > 0)
+        {
+            // capture result
+            if (scanQuery(resp.get(), ret, "%? 18%? ff %*", params) == NETMDERR_NO_ERROR)
+            {
+                if ((params.size() == 1) && (params.at(0).index() == BYTE_VECTOR))
+                {
+                    if (pResp != nullptr)
+                    {
+                        NetMDByteVector data = simple_get<NetMDByteVector>(params.at(0));
+                        *pResp = NetMDResp(new uint8_t[data.size()]);
+
+                        for(size_t i = 0; i < data.size(); i++)
+                        {
+                            (*pResp)[i] = data.at(i);
+                        }
+                        ret = data.size();
+                    }
+                    else
+                    {
+                        ret = NETMDERR_NO_ERROR;
+                    }
+
+                    return ret;
+                }
+            }
+        }
+    }
+
+    return NETMDERR_OTHER;
+}
+
+//--------------------------------------------------------------------------
+//! @brief      finalize TOC though exploit
+//!
+//! @return     NetMdErr
+//! @see        NetMdErr
+//--------------------------------------------------------------------------
+int CNetMdPatch::finalizeTOC()
+{
+    SonyDevInfo devcode = devCodeEx();
+
+    // check, if patch is already active ...
+    if (checkPatch(PID_USB_EXE, devcode))
+    {
+        USBExecute(devcode, exploitData(devcode, EID_LOWER_HEAD));
+        USBExecute(devcode, exploitData(devcode, EID_TRIGGER));
+        usleep(50'000'000);
+        USBExecute(devcode, exploitData(devcode, EID_RAISE_HEAD));
+        return NETMDERR_NO_ERROR;
+    }
+    return NETMDERR_OTHER;
 }
 
 //------------------------------------------------------------------------------

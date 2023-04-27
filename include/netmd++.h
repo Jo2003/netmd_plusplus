@@ -175,6 +175,15 @@ enum typelog
     CAPTURE     //!< needed for log parcing!
 };
 
+/// TOC sector names
+enum UTOCSector : uint16_t
+{
+    POS_ADDR,   //!< position and addresses of audio data
+    HW_TITLES,  //!< half width titles
+    TSTAMPS,    //!< time stamps
+    FW_TITLES,  //!< full width titles
+};
+
 /// NetMD time
 struct NetMdTime
 {
@@ -213,6 +222,9 @@ struct Group
 /// netmd groups
 using Groups = std::vector<Group>;
 
+/// byte vector
+using NetMDByteVector = std::vector<uint8_t>;
+
 //--------------------------------------------------------------------------
 //! @brief      format helper for TrackTime
 //!
@@ -242,6 +254,16 @@ std::ostream& operator<<(std::ostream& o, const AudioEncoding& ae);
 //! @return     formatted TrackProtection stored in ostream
 //--------------------------------------------------------------------------
 std::ostream& operator<<(std::ostream& o, const TrackProtection& tp);
+
+//------------------------------------------------------------------------------
+//! @brief      Addition assignment operator for NetMDByteVector.
+//!
+//! @param      a     byte vector 1
+//! @param[in]  b     byte vector 2
+//!
+//! @return     The result of the addition assignment
+//------------------------------------------------------------------------------
+NetMDByteVector& operator+=(NetMDByteVector& a, const NetMDByteVector& b);
 
 /// disc header
 class CMDiscHeader;
@@ -518,6 +540,23 @@ public:
     //! @return     vector of group structures
     //--------------------------------------------------------------------------
     Groups groups();
+
+    //--------------------------------------------------------------------------
+    //! @brief      prepare TOC manipulation
+    //!
+    //! @return     NetMdErr
+    //! @see        NetMdErr
+    //--------------------------------------------------------------------------
+    int prepareTOCManip();
+
+    //--------------------------------------------------------------------------
+    //! @brief      Reads an utoc sector.
+    //!
+    //! @param[in]  s     sector number
+    //!
+    //! @return     TOC sector data. (error if empty)
+    //--------------------------------------------------------------------------
+    NetMDByteVector readUTOCSector(UTOCSector s);
 
 private:
     /// disc header
