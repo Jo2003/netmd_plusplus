@@ -265,12 +265,12 @@ public:
     //--------------------------------------------------------------------------
     //! @brief      Adds a track.
     //!
-    //! This function hass to be used to split a DAO transferred disc audio
+    //! This function has to be used to split a DAO transferred disc audio
     //! track into the parts as on the original disc. This functions has to
     //! be called for all tracks in their correct order!
     //! **Breaking the order will break the TOC!**
     //!
-    //! @param[in]  no        track nomber (starting with 1)
+    //! @param[in]  no        track number (starting with 1)
     //! @param[in]  lengthMs  The length milliseconds
     //! @param[in]  title     The title
     //!

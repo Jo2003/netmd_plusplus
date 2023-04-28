@@ -23,6 +23,7 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
  *
  */
+#include <fstream>
 #include <iostream>
 #include <netmd++.h>
 #include "../src/CNetMdTOC.h"
@@ -118,6 +119,13 @@ int main (int argc, char* argv[])
                     pData[i] = toc.at(i);
                 }
 
+                std::ofstream org("./org.bin", std::ios_base::out | std::ios_base::binary | std::ios_base::trunc);
+                if (org)
+                {
+                    org.write(reinterpret_cast<const char*>(pData), 2352 * 4);
+                    org.flush();
+                }
+
                 CNetMdTOC utoc(11, 3'985'000, pData);
 
                 i = utoc.trackCount();
@@ -155,42 +163,30 @@ int main (int argc, char* argv[])
 
                 // time to write TOC ...
                 bool doit = true;
-                toc.clear();
-                addArrayData(toc, pData, 2352);
-                if (pNetMD->writeUTOCSector(UTOCSector::POS_ADDR, toc) == NETMDERR_NO_ERROR)
+                for (int x = 0; x < 4; x++)
                 {
-                    std::cout << "TOC sector 0 written!" << std::endl;
-                }
-                else
-                {
-                    doit = false;
-                }
-
-                toc.clear();
-                addArrayData(toc, &pData[2352], 2352);
-                if (pNetMD->writeUTOCSector(UTOCSector::HW_TITLES, toc) == NETMDERR_NO_ERROR)
-                {
-                    std::cout << "TOC sector 1 written!" << std::endl;
-                }
-                else
-                {
-                    doit = false;
-                }
-
-                toc.clear();
-                addArrayData(toc, &pData[2352 * 2], 2352);
-                if (pNetMD->writeUTOCSector(UTOCSector::TSTAMPS, toc) == NETMDERR_NO_ERROR)
-                {
-                    std::cout << "TOC sector 2 written!" << std::endl;
-                }
-                else
-                {
-                    doit = false;
+                    toc.clear();
+                    addArrayData(toc, &pData[2352 * x], 2352);
+                    if (pNetMD->writeUTOCSector(static_cast<UTOCSector>(x), toc) == NETMDERR_NO_ERROR)
+                    {
+                        std::cout << "TOC sector " << x << " written!" << std::endl;
+                    }
+                    else
+                    {
+                        doit = false;
+                    }
                 }
 
                 if (doit)
                 {
                     pNetMD->finalizeTOC();
+                }
+
+                std::ofstream out("./toc.bin", std::ios_base::out | std::ios_base::binary | std::ios_base::trunc);
+                if (out)
+                {
+                    out.write(reinterpret_cast<const char*>(pData), 2352 * 4);
+                    out.flush();
                 }
 
                 delete [] pData;

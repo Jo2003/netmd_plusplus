@@ -244,7 +244,7 @@ int CNetMdDev::initDevice()
 }
 
 //--------------------------------------------------------------------------
-//! @brief      Gets the strings.from the NetMD device
+//! @brief      Gets the strings from the NetMD device
 //!
 //! @param[in]  descr  The descriptor
 //!
@@ -423,7 +423,7 @@ int CNetMdDev::getResponse(NetMDResp& response)
 }
 
 //--------------------------------------------------------------------------
-//! @brief      excahnge data with NetMD device
+//! @brief      exchange data with NetMD device
 //!
 //! @param[in]  cmd       The command
 //! @param[in]  cmdLen    The command length

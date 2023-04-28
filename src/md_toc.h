@@ -50,7 +50,7 @@ namespace toc
     constexpr uint8_t F_SCMS11   = 0;                       //!< allow 1 generation (recording source was analog)
 
     //! default track mode
-    constexpr uint8_t DEF_TRACK_MODE = (F_STEREO | F_SP_MODE | F_AUDIO | F_SCMS00 | F_WRTENB);
+    constexpr uint8_t DEF_TRACK_MODE = (F_STEREO | F_SP_MODE | F_SCMS00 | F_WRTENB);
 
     //! Cluster, Sector, Group; 3 bytes, packed as follows:
     //! c = cluster, s = sector, g = sound group.

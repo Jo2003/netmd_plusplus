@@ -32,8 +32,6 @@
 
 namespace netmd {
 
-// https://github.com/asivery/netmd-exploits/blob/master/src/exploits/usb-code-execution.ts#L46
-
 //--------------------------------------------------------------------------
 //! @brief      Constructs a new instance.
 //!
@@ -72,12 +70,12 @@ void CNetMdTOC::import(uint8_t data[sizeof(toc::TOC)])
 //--------------------------------------------------------------------------
 //! @brief      Adds a track.
 //!
-//! This function hass to be used to split a DAO transferred disc audio
+//! This function has to be used to split a DAO transferred disc audio
 //! track into the parts as on the original disc. This functions has to
 //! be called for all tracks in their correct order!
 //! **Breaking the order will break the TOC!**
 //!
-//! @param[in]  no        track nomber (starting with 1)
+//! @param[in]  no        track number (starting with 1)
 //! @param[in]  lengthMs  The length milliseconds
 //! @param[in]  title     The title
 //!

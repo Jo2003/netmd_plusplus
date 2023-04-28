@@ -639,7 +639,7 @@ int CNetMdPatch::USBExecute(SonyDevInfo devInfo, const NetMDByteVector& execData
 
     if ((ret = formatQuery("00 18%b ff %*", {{exploitCmd(devInfo)}, {execData}}, query)) > 0)
     {
-        if ((ret = mNetMd.exchange(query.get(), ret, &resp, true, CNetMdDev::NETMD_STATUS_NOT_IMPLEMENTED)) > 0)
+        if ((ret = mNetMd.exchange(query.get(), ret, &resp, false, CNetMdDev::NETMD_STATUS_NOT_IMPLEMENTED)) > 0)
         {
             // capture result
             if (scanQuery(resp.get(), ret, "%? 18%? ff %*", params) == NETMDERR_NO_ERROR)

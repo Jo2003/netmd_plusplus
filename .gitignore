@@ -1,3 +1,6 @@
 compile_commands.json
 .cache/*
 netmd++.sublime-*
+doc/latex/*
+!doc/latex/refman.pdf
+.vscode/*
