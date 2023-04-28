@@ -29,6 +29,21 @@
 
 using namespace netmd;
 
+//------------------------------------------------------------------------------
+//! @brief      add bytes to byte vector
+//!
+//! @param      vec     The vector
+//! @param[in]  data    The data
+//! @param[in]  dataSz  The data size
+//------------------------------------------------------------------------------
+void addArrayData(NetMDByteVector& vec, const uint8_t* data, size_t dataSz)
+{
+    for (size_t i = 0; i < dataSz; i++)
+    {
+        vec.push_back(data[i]);
+    }
+}
+
 int main (int argc, char* argv[])
 {
     netmd_pp* pNetMD = new netmd_pp();
@@ -103,18 +118,82 @@ int main (int argc, char* argv[])
                     pData[i] = toc.at(i);
                 }
 
-                CNetMdTOC toc;
-                toc.import(pData);
+                CNetMdTOC utoc(11, 3'985'000, pData);
 
-                i = toc.trackCount();
+                i = utoc.trackCount();
 
                 std::cout << "TOC tracks: " << i << std::endl;
-                std::cout << "TOC disc info:  " << toc.discInfo() << std::endl;
+                std::cout << "TOC disc info:  " << utoc.discInfo() << std::endl;
 
                 for (int j = 1; j <= i; j++)
                 {
-                    std::cout << "TOC track #" << j << ": " << toc.trackInfo(j) << std::endl;
+                    std::cout << "TOC track #" << j << ": " << utoc.trackInfo(j);
                 }
+
+                utoc.addTrack(1, 358'830, "Cluster One");
+                utoc.addTrack(2, 261'490, "What Do You Want From Me");
+                utoc.addTrack(3, 424'560, "Poles Apart");
+                utoc.addTrack(4, 328'290, "Marooned");
+                utoc.addTrack(5, 257'070, "A Great Day For Freedom");
+                utoc.addTrack(6, 407'440, "Wearing The Inside Out");
+                utoc.addTrack(7, 372'270, "Take It Back");
+                utoc.addTrack(8, 379'450, "Coming Back To Life");
+                utoc.addTrack(9, 369'470, "Keep Talking");
+                utoc.addTrack(10, 314'730, "Lost For Words");
+                utoc.addTrack(11, 511'520, "High Hopes");
+                utoc.setDiscTitle("Pink Floyd - The Division Bell (7243 8 28984 2 9)");
+
+                i = utoc.trackCount();
+
+                std::cout << "TOC tracks: " << i << std::endl;
+                std::cout << "TOC disc info:  " << utoc.discInfo() << std::endl;
+
+                for (int j = 1; j <= i; j++)
+                {
+                    std::cout << "TOC track #" << j << ": " << utoc.trackInfo(j);
+                }
+
+                // time to write TOC ...
+                bool doit = true;
+                toc.clear();
+                addArrayData(toc, pData, 2352);
+                if (pNetMD->writeUTOCSector(UTOCSector::POS_ADDR, toc) == NETMDERR_NO_ERROR)
+                {
+                    std::cout << "TOC sector 0 written!" << std::endl;
+                }
+                else
+                {
+                    doit = false;
+                }
+
+                toc.clear();
+                addArrayData(toc, &pData[2352], 2352);
+                if (pNetMD->writeUTOCSector(UTOCSector::HW_TITLES, toc) == NETMDERR_NO_ERROR)
+                {
+                    std::cout << "TOC sector 1 written!" << std::endl;
+                }
+                else
+                {
+                    doit = false;
+                }
+
+                toc.clear();
+                addArrayData(toc, &pData[2352 * 2], 2352);
+                if (pNetMD->writeUTOCSector(UTOCSector::TSTAMPS, toc) == NETMDERR_NO_ERROR)
+                {
+                    std::cout << "TOC sector 2 written!" << std::endl;
+                }
+                else
+                {
+                    doit = false;
+                }
+
+                if (doit)
+                {
+                    pNetMD->finalizeTOC();
+                }
+
+                delete [] pData;
             }
             else
             {

@@ -7,22 +7,22 @@ This API uses the namespace *netmd*.
 ## Usage
 
  - include the header file into your project:
-~~~{c++}
-#23include "path/to/CNetMdApi.h"
-~~~
+```c++
+#include "path/to/CNetMdApi.h"
+```
 
  - create an instance of the API:
-~~~{c++}
+```c++
 netmd::netmd_pp* pNetMd = new netmd::netmd_pp();
-~~~
+```
 
  - initialize the first found NetMD device:
-~~~{c++}
+```c++
 if ((pNetMd != nullptr) && (pNetMd->initDevice() == netmd::NETMDERR_NO_ERROR))
 {
     pNetMd->initDiscHeader();
 }
-~~~
+```
 
  - If you change or re-plug the device, simply run above code (init) again!
 
@@ -30,7 +30,7 @@ if ((pNetMd != nullptr) && (pNetMd->initDevice() == netmd::NETMDERR_NO_ERROR))
 ### Track transfer
 Check for on-the-fly support and transfer a WAVE file to NetMD with on-the-fly encoding (LP2) or w/o encoding (SP).
 
-~~~{c++}
+```c++
 #include <CNetMdApi.h>
 
 int main()
@@ -56,10 +56,10 @@ int main()
     }
     return 0;
 }
-~~~
+```
 
 ### Erase disc and set new title
-~~~{c++}
+```c++
 #include <CNetMdApi.h>
 
 int main()
@@ -75,4 +75,4 @@ int main()
     }
     return 0;
 }
-~~~
+```

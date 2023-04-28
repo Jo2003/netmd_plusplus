@@ -433,6 +433,25 @@ class CNetMdSecure
     //--------------------------------------------------------------------------
     NetMDByteVector readUTOCSector(UTOCSector s);
 
+    //--------------------------------------------------------------------------
+    //! @brief      Writes an utoc sector.
+    //!
+    //! @param[in]  s     sector names
+    //! @param[in]  data  The data to be written
+    //!
+    //! @return     NetMdErr
+    //! @see        NetMdErr
+    //--------------------------------------------------------------------------
+    int writeUTOCSector(UTOCSector s, const NetMDByteVector& data);
+
+    //--------------------------------------------------------------------------
+    //! @brief      finalize TOC though exploit
+    //!
+    //! @return     NetMdErr
+    //! @see        NetMdErr
+    //--------------------------------------------------------------------------
+    int finalizeTOC();
+
     CNetMdDev& mNetMd;
 
     /// patch support class

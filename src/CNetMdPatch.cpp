@@ -31,6 +31,7 @@
 #include "log.h"
 #include "netmd_defines.h"
 #include "netmd_utils.h"
+#include <iomanip>
 #include <sstream>
 #include <unistd.h>
 #include <utility>
@@ -680,13 +681,33 @@ int CNetMdPatch::finalizeTOC()
 {
     SonyDevInfo devcode = devCodeEx();
 
+    mLOG(CAPTURE) << "Finalizing TOC: 00%";
+
     // check, if patch is already active ...
     if (checkPatch(PID_USB_EXE, devcode))
     {
-        USBExecute(devcode, exploitData(devcode, EID_LOWER_HEAD));
-        USBExecute(devcode, exploitData(devcode, EID_TRIGGER));
-        usleep(50'000'000);
-        USBExecute(devcode, exploitData(devcode, EID_RAISE_HEAD));
+        if (USBExecute(devcode, exploitData(devcode, EID_LOWER_HEAD)) == NETMDERR_NO_ERROR)
+        {
+            mLOG(DEBUG) << "Lower head success!";
+        }
+        usleep(1'000'000);
+        mLOG(CAPTURE) << "Finalizing TOC: 02%";
+        if (USBExecute(devcode, exploitData(devcode, EID_TRIGGER)) == NETMDERR_NO_ERROR)
+        {
+            mLOG(DEBUG) << "Trigger success!";
+        }
+
+        for(int i = 3; i <= 99; i++)
+        {
+            usleep(510'000);
+            mLOG(CAPTURE) << "Finalizing TOC: " << std::setw(2) << std::setfill('0') << i << "%";
+        }
+
+        if (USBExecute(devcode, exploitData(devcode, EID_RAISE_HEAD)) == NETMDERR_NO_ERROR)
+        {
+            mLOG(DEBUG) << "Raise head success!";
+        }
+        mLOG(CAPTURE) << "Finalizing TOC: 100%";
         return NETMDERR_NO_ERROR;
     }
     return NETMDERR_OTHER;

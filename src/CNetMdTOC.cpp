@@ -72,6 +72,11 @@ void CNetMdTOC::import(uint8_t data[sizeof(toc::TOC)])
 //--------------------------------------------------------------------------
 //! @brief      Adds a track.
 //!
+//! This function hass to be used to split a DAO transferred disc audio
+//! track into the parts as on the original disc. This functions has to
+//! be called for all tracks in their correct order!
+//! **Breaking the order will break the TOC!**
+//!
 //! @param[in]  no        track nomber (starting with 1)
 //! @param[in]  lengthMs  The length milliseconds
 //! @param[in]  title     The title
@@ -89,7 +94,7 @@ int CNetMdTOC::addTrack(uint8_t no, uint32_t lengthMs, const std::string& title)
     float allGroups   = mAudioEnd - mAudioStart;
     float trackGroups = static_cast<float>(lengthMs) * allGroups /  static_cast<float>(mLengthInMs);
 
-    mpToc->mTracks.ntracks           = no + 1;
+    mpToc->mTracks.ntracks           = no;
     mpToc->mTracks.trackmap[no]      = no;
     mpToc->mTracks.nonempty          = 1;
     mpToc->mTracks.sign              = toBigEndian(toc::SIGNATURE);
@@ -209,7 +214,6 @@ int CNetMdTOC::setDiscTitle(const std::string& title)
             mpToc->mTitles.free_title_slot ++;
         }
 
-        i = mpToc->mTitles.free_title_slot;
 
         if ((title.size() - (sz + toCpy)) > 0)
         {
@@ -219,6 +223,8 @@ int CNetMdTOC::setDiscTitle(const std::string& title)
         {
             mpToc->mTitles.titlelist[i].link = 0;
         }
+
+        i = mpToc->mTitles.free_title_slot;
     }
 
     return 0;
@@ -306,6 +312,8 @@ std::string CNetMdTOC::trackInfo(int trackNo) const
             oss << "Fragment #" << fragment << ": begin=" << static_cast<uint32_t>(begin)
                 << ", end=" << static_cast<uint32_t>(end) << ", mode=0x" << std::hex
                 << static_cast<int>(mpToc->mTracks.fraglist[fragment].mode) << std::dec
+                << ", length: " << CSG::toTime(static_cast<uint32_t>(end) - static_cast<uint32_t>(begin),
+                                               mpToc->mTracks.fraglist[fragment].mode & toc::F_STEREO)
                 << std::endl;
 
             fragment = mpToc->mTracks.fraglist[fragment].link;

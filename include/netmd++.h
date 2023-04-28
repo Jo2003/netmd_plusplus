@@ -544,8 +544,7 @@ public:
     //--------------------------------------------------------------------------
     //! @brief      prepare TOC manipulation
     //!
-    //! @return     NetMdErr
-    //! @see        NetMdErr
+    //! @return     @ref NetMdErr
     //--------------------------------------------------------------------------
     int prepareTOCManip();
 
@@ -557,6 +556,23 @@ public:
     //! @return     TOC sector data. (error if empty)
     //--------------------------------------------------------------------------
     NetMDByteVector readUTOCSector(UTOCSector s);
+
+    //--------------------------------------------------------------------------
+    //! @brief      Writes an utoc sector.
+    //!
+    //! @param[in]  s     sector names
+    //! @param[in]  data  The data to be written
+    //!
+    //! @return     @ref NetMdErr
+    //--------------------------------------------------------------------------
+    int writeUTOCSector(UTOCSector s, const NetMDByteVector& data);
+
+    //--------------------------------------------------------------------------
+    //! @brief      finalize TOC through exploit
+    //!
+    //! @return     @ref NetMdErr
+    //--------------------------------------------------------------------------
+    int finalizeTOC();
 
 private:
     /// disc header

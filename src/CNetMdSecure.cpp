@@ -1624,5 +1624,30 @@ NetMDByteVector CNetMdSecure::readUTOCSector(UTOCSector s)
     return mPatch.readUTOCSector(s);
 }
 
+//--------------------------------------------------------------------------
+//! @brief      Writes an utoc sector.
+//!
+//! @param[in]  s     sector names
+//! @param[in]  data  The data to be written
+//!
+//! @return     NetMdErr
+//! @see        NetMdErr
+//--------------------------------------------------------------------------
+int CNetMdSecure::writeUTOCSector(UTOCSector s, const NetMDByteVector& data)
+{
+    return mPatch.writeUTOCSector(s, data);
+}
+
+//--------------------------------------------------------------------------
+//! @brief      finalize TOC though exploit
+//!
+//! @return     NetMdErr
+//! @see        NetMdErr
+//--------------------------------------------------------------------------
+int CNetMdSecure::finalizeTOC()
+{
+    return mPatch.finalizeTOC();
+}
+
 
 } // ~namespace

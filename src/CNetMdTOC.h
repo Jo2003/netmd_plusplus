@@ -44,6 +44,8 @@ We virtualy split the tracks and give them titles.
 #include <cstdint>
 #include <cstring>
 #include <string>
+#include <sstream>
+#include <iomanip>
 #include "md_toc.h"
 
 namespace netmd {
@@ -114,6 +116,34 @@ public:
         uint8_t  group    = csg.csg[2] & 0xf;
 
         return cluster * CLUSTER_SIZE + sector * SECTOR_SIZE + group;
+    }
+
+    //--------------------------------------------------------------------------
+    //! @brief      convert group count into time
+    //!
+    //! @param[in]  groupCount  The group count
+    //! @param[in]  stereo      true, if stereo
+    //!
+    //! @return     formatted time
+    //--------------------------------------------------------------------------
+    static std::string toTime(uint32_t groupCount, bool stereo = true)
+    {
+        std::ostringstream oss;
+
+        // one group is about 11.6ms, in stereo two groups are 11.6ms
+        if (stereo)
+        {
+            groupCount = std::round(static_cast<float>(groupCount) / 2.0);
+        }
+
+        // time in ms
+        uint32_t ms = std::round(static_cast<float>(groupCount) * 11.595);
+
+        oss << std::setw(2) << std::setfill('0') << (ms / 60'000) << ":"
+            << std::setw(2) << std::setfill('0') << ((ms % 60'000) / 1'000) << "."
+            << std::setw(3) << std::setfill('0') << (ms % 1'000);
+
+        return oss.str();
     }
 
     //--------------------------------------------------------------------------
@@ -195,6 +225,14 @@ public:
         return fromGroups(mGroups);
     }
 
+    //--------------------------------------------------------------------------
+    //! @brief      convert to string (when casted to std::string)
+    //--------------------------------------------------------------------------
+    operator std::string() const
+    {
+        return toTime(mGroups);
+    }
+
 private:
     /// internal groups counter
     uint32_t mGroups;
@@ -226,6 +264,11 @@ public:
 
     //--------------------------------------------------------------------------
     //! @brief      Adds a track.
+    //!
+    //! This function hass to be used to split a DAO transferred disc audio
+    //! track into the parts as on the original disc. This functions has to
+    //! be called for all tracks in their correct order!
+    //! **Breaking the order will break the TOC!**
     //!
     //! @param[in]  no        track nomber (starting with 1)
     //! @param[in]  lengthMs  The length milliseconds
