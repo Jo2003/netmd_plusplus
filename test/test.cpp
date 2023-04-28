@@ -104,12 +104,13 @@ int main (int argc, char* argv[])
 
         if (pNetMD->prepareTOCManip() == NETMDERR_NO_ERROR)
         {
-            NetMDByteVector toc = pNetMD->readUTOCSector(UTOCSector::POS_ADDR);
-            toc += pNetMD->readUTOCSector(UTOCSector::HW_TITLES);
-            toc += pNetMD->readUTOCSector(UTOCSector::TSTAMPS);
-            toc += pNetMD->readUTOCSector(UTOCSector::FW_TITLES);
+            NetMDByteVector toc;
+            for (int x = 0; x < 6; x++)
+            {
+                toc += pNetMD->readUTOCSector(static_cast<UTOCSector>(x));
+            }
 
-            if (toc.size() == (4 * 2352))
+            if (toc.size() == (6 * 2352))
             {
                 std::cout << "TOC data read!" << std::endl;
                 uint8_t *pData = new uint8_t[toc.size()];
@@ -163,7 +164,7 @@ int main (int argc, char* argv[])
 
                 // time to write TOC ...
                 bool doit = true;
-                for (int x = 0; x < 4; x++)
+                for (int x = 0; x < 6; x++)
                 {
                     toc.clear();
                     addArrayData(toc, &pData[2352 * x], 2352);
@@ -185,7 +186,7 @@ int main (int argc, char* argv[])
                 std::ofstream out("./toc.bin", std::ios_base::out | std::ios_base::binary | std::ios_base::trunc);
                 if (out)
                 {
-                    out.write(reinterpret_cast<const char*>(pData), 2352 * 4);
+                    out.write(reinterpret_cast<const char*>(pData), 2352 * 6);
                     out.flush();
                 }
 

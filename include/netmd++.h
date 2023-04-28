@@ -182,6 +182,8 @@ enum UTOCSector : uint16_t
     HW_TITLES,  //!< half width titles
     TSTAMPS,    //!< time stamps
     FW_TITLES,  //!< full width titles
+    UNKNWN_1,
+    UNKNON_2,
 };
 
 /// NetMD time
