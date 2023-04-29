@@ -55,6 +55,10 @@ int main (int argc, char* argv[])
         pNetMD->initDevice();
         pNetMD->initDiscHeader();
 
+        pNetMD->eraseDisc();
+        pNetMD->sendAudioFile("./funky.wav", "Funky track", DiskFormat::NO_ONTHEFLY_CONVERSION);
+
+        /*
         std::string s;
 
         if (pNetMD->discTitle(s) == NETMDERR_NO_ERROR)
@@ -101,16 +105,16 @@ int main (int argc, char* argv[])
         bool support = pNetMD->spUploadSupported();
 
         std::cout << "Supports SP upload: " << support << std::endl;
-
+        */
         if (pNetMD->prepareTOCManip() == NETMDERR_NO_ERROR)
         {
             NetMDByteVector toc;
-            for (int x = 0; x < 6; x++)
+            for (int x = 0; x < 3; x++)
             {
                 toc += pNetMD->readUTOCSector(static_cast<UTOCSector>(x));
             }
 
-            if (toc.size() == (6 * 2352))
+            if (toc.size() == (3 * 2352))
             {
                 std::cout << "TOC data read!" << std::endl;
                 uint8_t *pData = new uint8_t[toc.size()];
@@ -123,13 +127,13 @@ int main (int argc, char* argv[])
                 std::ofstream org("./org.bin", std::ios_base::out | std::ios_base::binary | std::ios_base::trunc);
                 if (org)
                 {
-                    org.write(reinterpret_cast<const char*>(pData), 2352 * 4);
+                    org.write(reinterpret_cast<const char*>(pData), 2352 * 3);
                     org.flush();
                 }
 
-                CNetMdTOC utoc(11, 3'985'000, pData);
+                CNetMdTOC utoc(8, 459'000, pData);
 
-                i = utoc.trackCount();
+                int i = utoc.trackCount();
 
                 std::cout << "TOC tracks: " << i << std::endl;
                 std::cout << "TOC disc info:  " << utoc.discInfo() << std::endl;
@@ -139,7 +143,16 @@ int main (int argc, char* argv[])
                     std::cout << "TOC track #" << j << ": " << utoc.trackInfo(j);
                 }
 
-                utoc.addTrack(1, 358'830, "Cluster One");
+                utoc.addTrack(1, 60'000, "Funky Track One Minute Part #1");
+                utoc.addTrack(2, 60'000, "Funky Track One Minute Part #2");
+                utoc.addTrack(3, 60'000, "Funky Track One Minute Part #3");
+                utoc.addTrack(4, 60'000, "Funky Track One Minute Part #4");
+                utoc.addTrack(5, 60'000, "Funky Track One Minute Part #5");
+                utoc.addTrack(6, 60'000, "Funky Track One Minute Part #6");
+                utoc.addTrack(7, 60'000, "Funky Track One Minute Part #7");
+                utoc.addTrack(8, 39'000, "Funky Track Less Than One Minute Part #8");
+                
+                /*
                 utoc.addTrack(2, 261'490, "What Do You Want From Me");
                 utoc.addTrack(3, 424'560, "Poles Apart");
                 utoc.addTrack(4, 328'290, "Marooned");
@@ -151,6 +164,7 @@ int main (int argc, char* argv[])
                 utoc.addTrack(10, 314'730, "Lost For Words");
                 utoc.addTrack(11, 511'520, "High Hopes");
                 utoc.setDiscTitle("Pink Floyd - The Division Bell (7243 8 28984 2 9)");
+                */
 
                 i = utoc.trackCount();
 
@@ -164,7 +178,7 @@ int main (int argc, char* argv[])
 
                 // time to write TOC ...
                 bool doit = true;
-                for (int x = 0; x < 6; x++)
+                for (int x = 0; x < 3; x++)
                 {
                     toc.clear();
                     addArrayData(toc, &pData[2352 * x], 2352);
@@ -186,7 +200,7 @@ int main (int argc, char* argv[])
                 std::ofstream out("./toc.bin", std::ios_base::out | std::ios_base::binary | std::ios_base::trunc);
                 if (out)
                 {
-                    out.write(reinterpret_cast<const char*>(pData), 2352 * 6);
+                    out.write(reinterpret_cast<const char*>(pData), 2352 * 3);
                     out.flush();
                 }
 

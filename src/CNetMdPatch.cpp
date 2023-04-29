@@ -482,7 +482,7 @@ int CNetMdPatch::writeMetadataPeripheral(uint16_t sector, uint16_t offset, const
 {
     int ret;
     NetMDResp query;
-    if ((ret = formatQuery("00 1825 ff %<w %<w %*", {{sector}, {offset}, {data}}, query)) >= 8)
+    if ((ret = formatQuery("00 1825 ff %<w %<w %b %*", {{sector}, {offset}, {mBYTE(data.size())}, {data}}, query)) >= 8)
     {
         ret = mNetMd.exchange(query.get(), ret, nullptr, true);
         return (ret >= 0) ? NETMDERR_NO_ERROR : ret;

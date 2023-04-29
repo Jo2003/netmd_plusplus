@@ -133,8 +133,9 @@ namespace toc
         UTOC_0 mTracks;
         UTOC_1 mTitles;
         UTOC_2 mTimes;
-        UTOC_3 mFWTitles;
-        UTOC_3 mUnkwn1;
-        UTOC_3 mUnkwn2;
+        // we don't need this for our manipulation!
+        // UTOC_3 mFWTitles;
+        // UTOC_3 mUnkwn1;
+        // UTOC_3 mUnkwn2;
     };
 }} // ~namespaces
