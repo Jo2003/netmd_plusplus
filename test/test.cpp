@@ -26,7 +26,6 @@
 #include <fstream>
 #include <iostream>
 #include <netmd++.h>
-#include "../src/CNetMdTOC.h"
 
 using namespace netmd;
 
@@ -53,7 +52,6 @@ int main (int argc, char* argv[])
     {
         pNetMD->setLogLevel(INFO);
         pNetMD->initDevice();
-        pNetMD->initDiscHeader();
 
         pNetMD->eraseDisc();
         pNetMD->sendAudioFile("./funky.wav", "Funky track", DiskFormat::NO_ONTHEFLY_CONVERSION);
@@ -151,6 +149,7 @@ int main (int argc, char* argv[])
                 utoc.addTrack(6, 60'000, "Funky Track One Minute Part #6");
                 utoc.addTrack(7, 60'000, "Funky Track One Minute Part #7");
                 utoc.addTrack(8, 39'000, "Funky Track Less Than One Minute Part #8");
+                utoc.setDiscTitle("8 Funky tracks on gapless NetMD");
                 
                 /*
                 utoc.addTrack(2, 261'490, "What Do You Want From Me");
@@ -205,6 +204,29 @@ int main (int argc, char* argv[])
                 }
 
                 delete [] pData;
+
+                std::string s;
+
+                if (pNetMD->discTitle(s) == NETMDERR_NO_ERROR)
+                {
+                    std::cout << "Title: " << s << std::endl;
+                }
+
+                if ((i = pNetMD->trackCount()) > -1)
+                {
+                    std::cout << "Track Count: " << i << std::endl;
+
+                    for (int j = 0; j < i; j++)
+                    {
+                        TrackTime tt;
+                        pNetMD->trackTime(j, tt);
+
+                        if (pNetMD->trackTitle(j, s) == NETMDERR_NO_ERROR)
+                        {
+                            std::cout << "Track " << (j + 1) << ": " << s << "(" << tt << ")" << std::endl;
+                        }
+                    }
+                }
             }
             else
             {

@@ -40,25 +40,49 @@ namespace netmd {
 //! @param[in/out] data        The TOC data
 //--------------------------------------------------------------------------
 CNetMdTOC::CNetMdTOC(int trackCount, uint32_t lenInMs, uint8_t* data)
-    :mpToc(nullptr), mAudioStart(0), mAudioEnd(0), mTracksCount(trackCount),
-    mLengthInMs(lenInMs)
+    :mpToc(nullptr), mAudioStart(0), mAudioEnd(0), mpCurPos(nullptr)
 {
-    import(data);
+    import(trackCount, lenInMs, data);
+}
+
+//--------------------------------------------------------------------------
+//! @brief      Destroys the object.
+//--------------------------------------------------------------------------
+CNetMdTOC::~CNetMdTOC()
+{
+    if (mpCurPos != nullptr)
+    {
+        delete mpCurPos;
+    }
 }
 
 //--------------------------------------------------------------------------
 //! @brief      import TOC data
 //!
-//! @param      data  The TOC data
+//! @param[in]  trackCount  The track count
+//! @param[in]  lenInMs     The length in milliseconds
+//! @param      data        The TOC data
 //--------------------------------------------------------------------------
-void CNetMdTOC::import(uint8_t data[sizeof(toc::TOC)])
+void CNetMdTOC::import(int trackCount, uint32_t lenInMs, uint8_t* data)
 {
+    mTracksCount = trackCount;
+    mLengthInMs  = lenInMs;
+    mAudioStart  = 0;
+    mAudioEnd    = 0;
+    mpToc        = nullptr;
+
+    if (mpCurPos)
+    {
+        delete mpCurPos;
+        mpCurPos = nullptr;
+    }
+
     if (data)
     {
         mpToc = reinterpret_cast<toc::TOC*>(data);
         CSG csg(mpToc->mTracks.fraglist[mpToc->mTracks.trackmap[1]].start);
         mAudioStart = static_cast<uint32_t>(csg);
-        mCurPos     = mAudioStart;
+        mpCurPos    = new CSG(mAudioStart);
 
         csg = mpToc->mTracks.fraglist[mpToc->mTracks.trackmap[1]].end;
         mAudioEnd = static_cast<uint32_t>(csg);
@@ -102,19 +126,19 @@ int CNetMdTOC::addTrack(uint8_t no, uint32_t lengthMs, const std::string& title)
     if (no == 1)
     {
         // start is set ...
-        mCurPos += std::ceil(trackGroups) - 1;
-        mpToc->mTracks.fraglist[no].end  = static_cast<toc::discaddr>(mCurPos);
+        *mpCurPos += std::ceil(trackGroups) - 1;
+        mpToc->mTracks.fraglist[no].end  = static_cast<toc::discaddr>(*mpCurPos);
     }
     else if (no == mTracksCount)
     {
-        mpToc->mTracks.fraglist[no].start = mCurPos.nextAddr();
+        mpToc->mTracks.fraglist[no].start = mpCurPos->nextAddr();
         mpToc->mTracks.fraglist[no].end   = static_cast<toc::discaddr>(CSG(mAudioEnd));
     }
     else
     {
-        mpToc->mTracks.fraglist[no].start = mCurPos.nextAddr();
-        mCurPos += std::ceil(trackGroups);
-        mpToc->mTracks.fraglist[no].end   = static_cast<toc::discaddr>(mCurPos);
+        mpToc->mTracks.fraglist[no].start = mpCurPos->nextAddr();
+        *mpCurPos += std::ceil(trackGroups);
+        mpToc->mTracks.fraglist[no].end   = static_cast<toc::discaddr>(*mpCurPos);
     }
 
     mpToc->mTracks.free_track_slot   = no + 1;

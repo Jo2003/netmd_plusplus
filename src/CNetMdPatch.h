@@ -90,6 +90,7 @@ class CNetMdPatch
         EID_LOWER_HEAD,
         EID_RAISE_HEAD,
         EID_TRIGGER,
+        EID_DEV_RESET,
     };
 
     /// memory access
@@ -262,11 +263,13 @@ class CNetMdPatch
     //! @param[in]  devInfo   The device information
     //! @param[in]  execData  The data to USBExecute
     //! @param[out] pResp     The optional response pointer
+    //! @param[in]  sendOnly  The send only (no exchange) - optional
     //!
     //! @return     NetMdErr
     //! @see        NetMdErr
     //--------------------------------------------------------------------------
-    int USBExecute(SonyDevInfo devInfo, const NetMDByteVector& execData, NetMDResp* pResp = nullptr);
+    int USBExecute(SonyDevInfo devInfo, const NetMDByteVector& execData,
+                   NetMDResp* pResp = nullptr, bool sendOnly = false);
 
     //------------------------------------------------------------------------------
     //! @brief      write patch data

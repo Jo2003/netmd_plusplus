@@ -106,7 +106,12 @@ void CNetMdApi::setLogStream(std::ostream& os)
 //--------------------------------------------------------------------------
 int CNetMdApi::initDevice()
 {
-    return mpNetMd->initDevice();
+    int ret;
+    if ((ret = mpNetMd->initDevice()) == NETMDERR_NO_ERROR)
+    {
+        return initDiscHeader();
+    }
+    return ret;
 }
 
 //--------------------------------------------------------------------------
@@ -915,12 +920,26 @@ int CNetMdApi::writeUTOCSector(UTOCSector s, const NetMDByteVector& data)
 //--------------------------------------------------------------------------
 //! @brief      finalize TOC though exploit
 //!
+//! @param[in]  resetWait  The optional reset wait time (10 seconds)
+//!
 //! @return     NetMdErr
 //! @see        NetMdErr
 //--------------------------------------------------------------------------
-int CNetMdApi::finalizeTOC()
+int CNetMdApi::finalizeTOC(uint8_t resetWait)
 {
-    return mpSecure->finalizeTOC();
+    int ret = mpSecure->finalizeTOC();
+
+    if(ret == NETMDERR_NO_ERROR)
+    {
+        int wait = resetWait * 1'000'000 / 10;
+        for(int i = 91; i <= 100; i++)
+        {
+            usleep(wait);
+            mLOG(CAPTURE) << "Finalizing TOC: " << std::setw(2) << std::setfill('0') << i << "%";
+        }
+        ret = initDevice();
+    }
+    return ret;
 }
 
 } // ~namespace

@@ -50,6 +50,145 @@ We virtualy split the tracks and give them titles.
 
 namespace netmd {
 
+/// forward declaration
+class CSG;
+
+//------------------------------------------------------------------------------
+//! @brief      This class describes a net md TOC.
+//------------------------------------------------------------------------------
+class CNetMdTOC
+{
+public:
+
+    //--------------------------------------------------------------------------
+    //! @brief      Constructs a new instance.
+    //!
+    //! @param[in]     trackCount  The track count
+    //! @param[in]     lenInMs     The length in milliseconds
+    //! @param[in/out] data        The TOC data
+    //--------------------------------------------------------------------------
+    CNetMdTOC(int trackCount = 0, uint32_t lenInMs = 0, uint8_t* data = nullptr);
+
+    //--------------------------------------------------------------------------
+    //! @brief      Destroys the object.
+    //--------------------------------------------------------------------------
+    ~CNetMdTOC();
+
+    //--------------------------------------------------------------------------
+    //! @brief      import TOC data
+    //!
+    //! @param[in]  trackCount  The track count
+    //! @param[in]  lenInMs     The length in milliseconds
+    //! @param      data        The TOC data
+    //--------------------------------------------------------------------------
+    void import(int trackCount = 0, uint32_t lenInMs = 0, uint8_t* data = nullptr);
+
+    //--------------------------------------------------------------------------
+    //! @brief      Adds a track.
+    //!
+    //! This function has to be used to split a DAO transferred disc audio
+    //! track into the parts as on the original disc. This functions has to
+    //! be called for all tracks in their correct order!
+    //! **Breaking the order will break the TOC!**
+    //!
+    //! @param[in]  no        track number (starting with 1)
+    //! @param[in]  lengthMs  The length milliseconds
+    //! @param[in]  title     The title
+    //!
+    //! @return     0 -> ok; -1 -> error
+    //--------------------------------------------------------------------------
+    int addTrack(uint8_t no, uint32_t lengthMs, const std::string& title);
+
+    //--------------------------------------------------------------------------
+    //! @brief      Sets the disc title.
+    //!
+    //! @param[in]  title  The title
+    //!
+    //! @return     0 -> ok; -1 -> error
+    //--------------------------------------------------------------------------
+    int setDiscTitle(const std::string& title);
+
+    //--------------------------------------------------------------------------
+    //! @brief      get track count
+    //!
+    //! @return     number of tracks
+    //--------------------------------------------------------------------------
+    int trackCount() const;
+
+    //--------------------------------------------------------------------------
+    //! @brief      get MD title
+    //!
+    //! @return     title
+    //--------------------------------------------------------------------------
+    std::string discTitle() const;
+
+    //--------------------------------------------------------------------------
+    //! @brief      get track title
+    //!
+    //! @param[in]  trackNo  The track number
+    //!
+    //! @return     title
+    //--------------------------------------------------------------------------
+    std::string trackTitle(int trackNo) const;
+
+    //--------------------------------------------------------------------------
+    //! @brief      get track info
+    //!
+    //! @param[in]  trackNo  The track number
+    //!
+    //! @return     track info
+    //--------------------------------------------------------------------------
+    std::string trackInfo(int trackNo) const;
+
+    //--------------------------------------------------------------------------
+    //! @brief      get disc info
+    //!
+    //! @return     disc info
+    //--------------------------------------------------------------------------
+    std::string discInfo() const;
+
+protected:
+
+    //--------------------------------------------------------------------------
+    //! @brief      Sets the track title.
+    //!
+    //! @param[in]  no     The track number
+    //! @param[in]  title  The title
+    //!
+    //! @return     0
+    //--------------------------------------------------------------------------
+    int setTrackTitle(uint8_t no, const std::string& title);
+
+    //--------------------------------------------------------------------------
+    //! @brief      Sets the track time stamp.
+    //!
+    //! @param[in]  no    The new value
+    //!
+    //! @return     0
+    //--------------------------------------------------------------------------
+    int setTrackTStamp(int no);
+
+
+private:
+    /// TOC pointer
+    toc::TOC* mpToc;
+
+    /// group number where audio starts
+    uint32_t  mAudioStart;
+
+    /// group number where audio ends
+    uint32_t  mAudioEnd;
+
+    /// number of tracks for this TOC
+    int       mTracksCount;
+
+    /// complete length of all tracks in ms
+    uint32_t  mLengthInMs;
+
+    /// current group position
+    CSG*      mpCurPos;
+};
+
 //------------------------------------------------------------------------------
 //! @brief      This class describes a cluster-sector-group helper
 //------------------------------------------------------------------------------
@@ -238,134 +377,5 @@ private:
     uint32_t mGroups;
 };
 
-
-//------------------------------------------------------------------------------
-//! @brief      This class describes a net md TOC.
-//------------------------------------------------------------------------------
-class CNetMdTOC
-{
-public:
-
-    //--------------------------------------------------------------------------
-    //! @brief      Constructs a new instance.
-    //!
-    //! @param[in]     trackCount  The track count
-    //! @param[in]     lenInMs     The length in milliseconds
-    //! @param[in/out] data        The TOC data
-    //--------------------------------------------------------------------------
-    CNetMdTOC(int trackCount = 0, uint32_t lenInMs = 0, uint8_t* data = nullptr);
-
-    //--------------------------------------------------------------------------
-    //! @brief      import TOC data
-    //!
-    //! @param      data  The TOC data
-    //--------------------------------------------------------------------------
-    void import(uint8_t data[sizeof(toc::TOC)]);
-
-    //--------------------------------------------------------------------------
-    //! @brief      Adds a track.
-    //!
-    //! This function has to be used to split a DAO transferred disc audio
-    //! track into the parts as on the original disc. This functions has to
-    //! be called for all tracks in their correct order!
-    //! **Breaking the order will break the TOC!**
-    //!
-    //! @param[in]  no        track number (starting with 1)
-    //! @param[in]  lengthMs  The length milliseconds
-    //! @param[in]  title     The title
-    //!
-    //! @return     0 -> ok; -1 -> error
-    //--------------------------------------------------------------------------
-    int addTrack(uint8_t no, uint32_t lengthMs, const std::string& title);
-
-    //--------------------------------------------------------------------------
-    //! @brief      Sets the disc title.
-    //!
-    //! @param[in]  title  The title
-    //!
-    //! @return     0 -> ok; -1 -> error
-    //--------------------------------------------------------------------------
-    int setDiscTitle(const std::string& title);
-
-    //--------------------------------------------------------------------------
-    //! @brief      get track count
-    //!
-    //! @return     number of tracks
-    //--------------------------------------------------------------------------
-    int trackCount() const;
-
-    //--------------------------------------------------------------------------
-    //! @brief      get MD title
-    //!
-    //! @return     title
-    //--------------------------------------------------------------------------
-    std::string discTitle() const;
-
-    //--------------------------------------------------------------------------
-    //! @brief      get track title
-    //!
-    //! @param[in]  trackNo  The track number
-    //!
-    //! @return     title
-    //--------------------------------------------------------------------------
-    std::string trackTitle(int trackNo) const;
-
-    //--------------------------------------------------------------------------
-    //! @brief      get track info
-    //!
-    //! @param[in]  trackNo  The track number
-    //!
-    //! @return     track info
-    //--------------------------------------------------------------------------
-    std::string trackInfo(int trackNo) const;
-
-    //--------------------------------------------------------------------------
-    //! @brief      get disc info
-    //!
-    //! @return     disc info
-    //--------------------------------------------------------------------------
-    std::string discInfo() const;
-
-protected:
-
-    //--------------------------------------------------------------------------
-    //! @brief      Sets the track title.
-    //!
-    //! @param[in]  no     The track number
-    //! @param[in]  title  The title
-    //!
-    //! @return     0
-    //--------------------------------------------------------------------------
-    int setTrackTitle(uint8_t no, const std::string& title);
-
-    //--------------------------------------------------------------------------
-    //! @brief      Sets the track time stamp.
-    //!
-    //! @param[in]  no    The new value
-    //!
-    //! @return     0
-    //--------------------------------------------------------------------------
-    int setTrackTStamp(int no);
-
-
-private:
-    /// TOC pointer
-    toc::TOC* mpToc;
-
-    /// group number where audio starts
-    uint32_t  mAudioStart;
-
-    /// group number where audio ends
-    uint32_t  mAudioEnd;
-
-    /// number of tracks for this TOC
-    int       mTracksCount;
-
-    /// complete length of all tracks in ms
-    uint32_t  mLengthInMs;
-
-    /// current group position
-    CSG       mCurPos;
-};
 
 } // ~netmd

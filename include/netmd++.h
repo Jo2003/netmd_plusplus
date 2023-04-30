@@ -52,9 +52,9 @@ netmd::netmd_pp* pNetMd = new netmd::netmd_pp();
 
  - initialize the first found NetMD device:
 ~~~{c++}
-if ((pNetMd != nullptr) && (pNetMd->initDevice() == netmd::NETMDERR_NO_ERROR))
+if (pNetMd != nullptr)
 {
-    pNetMd->initDiscHeader();
+    pNetMd->initDevice();
 }
 ~~~
 
@@ -73,8 +73,6 @@ int main()
 
     if ((pNetMd != nullptr) && (pNetMd->initDevice() == netmd::NETMDERR_NO_ERROR))
     {
-        pNetMd->initDiscHeader();
-
         if (pNetMd->otfEncodeSupported())
         {
             pNetMd->sendAudioFile("/path/to/nice/audio.wav", "Very nice Audio file (LP2)", netmd::NETMD_DISKFORMAT_LP2);
@@ -570,11 +568,14 @@ public:
     int writeUTOCSector(UTOCSector s, const NetMDByteVector& data);
 
     //--------------------------------------------------------------------------
-    //! @brief      finalize TOC through exploit
+    //! @brief      finalize TOC though exploit
     //!
-    //! @return     @ref NetMdErr
+    //! @param[in]  resetWait  The optional reset wait time (10 seconds)
+    //!
+    //! @return     NetMdErr
+    //! @see        NetMdErr
     //--------------------------------------------------------------------------
-    int finalizeTOC();
+    int finalizeTOC(uint8_t resetWait = 10);
 
 private:
     /// disc header
@@ -586,5 +587,129 @@ private:
     /// secure implementation
     CNetMdSecure* mpSecure;
 };
+
+/// cluster / sector / group helper
+class CSG;
+
+namespace toc
+{
+    /// internally used TOC structure
+    struct TOC;
+}
+
+//------------------------------------------------------------------------------
+//! @brief      This class describes a net md TOC.
+//------------------------------------------------------------------------------
+class CNetMdTOC
+{
+public:
+
+    //--------------------------------------------------------------------------
+    //! @brief      Constructs a new instance.
+    //!
+    //! @param[in]     trackCount  The track count
+    //! @param[in]     lenInMs     The length in milliseconds
+    //! @param[in/out] data        The TOC data
+    //--------------------------------------------------------------------------
+    CNetMdTOC(int trackCount = 0, uint32_t lenInMs = 0, uint8_t* data = nullptr);
+
+    //--------------------------------------------------------------------------
+    //! @brief      Destroys the object.
+    //--------------------------------------------------------------------------
+    ~CNetMdTOC();
+
+    //--------------------------------------------------------------------------
+    //! @brief      import TOC data
+    //!
+    //! @param[in]  trackCount  The track count
+    //! @param[in]  lenInMs     The length in milliseconds
+    //! @param      data        The TOC data
+    //--------------------------------------------------------------------------
+    void import(int trackCount = 0, uint32_t lenInMs = 0, uint8_t* data = nullptr);
+
+    //--------------------------------------------------------------------------
+    //! @brief      Adds a track.
+    //!
+    //! This function has to be used to split a DAO transferred disc audio
+    //! track into the parts as on the original disc. This functions has to
+    //! be called for all tracks in their correct order!
+    //! **Breaking the order will break the TOC!**
+    //!
+    //! @param[in]  no        track number (starting with 1)
+    //! @param[in]  lengthMs  The length milliseconds
+    //! @param[in]  title     The title
+    //!
+    //! @return     0 -> ok; -1 -> error
+    //--------------------------------------------------------------------------
+    int addTrack(uint8_t no, uint32_t lengthMs, const std::string& title);
+
+    //--------------------------------------------------------------------------
+    //! @brief      Sets the disc title.
+    //!
+    //! @param[in]  title  The title
+    //!
+    //! @return     0 -> ok; -1 -> error
+    //--------------------------------------------------------------------------
+    int setDiscTitle(const std::string& title);
+
+    //--------------------------------------------------------------------------
+    //! @brief      get track count
+    //!
+    //! @return     number of tracks
+    //--------------------------------------------------------------------------
+    int trackCount() const;
+
+    //--------------------------------------------------------------------------
+    //! @brief      get MD title
+    //!
+    //! @return     title
+    //--------------------------------------------------------------------------
+    std::string discTitle() const;
+
+    //--------------------------------------------------------------------------
+    //! @brief      get track title
+    //!
+    //! @param[in]  trackNo  The track number
+    //!
+    //! @return     title
+    //--------------------------------------------------------------------------
+    std::string trackTitle(int trackNo) const;
+
+    //--------------------------------------------------------------------------
+    //! @brief      get track info
+    //!
+    //! @param[in]  trackNo  The track number
+    //!
+    //! @return     track info
+    //--------------------------------------------------------------------------
+    std::string trackInfo(int trackNo) const;
+
+    //--------------------------------------------------------------------------
+    //! @brief      get disc info
+    //!
+    //! @return     disc info
+    //--------------------------------------------------------------------------
+    std::string discInfo() const;
+
+private:
+    /// TOC pointer
+    toc::TOC* mpToc;
+
+    /// group number where audio starts
+    uint32_t  mAudioStart;
+
+    /// group number where audio ends
+    uint32_t  mAudioEnd;
+
+    /// number of tracks for this TOC
+    int       mTracksCount;
+
+    /// complete length of all tracks in ms
+    uint32_t  mLengthInMs;
+
+    /// current group position
+    CSG*      mpCurPos;
+};
+
 
 } // ~namespace

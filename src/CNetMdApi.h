@@ -363,10 +363,12 @@ public:
     //--------------------------------------------------------------------------
     //! @brief      finalize TOC though exploit
     //!
+    //! @param[in]  resetWait  The optional reset wait time (10 seconds)
+    //!
     //! @return     NetMdErr
     //! @see        NetMdErr
     //--------------------------------------------------------------------------
-    int finalizeTOC();
+    int finalizeTOC(uint8_t resetWait = 10);
 
 protected:
 

@@ -257,6 +257,23 @@ const CNetMdPatch::ExploitPayloadTab CNetMdPatch::smExplPayloadTab =
             {SDI_S1500, {0x01, 0x00, 0xa0, 0xe3, 0x00, 0x10, 0x9f, 0xe5, 0x11, 0xff, 0x2f, 0xe1, 0x83, 0x69, 0x01, 0x00}},
             {SDI_S1600, {0x01, 0x00, 0xa0, 0xe3, 0x00, 0x10, 0x9f, 0xe5, 0x11, 0xff, 0x2f, 0xe1, 0x6f, 0x6b, 0x01, 0x00}}
         }
+    },
+    {
+        EID_DEV_RESET,
+        {
+            {SDI_R1000, {0x00, 0x00, 0xa0, 0xe3, 0x10, 0xff, 0x2f, 0xe1}},
+            {SDI_R1100, {0x00, 0x00, 0xa0, 0xe3, 0x10, 0xff, 0x2f, 0xe1}},
+            {SDI_R1200, {0x00, 0x00, 0xa0, 0xe3, 0x10, 0xff, 0x2f, 0xe1}},
+            {SDI_R1300, {0x00, 0x00, 0xa0, 0xe3, 0x10, 0xff, 0x2f, 0xe1}},
+            {SDI_R1400, {0x00, 0x00, 0xa0, 0xe3, 0x10, 0xff, 0x2f, 0xe1}},
+            {SDI_S1000, {0x00, 0x00, 0xa0, 0xe3, 0x10, 0xff, 0x2f, 0xe1}},
+            {SDI_S1100, {0x00, 0x00, 0xa0, 0xe3, 0x10, 0xff, 0x2f, 0xe1}},
+            {SDI_S1200, {0x00, 0x00, 0xa0, 0xe3, 0x10, 0xff, 0x2f, 0xe1}},
+            {SDI_S1300, {0x00, 0x00, 0xa0, 0xe3, 0x10, 0xff, 0x2f, 0xe1}},
+            {SDI_S1400, {0x00, 0x00, 0xa0, 0xe3, 0x10, 0xff, 0x2f, 0xe1}},
+            {SDI_S1500, {0x00, 0x00, 0xa0, 0xe3, 0x10, 0xff, 0x2f, 0xe1}},
+            {SDI_S1600, {0x00, 0x00, 0xa0, 0xe3, 0x10, 0xff, 0x2f, 0xe1}}
+        }
     }
 };
 
@@ -627,11 +644,14 @@ int CNetMdPatch::prepareTOCManip()
 //!
 //! @param[in]  devInfo   The device information
 //! @param[in]  execData  The data to USBExecute
+//! @param[out] pResp     The optional response pointer
+//! @param[in]  sendOnly  The send only (no exchange) - optional
 //!
 //! @return     NetMdErr
 //! @see        NetMdErr
 //--------------------------------------------------------------------------
-int CNetMdPatch::USBExecute(SonyDevInfo devInfo, const NetMDByteVector& execData, NetMDResp* pResp)
+int CNetMdPatch::USBExecute(SonyDevInfo devInfo, const NetMDByteVector& execData,
+                            NetMDResp* pResp, bool sendOnly)
 {
     NetMDResp query, resp;
     NetMDParams params;
@@ -639,6 +659,12 @@ int CNetMdPatch::USBExecute(SonyDevInfo devInfo, const NetMDByteVector& execData
 
     if ((ret = formatQuery("00 18%b ff %*", {{exploitCmd(devInfo)}, {execData}}, query)) > 0)
     {
+        if (sendOnly)
+        {
+            // we expect an error on some commands, since read doesn't work and re-init is needed!
+            return mNetMd.sendCmd(query.get(), ret, false);
+        }
+
         if ((ret = mNetMd.exchange(query.get(), ret, &resp, false, CNetMdDev::NETMD_STATUS_NOT_IMPLEMENTED)) > 0)
         {
             // capture result
@@ -691,15 +717,15 @@ int CNetMdPatch::finalizeTOC()
             mLOG(DEBUG) << "Lower head success!";
         }
         usleep(1'000'000);
-        mLOG(CAPTURE) << "Finalizing TOC: 02%";
+        mLOG(CAPTURE) << "Finalizing TOC: 01%";
         if (USBExecute(devcode, exploitData(devcode, EID_TRIGGER)) == NETMDERR_NO_ERROR)
         {
             mLOG(DEBUG) << "Trigger success!";
         }
 
-        for(int i = 3; i <= 99; i++)
+        for(int i = 2; i <= 89; i++)
         {
-            usleep(510'000);
+            usleep(600'000);
             mLOG(CAPTURE) << "Finalizing TOC: " << std::setw(2) << std::setfill('0') << i << "%";
         }
 
@@ -707,7 +733,13 @@ int CNetMdPatch::finalizeTOC()
         {
             mLOG(DEBUG) << "Raise head success!";
         }
-        mLOG(CAPTURE) << "Finalizing TOC: 100%";
+
+        if (USBExecute(devcode, exploitData(devcode, EID_DEV_RESET), nullptr, true) == NETMDERR_NO_ERROR)
+        {
+            mLOG(DEBUG) << "Device reset success!";
+        }
+        mLOG(CAPTURE) << "Finalizing TOC: 90%";
+
         return NETMDERR_NO_ERROR;
     }
     return NETMDERR_OTHER;
