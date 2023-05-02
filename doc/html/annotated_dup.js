@@ -5,6 +5,7 @@ var annotated_dup =
       [ "NetMdTime", "structnetmd_1_1_net_md_time.html", "structnetmd_1_1_net_md_time" ],
       [ "DiscCapacity", "structnetmd_1_1_disc_capacity.html", "structnetmd_1_1_disc_capacity" ],
       [ "Group", "structnetmd_1_1_group.html", "structnetmd_1_1_group" ],
-      [ "CNetMdApi", "classnetmd_1_1_c_net_md_api.html", "classnetmd_1_1_c_net_md_api" ]
+      [ "CNetMdApi", "classnetmd_1_1_c_net_md_api.html", "classnetmd_1_1_c_net_md_api" ],
+      [ "CNetMdTOC", "classnetmd_1_1_c_net_md_t_o_c.html", "classnetmd_1_1_c_net_md_t_o_c" ]
     ] ]
 ];

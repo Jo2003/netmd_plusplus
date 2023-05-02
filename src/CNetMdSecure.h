@@ -406,6 +406,13 @@ class CNetMdSecure
     bool spUploadSupported();
 
     //--------------------------------------------------------------------------
+    //! @brief      is TOC manipulation supported?
+    //!
+    //! @return     true if supported, false if not
+    //--------------------------------------------------------------------------
+    bool tocManipSupported();
+
+    //--------------------------------------------------------------------------
     //! @brief      Sets the initial track title.
     //!
     //! @param[in]  trackNo  The track no

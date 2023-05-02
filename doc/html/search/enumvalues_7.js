@@ -1,5 +1,5 @@
 var searchData=
 [
-  ['unknown_168',['UNKNOWN',['../namespacenetmd.html#a10d2c2737ae3346999ca0a52b59e76b2a696b031073e74bf2cb98e5ef201d4aa3',1,'netmd::UNKNOWN()'],['../namespacenetmd.html#a12419608ab3cea377632a2485d3f5e5ea696b031073e74bf2cb98e5ef201d4aa3',1,'netmd::UNKNOWN()']]],
-  ['unprotected_169',['UNPROTECTED',['../namespacenetmd.html#a10d2c2737ae3346999ca0a52b59e76b2a937e6a98c210e6d3d0af5ed55de70d3b',1,'netmd']]]
+  ['pos_5faddr_199',['POS_ADDR',['../namespacenetmd.html#ac0ff9cdf9dc7784c232f4fabeadc13d0aa4a1c2983259b6779c2c9cba8ca3d11b',1,'netmd']]],
+  ['protected_200',['PROTECTED',['../namespacenetmd.html#a10d2c2737ae3346999ca0a52b59e76b2a0c2448254108d59f7400d1c96f31d751',1,'netmd']]]
 ];

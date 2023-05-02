@@ -1519,4 +1519,33 @@ bool CNetMdPatch::supportsSpUpload()
     return ret;
 }
 
+//--------------------------------------------------------------------------
+//! @brief      is TOC manipulation supported?
+//!
+//! @return     true if supported, false if not
+//--------------------------------------------------------------------------
+bool CNetMdPatch::tocManipSupported()
+{
+    mLOG(DEBUG);
+    bool ret = false;
+
+    // only available on Sony devices!
+    if (mNetMd.isMaybePatchable())
+    {
+        mLOG(DEBUG) << "Enable factory ...";
+        if (enableFactory() == NETMDERR_NO_ERROR)
+        {
+            mLOG(DEBUG) << "Get extended device info!";
+            SonyDevInfo devCode = devCodeEx();
+            if (devCode != SDI_UNKNOWN)
+            {
+                mLOG(DEBUG) << "Supported device!";
+                ret = true;
+            }
+        }
+    }
+
+    return ret;
+}
+
 } // ~namespace

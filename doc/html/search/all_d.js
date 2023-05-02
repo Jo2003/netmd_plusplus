@@ -1,5 +1,5 @@
 var searchData=
 [
-  ['rawdischeader_60',['rawDiscHeader',['../classnetmd_1_1_c_net_md_api.html#abe0ee8f8677d77966552e7dd6bb570c0',1,'netmd::CNetMdApi']]],
-  ['recorded_61',['recorded',['../structnetmd_1_1_disc_capacity.html#a9f100874909cb4f1d6670ebcc183f9bc',1,'netmd::DiscCapacity']]]
+  ['readutocsector_71',['readUTOCSector',['../classnetmd_1_1_c_net_md_api.html#ae92c4f4fc9243585c46ec03b7402318d',1,'netmd::CNetMdApi']]],
+  ['recorded_72',['recorded',['../structnetmd_1_1_disc_capacity.html#a9f100874909cb4f1d6670ebcc183f9bc',1,'netmd::DiscCapacity']]]
 ];

@@ -41,30 +41,30 @@ This API uses the namespace *netmd*.
 ## Usage
 
  - include the header file into your project:
-~~~{c++}
+~~~
 #include "path/to/netmd++.h"
 ~~~
 
  - create an instance of the API:
-~~~{c++}
+~~~
 netmd::netmd_pp* pNetMd = new netmd::netmd_pp();
 ~~~
 
  - initialize the first found NetMD device:
-~~~{c++}
+~~~
 if (pNetMd != nullptr)
 {
     pNetMd->initDevice();
 }
 ~~~
 
- - If you change or re-plug the device, simply run above code (init) again!
+ - If you change or re-plug the device, simply run above code (initDevice()) again!
 
 ## Examples
 ### Track transfer
 Check for on-the-fly support and transfer a WAVE file to NetMD with on-the-fly encoding (LP2) or w/o encoding (SP).
 
-~~~{c++}
+~~~
 #include <netmd++.h>
 
 int main()
@@ -87,7 +87,7 @@ int main()
 ~~~
 
 ### Erase disc and set new title
-~~~{c++}
+~~~
 #include <netmd++.h>
 
 int main()
@@ -97,7 +97,6 @@ int main()
     if ((pNetMd != nullptr) && (pNetMd->initDevice() == netmd::NETMDERR_NO_ERROR))
     {
         pNetMd->eraseDisc();
-        pNetMd->initDiscHeader();
         pNetMd->setDiscTitle("Amazing MD");
 
     }
@@ -180,8 +179,8 @@ enum UTOCSector : uint16_t
     HW_TITLES,  //!< half width titles
     TSTAMPS,    //!< time stamps
     FW_TITLES,  //!< full width titles
-    UNKNWN_1,
-    UNKNON_2,
+    UNKNWN_1,   //!< some unidentified TOC sector #1
+    UNKNON_2,   //!< some unidentified TOC sector #2
 };
 
 /// NetMD time
@@ -302,13 +301,6 @@ public:
     //! @return     NetMdErr
     //--------------------------------------------------------------------------
     int initDevice();
-
-    //--------------------------------------------------------------------------
-    //! @brief      Initializes the disc header.
-    //!
-    //! @return     NetMdErr
-    //--------------------------------------------------------------------------
-    int initDiscHeader();
 
     //--------------------------------------------------------------------------
     //! @brief      Gets the device name.
@@ -495,6 +487,13 @@ public:
     bool otfEncodeSupported();
 
     //--------------------------------------------------------------------------
+    //! @brief      is TOC manipulation supported?
+    //!
+    //! @return     true if supported, false if not
+    //--------------------------------------------------------------------------
+    bool tocManipSupported();
+
+    //--------------------------------------------------------------------------
     //! @brief      Sends an audio track
     //!
     //! The audio file must be either an WAVE file (44.1kHz / 16 bit), or an
@@ -568,14 +567,14 @@ public:
     int writeUTOCSector(UTOCSector s, const NetMDByteVector& data);
 
     //--------------------------------------------------------------------------
-    //! @brief      finalize TOC though exploit
+    //! @brief      finalize TOC through exploit
     //!
-    //! @param[in]  resetWait  The optional reset wait time (10 seconds)
+    //! @param[in]  resetWait  The optional reset wait time (15 seconds)
     //!
     //! @return     NetMdErr
     //! @see        NetMdErr
     //--------------------------------------------------------------------------
-    int finalizeTOC(uint8_t resetWait = 10);
+    int finalizeTOC(uint8_t resetWait = 15);
 
 private:
     /// disc header
@@ -609,7 +608,7 @@ public:
     //!
     //! @param[in]     trackCount  The track count
     //! @param[in]     lenInMs     The length in milliseconds
-    //! @param[in/out] data        The TOC data
+    //! @param         data        The TOC data
     //--------------------------------------------------------------------------
     CNetMdTOC(int trackCount = 0, uint32_t lenInMs = 0, uint8_t* data = nullptr);
 
@@ -636,8 +635,8 @@ public:
     //! **Breaking the order will break the TOC!**
     //!
     //! @param[in]  no        track number (starting with 1)
-    //! @param[in]  lengthMs  The length milliseconds
-    //! @param[in]  title     The title
+    //! @param[in]  lengthMs  The length in milliseconds
+    //! @param[in]  title     The track title
     //!
     //! @return     0 -> ok; -1 -> error
     //--------------------------------------------------------------------------

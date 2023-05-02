@@ -226,7 +226,10 @@ int CNetMdApi::eraseDisc()
     unsigned char request[] = {0x00, 0x18, 0x40, 0xff, 0x00, 0x00};
     int ret = mpNetMd->exchange(request, sizeof(request));
 
-    if (ret > 0) ret = NETMDERR_NO_ERROR;
+    if (ret > 0)
+    {
+        return initDiscHeader();
+    }
 
     return ret;
 }
@@ -940,6 +943,16 @@ int CNetMdApi::finalizeTOC(uint8_t resetWait)
         ret = initDevice();
     }
     return ret;
+}
+
+//------------------------------------------------------------------------------
+//! @brief      is TOC manipulation supported
+//!
+//! @return     true if supported, false if not
+//------------------------------------------------------------------------------
+bool CNetMdApi::tocManipSupported()
+{
+    return mpSecure->tocManipSupported();
 }
 
 } // ~namespace

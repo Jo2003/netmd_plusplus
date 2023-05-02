@@ -1,12 +1,15 @@
 var namespacenetmd =
 [
+    [ "toc", "namespacenetmd_1_1toc.html", null ],
     [ "TrackTime", "structnetmd_1_1_track_time.html", "structnetmd_1_1_track_time" ],
     [ "NetMdTime", "structnetmd_1_1_net_md_time.html", "structnetmd_1_1_net_md_time" ],
     [ "DiscCapacity", "structnetmd_1_1_disc_capacity.html", "structnetmd_1_1_disc_capacity" ],
     [ "Group", "structnetmd_1_1_group.html", "structnetmd_1_1_group" ],
     [ "CNetMdApi", "classnetmd_1_1_c_net_md_api.html", "classnetmd_1_1_c_net_md_api" ],
+    [ "CNetMdTOC", "classnetmd_1_1_c_net_md_t_o_c.html", "classnetmd_1_1_c_net_md_t_o_c" ],
     [ "Groups", "namespacenetmd.html#a3d51bef57e5495eae342cad0efe022bf", null ],
     [ "netmd_pp", "namespacenetmd.html#a8bc42e14d176e366d3d70a1e43963856", null ],
+    [ "NetMDByteVector", "namespacenetmd.html#acb561428b15aeb16c85e854ccc2c2938", null ],
     [ "AudioEncoding", "namespacenetmd.html#a12419608ab3cea377632a2485d3f5e5e", [
       [ "SP", "namespacenetmd.html#a12419608ab3cea377632a2485d3f5e5ea674769e3326f8cf937af4282f2815c02", null ],
       [ "LP2", "namespacenetmd.html#a12419608ab3cea377632a2485d3f5e5ea44f4aa36580f79cc4bf4e0cf32284d8e", null ],
@@ -44,6 +47,15 @@ var namespacenetmd =
       [ "CRITICAL", "namespacenetmd.html#a7a6c70b3958ced268c65a83f9b6c5fafa2f95e5f3218ee562f314a3a6039d96cf", null ],
       [ "CAPTURE", "namespacenetmd.html#a7a6c70b3958ced268c65a83f9b6c5fafa15f1162534472c211fd4ba1e1c79b70b", null ]
     ] ],
+    [ "UTOCSector", "namespacenetmd.html#ac0ff9cdf9dc7784c232f4fabeadc13d0", [
+      [ "POS_ADDR", "namespacenetmd.html#ac0ff9cdf9dc7784c232f4fabeadc13d0aa4a1c2983259b6779c2c9cba8ca3d11b", null ],
+      [ "HW_TITLES", "namespacenetmd.html#ac0ff9cdf9dc7784c232f4fabeadc13d0afd1f26aadadb76698fb543049ccfc266", null ],
+      [ "TSTAMPS", "namespacenetmd.html#ac0ff9cdf9dc7784c232f4fabeadc13d0abdccce31ff2a7c905452475acf1db099", null ],
+      [ "FW_TITLES", "namespacenetmd.html#ac0ff9cdf9dc7784c232f4fabeadc13d0a66416b1da88e77247714c2c9c91b8429", null ],
+      [ "UNKNWN_1", "namespacenetmd.html#ac0ff9cdf9dc7784c232f4fabeadc13d0abb5f17d2477894d2bff9aa14ee58371c", null ],
+      [ "UNKNON_2", "namespacenetmd.html#ac0ff9cdf9dc7784c232f4fabeadc13d0ad9e3d29c34f3636d5017e1d9c69a0c20", null ]
+    ] ],
+    [ "operator+=", "namespacenetmd.html#a9f9217e6b3198d85bc982c8a6084cbe7", null ],
     [ "operator<<", "namespacenetmd.html#afe2fbf2d6274a9fa0c8b4a17e3a80377", null ],
     [ "operator<<", "namespacenetmd.html#a33f3409a537211fe002a38d5d2a04238", null ],
     [ "operator<<", "namespacenetmd.html#aad0756617cd08561544503fa902a47f0", null ]

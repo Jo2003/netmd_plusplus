@@ -409,6 +409,13 @@ class CNetMdPatch
     //--------------------------------------------------------------------------
     bool supportsSpUpload();
 
+    //--------------------------------------------------------------------------
+    //! @brief      is TOC manipulation supported?
+    //!
+    //! @return     true if supported, false if not
+    //--------------------------------------------------------------------------
+    bool tocManipSupported();
+
     CNetMdDev& mNetMd;
 };
 

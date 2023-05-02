@@ -286,6 +286,13 @@ public:
     bool otfEncodeSupported();
 
     //--------------------------------------------------------------------------
+    //! @brief      is TOC manipulation supported?
+    //!
+    //! @return     true if supported, false if not
+    //--------------------------------------------------------------------------
+    bool tocManipSupported();
+
+    //--------------------------------------------------------------------------
     //! @brief      Sends an audio track
     //!
     //! The audio file must be either an WAVE file (44.1kHz / 16 bit), or an
@@ -361,14 +368,14 @@ public:
     int writeUTOCSector(UTOCSector s, const NetMDByteVector& data);
 
     //--------------------------------------------------------------------------
-    //! @brief      finalize TOC though exploit
+    //! @brief      finalize TOC through exploit
     //!
-    //! @param[in]  resetWait  The optional reset wait time (10 seconds)
+    //! @param[in]  resetWait  The optional reset wait time (15 seconds)
     //!
     //! @return     NetMdErr
     //! @see        NetMdErr
     //--------------------------------------------------------------------------
-    int finalizeTOC(uint8_t resetWait = 10);
+    int finalizeTOC(uint8_t resetWait = 15);
 
 protected:
 

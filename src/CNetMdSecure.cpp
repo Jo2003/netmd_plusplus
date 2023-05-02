@@ -1649,5 +1649,14 @@ int CNetMdSecure::finalizeTOC()
     return mPatch.finalizeTOC();
 }
 
+//--------------------------------------------------------------------------
+//! @brief      is TOC manipulation supported?
+//!
+//! @return     true if supported, false if not
+//--------------------------------------------------------------------------
+bool CNetMdSecure::tocManipSupported()
+{
+    return mPatch.tocManipSupported();
+}
 
 } // ~namespace
