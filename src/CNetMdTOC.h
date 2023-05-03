@@ -168,6 +168,21 @@ protected:
     //--------------------------------------------------------------------------
     int setTrackTStamp(int no);
 
+    //--------------------------------------------------------------------------
+    //! @brief      free segment starting at segment
+    //!
+    //! @param[in]  segment  The segment index
+    //--------------------------------------------------------------------------
+    void freeTitle(int segment);
+
+    //--------------------------------------------------------------------------
+    //! @brief      get next free title cell
+    //!
+    //! @param[in]  cleanup  if true clear unused cells
+    //!
+    //! @return     cell number or -1 on error
+    //--------------------------------------------------------------------------
+    int nextFreeTitleCell(bool cleanup = false);
 
 private:
     /// TOC pointer
@@ -187,6 +202,9 @@ private:
 
     /// current group position
     CSG*      mpCurPos;
+
+    /// track we need to split
+    int       mDAOTrack;
 };
 
 //------------------------------------------------------------------------------

@@ -27,6 +27,8 @@
  *
  */
 
+#include <vector>
+#include <algorithm>
 #include "CNetMdTOC.h"
 #include "netmd_utils.h"
 
@@ -40,7 +42,7 @@ namespace netmd {
 //! @param[in/out] data        The TOC data
 //--------------------------------------------------------------------------
 CNetMdTOC::CNetMdTOC(int trackCount, uint32_t lenInMs, uint8_t* data)
-    :mpToc(nullptr), mAudioStart(0), mAudioEnd(0), mpCurPos(nullptr)
+    :mpToc(nullptr), mAudioStart(0), mAudioEnd(0), mpCurPos(nullptr), mDAOTrack(0)
 {
     import(trackCount, lenInMs, data);
 }
@@ -69,6 +71,7 @@ void CNetMdTOC::import(int trackCount, uint32_t lenInMs, uint8_t* data)
     mLengthInMs  = lenInMs;
     mAudioStart  = 0;
     mAudioEnd    = 0;
+    mDAOTrack    = 0;
     mpToc        = nullptr;
 
     if (mpCurPos)
@@ -80,14 +83,16 @@ void CNetMdTOC::import(int trackCount, uint32_t lenInMs, uint8_t* data)
     if (data)
     {
         mpToc = reinterpret_cast<toc::TOC*>(data);
-        CSG csg(mpToc->mTracks.fraglist[mpToc->mTracks.trackmap[1]].start);
+
+        // find last track since it contains the data we
+        // need to manipulate
+        mDAOTrack = mpToc->mTracks.ntracks;
+        CSG csg(mpToc->mTracks.fraglist[mpToc->mTracks.trackmap[mDAOTrack]].start);
         mAudioStart = static_cast<uint32_t>(csg);
         mpCurPos    = new CSG(mAudioStart);
 
-        csg = mpToc->mTracks.fraglist[mpToc->mTracks.trackmap[1]].end;
+        csg = mpToc->mTracks.fraglist[mpToc->mTracks.trackmap[mDAOTrack]].end;
         mAudioEnd = static_cast<uint32_t>(csg);
-
-        mpToc->mTitles.free_title_slot = 1;
     }
 }
 
@@ -115,36 +120,36 @@ int CNetMdTOC::addTrack(uint8_t no, uint32_t lengthMs, const std::string& title)
     // track audio data splitting...
     float allGroups   = mAudioEnd - mAudioStart;
     float trackGroups = static_cast<float>(lengthMs) * allGroups /  static_cast<float>(mLengthInMs);
+    int   currTrack   = mDAOTrack + no - 1;
 
-    mpToc->mTracks.ntracks           = no;
-    mpToc->mTracks.trackmap[no]      = no;
-    mpToc->mTracks.nonempty          = 1;
-    mpToc->mTracks.sign              = toBigEndian(toc::SIGNATURE);
-    mpToc->mTracks.fraglist[no].mode = toc::DEF_TRACK_MODE;
-    mpToc->mTracks.fraglist[no].link = 0;
+    mpToc->mTracks.ntracks = currTrack;
+    mpToc->mTracks.free_track_slot = currTrack + 1;
+    mpToc->mTracks.trackmap[currTrack] = currTrack;
+
+    auto& fragment = mpToc->mTracks.fraglist[currTrack];
+    fragment.mode = toc::DEF_TRACK_MODE;
+    fragment.link = 0;
 
     if (no == 1)
     {
         // start is set ...
         *mpCurPos += std::ceil(trackGroups) - 1;
-        mpToc->mTracks.fraglist[no].end  = static_cast<toc::discaddr>(*mpCurPos);
+        fragment.end  = static_cast<toc::discaddr>(*mpCurPos);
     }
     else if (no == mTracksCount)
     {
-        mpToc->mTracks.fraglist[no].start = mpCurPos->nextAddr();
-        mpToc->mTracks.fraglist[no].end   = static_cast<toc::discaddr>(CSG(mAudioEnd));
+        fragment.start = mpCurPos->nextAddr();
+        fragment.end   = static_cast<toc::discaddr>(CSG(mAudioEnd));
     }
     else
     {
-        mpToc->mTracks.fraglist[no].start = mpCurPos->nextAddr();
+        fragment.start = mpCurPos->nextAddr();
         *mpCurPos += std::ceil(trackGroups);
-        mpToc->mTracks.fraglist[no].end   = static_cast<toc::discaddr>(*mpCurPos);
+        fragment.end   = static_cast<toc::discaddr>(*mpCurPos);
     }
 
-    mpToc->mTracks.free_track_slot   = no + 1;
-
-    setTrackTitle(no, title);
-    setTrackTStamp(no);
+    setTrackTitle(currTrack, title);
+    setTrackTStamp(currTrack);
 
     return 0;
 }
@@ -159,6 +164,12 @@ int CNetMdTOC::addTrack(uint8_t no, uint32_t lengthMs, const std::string& title)
 //--------------------------------------------------------------------------
 int CNetMdTOC::setTrackTitle(uint8_t no, const std::string& title)
 {
+    if (no == mDAOTrack)
+    {
+        freeTitle(no);
+        mpToc->mTitles.free_title_slot = nextFreeTitleCell(true);
+    }
+
     mpToc->mTitles.titlemap[no] = mpToc->mTitles.free_title_slot;
 
     for(size_t sz = 0; sz < title.size(); sz += 7)
@@ -169,7 +180,7 @@ int CNetMdTOC::setTrackTitle(uint8_t no, const std::string& title)
         size_t toCpy = ((title.size() - sz) < 7) ? (title.size() - sz) : 7;
         memcpy(pTitle, title.c_str() + sz, toCpy);
 
-        mpToc->mTitles.free_title_slot ++;
+        mpToc->mTitles.free_title_slot = nextFreeTitleCell();
 
         if ((title.size() - (sz + toCpy)) > 0)
         {
@@ -221,6 +232,7 @@ int CNetMdTOC::setDiscTitle(const std::string& title)
     }
 
     // first part will be wriiten to titlelist[0]
+    freeTitle(0);
     mpToc->mTitles.titlemap[0] = 0;
     size_t i = 0;
 
@@ -230,12 +242,7 @@ int CNetMdTOC::setDiscTitle(const std::string& title)
         memset(pTitle, 0, 7);
         size_t toCpy = ((title.size() - sz) < 7) ? (title.size() - sz) : 7;
         memcpy(pTitle, title.c_str() + sz, toCpy);
-
-        if (i)
-        {
-            mpToc->mTitles.free_title_slot ++;
-        }
-
+        mpToc->mTitles.free_title_slot = nextFreeTitleCell();
 
         if ((title.size() - (sz + toCpy)) > 0)
         {
@@ -365,6 +372,77 @@ std::string CNetMdTOC::discInfo() const
     }
 
     return oss.str();
+}
+
+//--------------------------------------------------------------------------
+//! @brief      free segment starting at segment
+//!
+//! @param[in]  segment  The segment index
+//--------------------------------------------------------------------------
+void CNetMdTOC::freeTitle(int segment)
+{
+    if (!mpToc)
+    {
+        return;
+    }
+
+    uint8_t link = mpToc->mTitles.titlemap[segment];
+
+    do
+    {
+        auto& cell = mpToc->mTitles.titlelist[link];
+        link = cell.link;
+        memset(&cell, 0, sizeof(toc::titlecell));
+    }
+    while(link);
+}
+
+//--------------------------------------------------------------------------
+//! @brief      get next free title cell
+//!
+//! @param[in]  cleanup  if true clear unused cells
+//!
+//! @return     cell number or -1 on error
+//--------------------------------------------------------------------------
+int CNetMdTOC::nextFreeTitleCell(bool cleanup)
+{
+    if (!mpToc)
+    {
+        return -1;
+    }
+
+    std::vector<uint8_t> used;
+    std::vector<uint8_t> unused;
+    for (int i = 0; i <= mpToc->mTracks.ntracks; i++)
+    {
+        uint8_t link = mpToc->mTitles.titlemap[i];
+
+        do
+        {
+            used.push_back(link);
+            link = mpToc->mTitles.titlelist[link].link;
+        }
+        while(link);
+    }
+
+    for (int i = 0; i <= 255; i++)
+    {
+        if (std::find(used.begin(), used.end(), i) == used.end())
+        {
+            unused.push_back(i);
+        }
+    }
+
+    if (cleanup)
+    {
+        for (const auto& c : unused)
+        {
+            auto& cell = mpToc->mTitles.titlelist[c];
+            memset(&cell, 0, sizeof(toc::titlecell));
+        }
+    }
+
+    return unused.empty() ? -1 : unused.at(0);
 }
 
 } // ~netmd

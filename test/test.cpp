@@ -53,7 +53,7 @@ int main (int argc, char* argv[])
         pNetMD->setLogLevel(INFO);
         pNetMD->initDevice();
 
-        pNetMD->eraseDisc();
+        // pNetMD->eraseDisc();
         pNetMD->sendAudioFile("./funky.wav", "Funky track", DiskFormat::NO_ONTHEFLY_CONVERSION);
 
         /*

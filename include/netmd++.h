@@ -708,6 +708,9 @@ private:
 
     /// current group position
     CSG*      mpCurPos;
+
+    /// track we need to split
+    int       mDAOTrack;
 };
 
 
