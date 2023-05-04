@@ -122,11 +122,13 @@ int CNetMdTOC::addTrack(uint8_t no, uint32_t lengthMs, const std::string& title)
     float trackGroups = static_cast<float>(lengthMs) * allGroups /  static_cast<float>(mLengthInMs);
     int   currTrack   = mDAOTrack + no - 1;
 
-    mpToc->mTracks.ntracks = currTrack;
-    mpToc->mTracks.free_track_slot = currTrack + 1;
-    mpToc->mTracks.trackmap[currTrack] = currTrack;
+    // for our first track the fragment was already given
+    int   fragNo      = (no == 1) ? mpToc->mTracks.trackmap[currTrack] : nextFreeTrackFragment();
 
-    auto& fragment = mpToc->mTracks.fraglist[currTrack];
+    mpToc->mTracks.ntracks = currTrack;
+    mpToc->mTracks.trackmap[currTrack] = fragNo;
+
+    auto& fragment = mpToc->mTracks.fraglist[fragNo];
     fragment.mode = toc::DEF_TRACK_MODE;
     fragment.link = 0;
 
@@ -150,6 +152,8 @@ int CNetMdTOC::addTrack(uint8_t no, uint32_t lengthMs, const std::string& title)
 
     setTrackTitle(currTrack, title);
     setTrackTStamp(currTrack);
+
+    mpToc->mTracks.free_track_slot = nextFreeTrackFragment((no == 1) ? true : false);
 
     return 0;
 }
@@ -425,7 +429,8 @@ int CNetMdTOC::nextFreeTitleCell(bool cleanup)
         while(link);
     }
 
-    for (int i = 0; i <= 255; i++)
+    // cell 0 is never free
+    for (int i = 1; i <= 255; i++)
     {
         if (std::find(used.begin(), used.end(), i) == used.end())
         {
@@ -439,6 +444,55 @@ int CNetMdTOC::nextFreeTitleCell(bool cleanup)
         {
             auto& cell = mpToc->mTitles.titlelist[c];
             memset(&cell, 0, sizeof(toc::titlecell));
+        }
+    }
+
+    return unused.empty() ? -1 : unused.at(0);
+}
+
+//--------------------------------------------------------------------------
+//! @brief      get next free track fragment
+//!
+//! @param[in]  cleanup  if true clear unused cells
+//!
+//! @return     fragment number or -1 on error
+//--------------------------------------------------------------------------
+int CNetMdTOC::nextFreeTrackFragment(bool cleanup)
+{
+    if (!mpToc)
+    {
+        return -1;
+    }
+
+    std::vector<uint8_t> used;
+    std::vector<uint8_t> unused;
+    for (int i = 0; i <= mpToc->mTracks.ntracks; i++)
+    {
+        uint8_t link = mpToc->mTracks.trackmap[i];
+
+        do
+        {
+            used.push_back(link);
+            link = mpToc->mTracks.fraglist[link].link;
+        }
+        while(link);
+    }
+
+    // fragment zero is never used
+    for (int i = 1; i <= 255; i++)
+    {
+        if (std::find(used.begin(), used.end(), i) == used.end())
+        {
+            unused.push_back(i);
+        }
+    }
+
+    if (cleanup)
+    {
+        for (const auto& f : unused)
+        {
+            auto& fragment = mpToc->mTracks.fraglist[f];
+            memset(&fragment, 0, sizeof(toc::fragment));
         }
     }
 

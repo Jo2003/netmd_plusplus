@@ -184,6 +184,15 @@ protected:
     //--------------------------------------------------------------------------
     int nextFreeTitleCell(bool cleanup = false);
 
+    //--------------------------------------------------------------------------
+    //! @brief      get next free track fragment
+    //!
+    //! @param[in]  cleanup  if true clear unused cells
+    //!
+    //! @return     fragment number or -1 on error
+    //--------------------------------------------------------------------------
+    int nextFreeTrackFragment(bool cleanup = false);
+
 private:
     /// TOC pointer
     toc::TOC* mpToc;
