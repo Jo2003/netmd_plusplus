@@ -30,6 +30,7 @@
 #include <vector>
 #include <algorithm>
 #include "CNetMdTOC.h"
+#include "log.h"
 #include "netmd_utils.h"
 
 namespace netmd {
@@ -42,7 +43,7 @@ namespace netmd {
 //! @param[in/out] data        The TOC data
 //--------------------------------------------------------------------------
 CNetMdTOC::CNetMdTOC(int trackCount, uint32_t lenInMs, uint8_t* data)
-    :mpToc(nullptr), mAudioStart(0), mAudioEnd(0), mpCurPos(nullptr), mDAOTrack(0)
+    :mpToc(nullptr), mCurPos(0), mDAOTrack(0), mDAOGroups(0)
 {
     import(trackCount, lenInMs, data);
 }
@@ -52,10 +53,6 @@ CNetMdTOC::CNetMdTOC(int trackCount, uint32_t lenInMs, uint8_t* data)
 //--------------------------------------------------------------------------
 CNetMdTOC::~CNetMdTOC()
 {
-    if (mpCurPos != nullptr)
-    {
-        delete mpCurPos;
-    }
 }
 
 //--------------------------------------------------------------------------
@@ -69,16 +66,10 @@ void CNetMdTOC::import(int trackCount, uint32_t lenInMs, uint8_t* data)
 {
     mTracksCount = trackCount;
     mLengthInMs  = lenInMs;
-    mAudioStart  = 0;
-    mAudioEnd    = 0;
     mDAOTrack    = 0;
+    mCurPos      = 0;
     mpToc        = nullptr;
-
-    if (mpCurPos)
-    {
-        delete mpCurPos;
-        mpCurPos = nullptr;
-    }
+    mDAOFragments.clear();
 
     if (data)
     {
@@ -87,12 +78,25 @@ void CNetMdTOC::import(int trackCount, uint32_t lenInMs, uint8_t* data)
         // find last track since it contains the data we
         // need to manipulate
         mDAOTrack = mpToc->mTracks.ntracks;
-        CSG csg(mpToc->mTracks.fraglist[mpToc->mTracks.trackmap[mDAOTrack]].start);
-        mAudioStart = static_cast<uint32_t>(csg);
-        mpCurPos    = new CSG(mAudioStart);
 
-        csg = mpToc->mTracks.fraglist[mpToc->mTracks.trackmap[mDAOTrack]].end;
-        mAudioEnd = static_cast<uint32_t>(csg);
+        // collect all used track fragments
+        uint8_t link = mpToc->mTracks.trackmap[mDAOTrack];
+
+        do
+        {
+            toc::fragment& fragment = mpToc->mTracks.fraglist[link];
+            CSG gStart(fragment.start);
+            CSG gEnd(fragment.end);
+            link = fragment.link;
+            mDAOFragments.push_back({static_cast<uint32_t>(gStart), static_cast<uint32_t>(gEnd)});
+        }
+        while(link);
+
+        // get whole groups count
+        mDAOGroups = daoGroupCount();
+
+        // free used DAO track fragment in TOC
+        mpToc->mTracks.trackmap[mDAOTrack] = 0;
     }
 }
 
@@ -118,42 +122,30 @@ int CNetMdTOC::addTrack(uint8_t no, uint32_t lengthMs, const std::string& title)
     }
 
     // track audio data splitting...
-    float allGroups   = mAudioEnd - mAudioStart;
+    float allGroups   = mDAOGroups;
     float trackGroups = static_cast<float>(lengthMs) * allGroups /  static_cast<float>(mLengthInMs);
     int   currTrack   = mDAOTrack + no - 1;
-
-    // for our first track the fragment was already given
-    int   fragNo      = (no == 1) ? mpToc->mTracks.trackmap[currTrack] : nextFreeTrackFragment();
+    int   fragNo      = nextFreeTrackFragment(no == 1);
 
     mpToc->mTracks.ntracks = currTrack;
     mpToc->mTracks.trackmap[currTrack] = fragNo;
 
-    auto& fragment = mpToc->mTracks.fraglist[fragNo];
-    fragment.mode = toc::DEF_TRACK_MODE;
-    fragment.link = 0;
+    DAOFragments trFrags = getTrackFragments(no, std::round(trackGroups));
 
-    if (no == 1)
+    for (auto it = trFrags.begin(); it != trFrags.end(); it ++)
     {
-        // start is set ...
-        *mpCurPos += std::ceil(trackGroups) - 1;
-        fragment.end  = static_cast<toc::discaddr>(*mpCurPos);
-    }
-    else if (no == mTracksCount)
-    {
-        fragment.start = mpCurPos->nextAddr();
-        fragment.end   = static_cast<toc::discaddr>(CSG(mAudioEnd));
-    }
-    else
-    {
-        fragment.start = mpCurPos->nextAddr();
-        *mpCurPos += std::ceil(trackGroups);
-        fragment.end   = static_cast<toc::discaddr>(*mpCurPos);
+        auto& fragment = mpToc->mTracks.fraglist[fragNo];
+        fragment.start = static_cast<toc::discaddr>(CSG(it->mStart));
+        fragment.end   = static_cast<toc::discaddr>(CSG(it->mEnd));
+        fragment.mode  = toc::DEF_TRACK_MODE;
+        fragNo         = (it == (trFrags.end() - 1)) ? 0 : nextFreeTrackFragment();
+        fragment.link  = fragNo;
     }
 
     setTrackTitle(currTrack, title);
     setTrackTStamp(currTrack);
 
-    mpToc->mTracks.free_track_slot = nextFreeTrackFragment((no == 1) ? true : false);
+    mpToc->mTracks.free_track_slot = nextFreeTrackFragment();
 
     return 0;
 }
@@ -497,6 +489,79 @@ int CNetMdTOC::nextFreeTrackFragment(bool cleanup)
     }
 
     return unused.empty() ? -1 : unused.at(0);
+}
+
+//--------------------------------------------------------------------------
+//! @brief      get group count of DAO track
+//!
+//! @return     group count
+//--------------------------------------------------------------------------
+uint32_t CNetMdTOC::daoGroupCount() const
+{
+    uint32_t ret = 0;
+    for (const auto& f : mDAOFragments)
+    {
+        ret += ((f.mEnd - f.mStart) + 1);
+    }
+    return ret;
+}
+
+//--------------------------------------------------------------------------
+//! @brief      Gets the track fragments.
+//!
+//! @param[in]  trackNo  The track number
+//! @param[in]  groups   The groups count of the track
+//!
+//! @return     The track fragments.
+//--------------------------------------------------------------------------
+CNetMdTOC::DAOFragments CNetMdTOC::getTrackFragments(int trackNo, uint32_t groups)
+{
+    DAOFragments ret;
+    uint32_t start  = 0;
+    uint32_t end    = 0;
+
+    mLOG(DEBUG) << "Track: " << trackNo << ", song groups: " << groups;
+
+    for (auto it = mDAOFragments.begin(); it != mDAOFragments.end() && groups;)
+    {
+        mLOG(DEBUG) << "Handling DAO fragment (" << it->mStart << " ... " << it->mEnd << ")";
+        if (mCurPos == 0)
+        {
+            mCurPos = it->mStart;
+        }
+
+        start   = mCurPos;
+        end     = start + groups - 1;
+        // take care for DAO fragment border crossing
+        end     = (end < it->mEnd) ? end : it->mEnd;
+        mCurPos = end + 1;
+        groups -= ((end - start) + 1);
+
+        // We may have some rounding offset here.
+        // So, on last track and last fragmemt we use the end value anyway.
+        if ((trackNo == mTracksCount) && (it == (mDAOFragments.end() - 1)))
+        {
+            end = it->mEnd;
+            groups = 0;
+        }
+
+        ret.push_back({start, end});
+
+        mLOG(DEBUG) << "Track: " << trackNo << ", fragment: " << ret.size() << ", start: " << start
+                    << ", end: " << end << ", groups still to place: " << groups;
+
+        if (end == it->mEnd)
+        {
+            // current position will be the start of the next fragment
+            mCurPos = 0;
+
+            // DAO fragment completely used,
+            // erase this fragment and update iterator.
+            it = mDAOFragments.erase(it);
+        }
+    }
+
+    return ret;
 }
 
 } // ~netmd

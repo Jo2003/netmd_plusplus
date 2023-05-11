@@ -1,5 +1,7 @@
 var classnetmd_1_1_c_net_md_t_o_c =
 [
+    [ "DAOFragment", "structnetmd_1_1_c_net_md_t_o_c_1_1_d_a_o_fragment.html", "structnetmd_1_1_c_net_md_t_o_c_1_1_d_a_o_fragment" ],
+    [ "DAOFragments", "classnetmd_1_1_c_net_md_t_o_c.html#ad95f8650c9e82c68b845f14cc4a2ae7c", null ],
     [ "CNetMdTOC", "classnetmd_1_1_c_net_md_t_o_c.html#a02a353f3d5121362efca472fe72993b0", null ],
     [ "~CNetMdTOC", "classnetmd_1_1_c_net_md_t_o_c.html#a2431e3c3b83bc1f453f7bfb7cdfb0553", null ],
     [ "addTrack", "classnetmd_1_1_c_net_md_t_o_c.html#a9c4ebc8c274c8caa022cda4026e5a511", null ],

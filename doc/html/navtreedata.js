@@ -33,6 +33,10 @@ var NAVTREE =
         [ "Erase disc and set new title", "index.html#autotoc_md5", null ]
       ] ]
     ] ],
+    [ "MDs UTOC", "index.html#autotoc_md6", [
+      [ "Addressing in UTOC", "index.html#autotoc_md7", null ],
+      [ "Modifying the UTOC", "index.html#autotoc_md8", null ]
+    ] ],
     [ "Namespaces", "namespaces.html", [
       [ "Namespace List", "namespaces.html", "namespaces_dup" ],
       [ "Namespace Members", "namespacemembers.html", [
@@ -49,7 +53,8 @@ var NAVTREE =
       [ "Class Members", "functions.html", [
         [ "All", "functions.html", null ],
         [ "Functions", "functions_func.html", null ],
-        [ "Variables", "functions_vars.html", null ]
+        [ "Variables", "functions_vars.html", null ],
+        [ "Typedefs", "functions_type.html", null ]
       ] ]
     ] ],
     [ "Files", "files.html", [

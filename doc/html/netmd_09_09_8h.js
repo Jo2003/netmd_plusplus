@@ -6,6 +6,7 @@ var netmd_09_09_8h =
     [ "Group", "structnetmd_1_1_group.html", "structnetmd_1_1_group" ],
     [ "CNetMdApi", "classnetmd_1_1_c_net_md_api.html", "classnetmd_1_1_c_net_md_api" ],
     [ "CNetMdTOC", "classnetmd_1_1_c_net_md_t_o_c.html", "classnetmd_1_1_c_net_md_t_o_c" ],
+    [ "DAOFragment", "structnetmd_1_1_c_net_md_t_o_c_1_1_d_a_o_fragment.html", "structnetmd_1_1_c_net_md_t_o_c_1_1_d_a_o_fragment" ],
     [ "Groups", "netmd_09_09_8h.html#a3d51bef57e5495eae342cad0efe022bf", null ],
     [ "netmd_pp", "netmd_09_09_8h.html#a8bc42e14d176e366d3d70a1e43963856", null ],
     [ "NetMDByteVector", "netmd_09_09_8h.html#acb561428b15aeb16c85e854ccc2c2938", null ],

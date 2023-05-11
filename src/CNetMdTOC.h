@@ -46,6 +46,7 @@ We virtualy split the tracks and give them titles.
 #include <string>
 #include <sstream>
 #include <iomanip>
+#include <vector>
 #include "md_toc.h"
 
 namespace netmd {
@@ -59,6 +60,16 @@ class CSG;
 class CNetMdTOC
 {
 public:
+
+    /// a fragment used in DAO track
+    struct DAOFragment
+    {
+        uint32_t mStart;    ///< start group
+        uint32_t mEnd;      ///< end group
+    };
+
+    /// type to store all DAO track fragments (for fragmented, non empty discs)
+    using DAOFragments = std::vector<DAOFragment>;
 
     //--------------------------------------------------------------------------
     //! @brief      Constructs a new instance.
@@ -193,15 +204,26 @@ protected:
     //--------------------------------------------------------------------------
     int nextFreeTrackFragment(bool cleanup = false);
 
+    //--------------------------------------------------------------------------
+    //! @brief      get group count of DAO track
+    //!
+    //! @return     group count
+    //--------------------------------------------------------------------------
+    uint32_t daoGroupCount() const;
+
+    //--------------------------------------------------------------------------
+    //! @brief      Gets the track fragments.
+    //!
+    //! @param[in]  trackNo  The track number
+    //! @param[in]  groups   The groups count of the track
+    //!
+    //! @return     The track fragments.
+    //--------------------------------------------------------------------------
+    DAOFragments getTrackFragments(int trackNo, uint32_t groups);
+
 private:
     /// TOC pointer
     toc::TOC* mpToc;
-
-    /// group number where audio starts
-    uint32_t  mAudioStart;
-
-    /// group number where audio ends
-    uint32_t  mAudioEnd;
 
     /// number of tracks for this TOC
     int       mTracksCount;
@@ -210,10 +232,16 @@ private:
     uint32_t  mLengthInMs;
 
     /// current group position
-    CSG*      mpCurPos;
+    uint32_t  mCurPos;
 
     /// track we need to split
     int       mDAOTrack;
+
+    /// whole groups count of DAO track
+    uint32_t  mDAOGroups;
+
+    /// the fragments used for DAO track
+    DAOFragments mDAOFragments;
 };
 
 //------------------------------------------------------------------------------
@@ -221,6 +249,15 @@ private:
 //------------------------------------------------------------------------------
 class CSG
 {
+    //! The disc start and end addresses each consist of a cluster, sector, and sound group,
+    //! all packed into 3 bytes. The sound group is the MiniDisc's smallest addressable unit,
+    //! representing 11.6ms of mono audio (212 bytes). A sector contains 11 sound groups (2332 bytes).
+    //! A cluster is an aggregate of 32 sectors (352 sound groups) representing 2.03 seconds
+    //! of stereo audio; it is the smallest unit of data that can be written to a MiniDisc.
+    //! In the 3 byte packing, there are 14 bits allocated to the cluster number,
+    //! 6 bits to the sector, and 4 bits to the soundgroup; this arrangement allows addressing
+    //! of up to 9.2 hours of stereo audio.
+
 public:
     /// groups in a sector
     static constexpr uint32_t SECTOR_SIZE  = 11;
@@ -303,7 +340,7 @@ public:
         }
 
         // time in ms
-        uint32_t ms = std::round(static_cast<float>(groupCount) * 11.595);
+        uint32_t ms = std::round(static_cast<float>(groupCount) * 11.6);
 
         oss << std::setw(2) << std::setfill('0') << (ms / 60'000) << ":"
             << std::setw(2) << std::setfill('0') << ((ms % 60'000) / 1'000) << "."
