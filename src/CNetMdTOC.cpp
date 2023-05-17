@@ -122,15 +122,18 @@ int CNetMdTOC::addTrack(uint8_t no, uint32_t lengthMs, const std::string& title)
     }
 
     // track audio data splitting...
-    float allGroups   = mDAOGroups;
-    float trackGroups = static_cast<float>(lengthMs) * allGroups /  static_cast<float>(mLengthInMs);
-    int   currTrack   = mDAOTrack + no - 1;
-    int   fragNo      = nextFreeTrackFragment(no == 1);
+    float    allGroups   = mDAOGroups;
+    uint32_t trackGroups = static_cast<uint32_t>(static_cast<float>(lengthMs) * allGroups /  static_cast<float>(mLengthInMs));
+    int      currTrack   = mDAOTrack + no - 1;
+    int      fragNo      = nextFreeTrackFragment(no == 1);
+
+    // start new track at new sector
+    trackGroups += (trackGroups % CSG::SECTOR_SIZE) ? (CSG::SECTOR_SIZE - (trackGroups % CSG::SECTOR_SIZE)) : 0;
 
     mpToc->mTracks.ntracks = currTrack;
     mpToc->mTracks.trackmap[currTrack] = fragNo;
 
-    DAOFragments trFrags = getTrackFragments(no, std::round(trackGroups));
+    DAOFragments trFrags = getTrackFragments(no, trackGroups);
 
     for (auto it = trFrags.begin(); it != trFrags.end(); it ++)
     {
