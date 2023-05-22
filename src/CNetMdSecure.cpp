@@ -1641,12 +1641,14 @@ int CNetMdSecure::writeUTOCSector(UTOCSector s, const NetMDByteVector& data)
 //--------------------------------------------------------------------------
 //! @brief      finalize TOC though exploit
 //!
+//! @param[in]  reset  do device reset if true
+//!
 //! @return     NetMdErr
 //! @see        NetMdErr
 //--------------------------------------------------------------------------
-int CNetMdSecure::finalizeTOC()
+int CNetMdSecure::finalizeTOC(bool reset)
 {
-    return mPatch.finalizeTOC();
+    return mPatch.finalizeTOC(reset);
 }
 
 //--------------------------------------------------------------------------

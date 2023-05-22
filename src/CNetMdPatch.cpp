@@ -700,10 +700,12 @@ int CNetMdPatch::USBExecute(SonyDevInfo devInfo, const NetMDByteVector& execData
 //--------------------------------------------------------------------------
 //! @brief      finalize TOC though exploit
 //!
+//! @param[in]  reset  do device reset if true
+//!
 //! @return     NetMdErr
 //! @see        NetMdErr
 //--------------------------------------------------------------------------
-int CNetMdPatch::finalizeTOC()
+int CNetMdPatch::finalizeTOC(bool reset)
 {
     SonyDevInfo devcode = devCodeEx();
 
@@ -734,10 +736,14 @@ int CNetMdPatch::finalizeTOC()
             mLOG(DEBUG) << "Raise head success!";
         }
 
-        if (USBExecute(devcode, exploitData(devcode, EID_DEV_RESET), nullptr, true) == NETMDERR_NO_ERROR)
+        if (reset)
         {
-            mLOG(DEBUG) << "Device reset success!";
+            if (USBExecute(devcode, exploitData(devcode, EID_DEV_RESET), nullptr, true) == NETMDERR_NO_ERROR)
+            {
+                mLOG(DEBUG) << "Device reset success!";
+            }
         }
+
         mLOG(CAPTURE) << "Finalizing TOC: 90%";
 
         return NETMDERR_NO_ERROR;

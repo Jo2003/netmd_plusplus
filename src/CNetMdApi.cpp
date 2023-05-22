@@ -921,27 +921,30 @@ int CNetMdApi::writeUTOCSector(UTOCSector s, const NetMDByteVector& data)
 }
 
 //--------------------------------------------------------------------------
-//! @brief      finalize TOC though exploit
+//! @brief      finalize TOC through exploit
 //!
-//! @param[in]  resetWait  The optional reset wait time (10 seconds)
+//! @param[in]  reset      do reset if true (default: false)
+//! @param[in]  resetWait  The optional reset wait time (15 seconds)
+//!                        Only needed if reset is true
 //!
 //! @return     NetMdErr
 //! @see        NetMdErr
 //--------------------------------------------------------------------------
-int CNetMdApi::finalizeTOC(uint8_t resetWait)
+int CNetMdApi::finalizeTOC(bool reset, uint8_t resetWait)
 {
-    int ret = mpSecure->finalizeTOC();
+    int ret = mpSecure->finalizeTOC(reset);
 
-    if(ret == NETMDERR_NO_ERROR)
+    if (reset && (ret == NETMDERR_NO_ERROR))
     {
         int wait = resetWait * 1'000'000 / 10;
-        for(int i = 91; i <= 100; i++)
+        for(int i = 91; i < 100; i++)
         {
             usleep(wait);
             mLOG(CAPTURE) << "Finalizing TOC: " << std::setw(2) << std::setfill('0') << i << "%";
         }
         ret = initDevice();
     }
+    mLOG(CAPTURE) << "Finalizing TOC: 100%";
     return ret;
 }
 

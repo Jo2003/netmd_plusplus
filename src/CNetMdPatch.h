@@ -252,10 +252,12 @@ class CNetMdPatch
     //--------------------------------------------------------------------------
     //! @brief      finalize TOC though exploit
     //!
+    //! @param[in]  reset  do device reset if true
+    //!
     //! @return     NetMdErr
     //! @see        NetMdErr
     //--------------------------------------------------------------------------
-    int finalizeTOC();
+    int finalizeTOC(bool reset);
 
     //--------------------------------------------------------------------------
     //! @brief      USB execution (run exploit)
