@@ -296,7 +296,7 @@ int CNetMdApi::rawDiscHeader(std::string& header)
 
         if (formatQuery(format, {{remaining}, {read}}, request) == 19)
         {
-            if (((ret = mpNetMd->exchange(request.get(), 19, &response)) > 0) && (response != nullptr))
+            if ((mpNetMd->exchange(request.get(), 19, &response) > 0) && (response != nullptr))
             {
                 if (remaining == 0)
                 {
@@ -589,7 +589,7 @@ int CNetMdApi::deleteGroup(int group)
 //--------------------------------------------------------------------------
 int CNetMdApi::deleteTrack(uint16_t track)
 {
-    mLOG(DEBUG);
+    mLOG(DEBUG) << "Track " << track;
     int ret = 0;
 
     if (trackCount() > static_cast<int>(track))
@@ -608,8 +608,7 @@ int CNetMdApi::deleteTrack(uint16_t track)
 
             if (ret == NETMDERR_NO_ERROR)
             {
-                mpDiscHeader->delTrack(track);
-                writeRawDiscHeader();
+                initDiscHeader();
             }
         }
         else
@@ -648,7 +647,7 @@ int CNetMdApi::trackBitRate(uint16_t track, AudioEncoding& encoding, uint8_t& ch
     {
         usleep(5'000);
 
-        if (((ret = mpNetMd->exchange(query.get(), ret, &response)) >= 29) && (response != nullptr))
+        if ((mpNetMd->exchange(query.get(), ret, &response) >= 29) && (response != nullptr))
         {
             encoding = static_cast<AudioEncoding>(response[27]);
             channel  = response[28];
@@ -793,7 +792,7 @@ int CNetMdApi::setTrackTitle(uint16_t trackNo, const std::string& title)
     if (((ret = formatQuery(format, params, query)) > 0) && (query != nullptr))
     {
         cacheTOC();
-        if ((ret = mpNetMd->exchange(query.get(), ret)) > 0)
+        if (mpNetMd->exchange(query.get(), ret) > 0)
         {
             ret = NETMDERR_NO_ERROR;
         }
@@ -859,7 +858,7 @@ int CNetMdApi::discCapacity(DiscCapacity& dcap)
     NetMDResp resp;
     mpNetMd->exchange(hs, sizeof(hs));
 
-    if (((ret = mpNetMd->exchange(request, sizeof(request), &resp)) >= 46) && (resp != nullptr))
+    if ((mpNetMd->exchange(request, sizeof(request), &resp) >= 46) && (resp != nullptr))
     {
         parse_time(resp.get() + 27, dcap.recorded);
         parse_time(resp.get() + 34, dcap.total);

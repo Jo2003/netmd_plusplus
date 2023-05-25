@@ -34,6 +34,7 @@
 #include "netmd_defines.h"
 #include "netmd_utils.h"
 #include <cstdint>
+#include <unistd.h>
 #include <fstream>
 #include <ios>
 
@@ -1041,7 +1042,7 @@ int CNetMdSecure::sendTrack(WireFormat wf, DiskFormat df, uint32_t frames,
 
         if ((ret = scanQuery(resp.get() + offset, ret - offset, capture, capParams)) != NETMDERR_NO_ERROR)
         {
-            mNetMdThrow(NETMDERR_USB, "Error while scanQuery()!");
+            mNetMdThrow(ret, "Error while scanQuery()!");
         }
 
         if (capParams.size() != 2)
@@ -1521,6 +1522,8 @@ int CNetMdSecure::sendAudioTrack(const std::string& filename, const std::string&
         mLOG(DEBUG) << "sessionKeyForget() failed!";
     }
 
+    usleep(1'000'000);
+
     // leave session
     if (leaveSession() != NETMDERR_NO_ERROR)
     {
@@ -1573,7 +1576,7 @@ int CNetMdSecure::setInitTrackTitle(uint16_t trackNo, const std::string& title)
     NetMDParams params = {
         {trackNo                },
         {mBYTE(title.size())    },
-        {mBYTE(0)},
+        {mBYTE(0)               },
         {ba                     }
     };
 
@@ -1582,7 +1585,7 @@ int CNetMdSecure::setInitTrackTitle(uint16_t trackNo, const std::string& title)
     if (((ret = formatQuery(format, params, query)) > 0) && (query != nullptr))
     {
         mNetMd.exchange(cache, sizeof(cache));
-        if ((ret = mNetMd.exchange(query.get(), ret)) > 0)
+        if (mNetMd.exchange(query.get(), ret) > 0)
         {
             ret = NETMDERR_NO_ERROR;
         }

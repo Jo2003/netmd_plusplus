@@ -90,9 +90,13 @@ class CNetMdDev
     static constexpr unsigned int NETMD_POLL_TIMEOUT = 1000;
     static constexpr unsigned int NETMD_SEND_TIMEOUT = 1000;
     static constexpr unsigned int NETMD_RECV_TIMEOUT = 1000;
-    static constexpr unsigned int NETMD_RECV_TRIES   =   30;
+    static constexpr unsigned int NETMD_RECV_TRIES   =  100;
     static constexpr unsigned int NETMD_SYNC_TRIES   =    5;
     static constexpr uint8_t    NETMD_STATUS_CONTROL = 0x00;
+
+    /// reply retry interval
+    static constexpr unsigned int NETMD_REPLY_SZ_INTERVAL_USEC     =    10'000;
+    static constexpr unsigned int NETMD_MAX_REPLY_SZ_INTERVAL_USEC = 1'000'000;
 
     /// NetMD status
     enum NetMdStatus : uint8_t
@@ -194,16 +198,20 @@ class CNetMdDev
         return static_cast<uint32_t>(v) << 16 | static_cast<uint32_t>(d);
     }
 
-
     //--------------------------------------------------------------------------
-    //! @brief      polls to see if minidisc wants to send data
+    //! @brief      get response length
     //!
-    //! @param      buf    The poll buffer buffer
-    //! @param[in]  tries  The number of tries
+    //! @param[out] req request
     //!
     //! @return     < 0 -> NetMdErr; else number of bytes device wants to send
     //--------------------------------------------------------------------------
-    int poll(uint8_t buf[4], int tries);
+    int responseLength(uint8_t& req);
+
+    //--------------------------------------------------------------------------
+    //! @brief      read any garbage which might still be in send queue of
+    //!             the NetMD device
+    //--------------------------------------------------------------------------
+    void cleanupRespQueue();
 
     //--------------------------------------------------------------------------
     //! @brief      Sends a standard command.

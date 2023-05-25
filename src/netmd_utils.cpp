@@ -313,9 +313,10 @@ int scanQuery(const uint8_t data[], size_t size, const char* format, NetMDParams
                     {
                         if (cmp != data[dataIdx++])
                         {
-                            mLOG(CRITICAL) << "Error! Got: " << std::hex
+                            mLOG(CRITICAL) << "Error! Got: 0x" << std::hex
                                        << static_cast<int>(data[dataIdx - 1])
-                                       << " expected: " << std::hex << static_cast<int>(cmp) << std::dec;
+                                       << " expected: 0x" << std::hex << static_cast<int>(cmp)
+                                       << std::dec << " at offset " << dataIdx - 1;
                             return ret;
                         }
                     }

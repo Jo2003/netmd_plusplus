@@ -35,6 +35,8 @@
 #include <sys/types.h>
 #include <cstring>
 #include <unistd.h>
+#include <cmath>
+#include <algorithm>
 
 namespace netmd {
 
@@ -296,14 +298,13 @@ std::string CNetMdDev::getDeviceName() const
 }
 
 //--------------------------------------------------------------------------
-//! @brief      polls to see if minidisc wants to send data
+//! @brief      get response length
 //!
-//! @param      buf    The poll buffer buffer
-//! @param[in]  tries  The number of tries
+//! @param[out] req request
 //!
 //! @return     < 0 -> NetMdErr; else number of bytes device wants to send
 //--------------------------------------------------------------------------
-int CNetMdDev::poll(uint8_t buf[4], int tries)
+int CNetMdDev::responseLength(uint8_t& req)
 {
     if (mDevice.mDevHdl == nullptr)
     {
@@ -311,38 +312,48 @@ int CNetMdDev::poll(uint8_t buf[4], int tries)
         return NETMDERR_NOTREADY;
     }
 
-    int sleepytime = 5, ret;
+    uint8_t pollbuf[] = {0, 0, 0, 0};
+    static constexpr uint8_t REQ_TYPE = LIBUSB_ENDPOINT_IN | LIBUSB_REQUEST_TYPE_VENDOR | LIBUSB_RECIPIENT_INTERFACE;
+    int ret = 0;
 
-    for (int i = 0; i < tries; i++)
+    if ((ret = libusb_control_transfer(mDevice.mDevHdl, REQ_TYPE, 0x01, 0, 0, pollbuf, 4, NETMD_POLL_TIMEOUT)) > 0)
     {
-        // send a poll message
-        memset(buf, 0, 4);
-
-        if ((ret = libusb_control_transfer(mDevice.mDevHdl,
-                                           LIBUSB_ENDPOINT_IN | LIBUSB_REQUEST_TYPE_VENDOR | LIBUSB_RECIPIENT_INTERFACE,
-                                           0x01, 0, 0, buf, 4, NETMD_POLL_TIMEOUT)) < 0)
+        if (pollbuf[0] != 0)
         {
-            mLOG(CRITICAL) << "libusb_control_transfer failed! " << libusb_strerror(static_cast<libusb_error>(ret));
-            return NETMDERR_USB;
-        }
-
-        if (buf[0] != 0)
-        {
-            break;
-        }
-
-        if (i > 0)
-        {
-            usleep(sleepytime * 1000);
-            sleepytime = 100;
-        }
-        if (i > 10)
-        {
-            sleepytime = 1000;
+            req = pollbuf[1];
+            return (static_cast<int>(pollbuf[3]) << 8) | static_cast<int>(pollbuf[2]);
         }
     }
+    else if (ret < 0)
+    {
+        mLOG(DEBUG) << "Error while polling for response: " << libusb_strerror(static_cast<libusb_error>(ret));
+        return -1;
+    }
 
-    return (static_cast<int>(buf[3]) << 8) | static_cast<int>(buf[2]);
+    return 0;
+}
+
+//--------------------------------------------------------------------------
+//! @brief      read any garbage which might still be in send queue of
+//!             the NetMD device
+//--------------------------------------------------------------------------
+void CNetMdDev::cleanupRespQueue()
+{
+    uint8_t req = 0;
+    int ret = responseLength(req);
+
+    if (ret > 0)
+    {
+        NetMDResp response = NetMDResp(new unsigned char[ret]);
+
+        static constexpr uint8_t REQ_TYPE = LIBUSB_ENDPOINT_IN | LIBUSB_REQUEST_TYPE_VENDOR | LIBUSB_RECIPIENT_INTERFACE;
+
+        // receive data
+        if (libusb_control_transfer(mDevice.mDevHdl, REQ_TYPE, req, 0, 0, response.get(), ret, NETMD_RECV_TIMEOUT) > 0)
+        {
+            mLOG(DEBUG) << "Read garbage: " << LOG::hexFormat(DEBUG, response.get(), ret);
+        }
+    }
 }
 
 //--------------------------------------------------------------------------
@@ -357,19 +368,14 @@ int CNetMdDev::poll(uint8_t buf[4], int tries)
 //--------------------------------------------------------------------------
 int CNetMdDev::sendCmd(unsigned char* cmd, size_t cmdLen, bool factory)
 {
-    unsigned char pollbuf[4];
-    int len, ret;
-
-    // poll to see if we can send data
-    len = poll(pollbuf, 1);
-    if (len != 0)
-    {
-        mLOG(CRITICAL) << "poll() failed!";
-        return (len > 0) ? NETMDERR_NOTREADY : len;
-    }
+    // read any data still in response queue
+    // of the NetMD device
+    cleanupRespQueue();
 
     // send data
     mLOG(DEBUG) << (factory ? "factory " : "") << "command:" << LOG::hexFormat(DEBUG, cmd, cmdLen);
+
+    int ret;
 
     if ((ret = libusb_control_transfer(mDevice.mDevHdl,
                                        LIBUSB_ENDPOINT_OUT | LIBUSB_REQUEST_TYPE_VENDOR | LIBUSB_RECIPIENT_INTERFACE,
@@ -392,14 +398,38 @@ int CNetMdDev::sendCmd(unsigned char* cmd, size_t cmdLen, bool factory)
 //--------------------------------------------------------------------------
 int CNetMdDev::getResponse(NetMDResp& response)
 {
-    uint8_t pollbuf[4];
-
     // poll for data that minidisc wants to send
-    int ret = poll(pollbuf, NETMD_RECV_TRIES);
-    if (ret <= 0)
+    uint8_t req = 0;
+    int ret;
+    uint32_t i = 0;
+
+    while ((ret = responseLength(req)) <= 0)
     {
-        mLOG(CRITICAL) << "poll failed!";
-        return (ret == 0) ? NETMDERR_TIMEOUT : ret;
+        // a second chance
+        if (ret < 0)
+        {
+            mLOG(DEBUG) << "try again ...";
+            return NETMDERR_AGAIN;
+        }
+
+        // we shouldn't try forever ...
+        if (i == NETMD_RECV_TRIES)
+        {
+            mLOG(CRITICAL) << "Timeout while waiting for response length!";
+            return NETMDERR_TIMEOUT;
+        }
+
+        // Double wait time every 10 attempts up to 1 sec
+        uint32_t sleep = std::min<uint32_t>(NETMD_REPLY_SZ_INTERVAL_USEC * pow(2, i / 10),
+                                            NETMD_MAX_REPLY_SZ_INTERVAL_USEC);
+
+        usleep(sleep);
+        i++;
+
+        if (!(i % 10))
+        {
+            mLOG(DEBUG) << "still polling ... (" << i << " / " << NETMD_RECV_TRIES << ")";
+        }
     }
 
     response = NetMDResp(new unsigned char[ret]);
@@ -407,7 +437,7 @@ int CNetMdDev::getResponse(NetMDResp& response)
     // receive data
     if ((ret = libusb_control_transfer(mDevice.mDevHdl,
                                        LIBUSB_ENDPOINT_IN | LIBUSB_REQUEST_TYPE_VENDOR | LIBUSB_RECIPIENT_INTERFACE,
-                                       pollbuf[1], 0, 0, response.get(), ret,
+                                       req, 0, 0, response.get(), ret,
                                        NETMD_RECV_TIMEOUT)) < 0)
     {
         mLOG(CRITICAL) << "libusb_control_transfer failed! " << libusb_strerror(static_cast<libusb_error>(ret));
@@ -445,41 +475,51 @@ int CNetMdDev::exchange(unsigned char* cmd, size_t cmdLen, NetMDResp* response,
     int ret = 0;
     NetMDResp tmpRsp;
     NetMDResp* pResp = (response == nullptr) ? &tmpRsp : response;
+    int redo = 2;
 
-    if ((ret = sendCmd(cmd, cmdLen, factory)) == NETMDERR_NO_ERROR)
+    do
     {
-        ret = getResponse(*pResp);
-
-        if (*pResp == nullptr)
+        if ((ret = sendCmd(cmd, cmdLen, factory)) == NETMDERR_NO_ERROR)
         {
-            ret = NETMDERR_CMD_FAILED;
-        }
-        else if (((*pResp)[0] == NETMD_STATUS_INTERIM) && (expected != NETMD_STATUS_INTERIM))
-        {
-            mLOG(DEBUG) << "Re-read ...!";
-            (*pResp) = nullptr;
-            ret = getResponse(*pResp);
+            if ((ret = getResponse(*pResp)) == NETMDERR_AGAIN)
+            {
+                redo --;
+                continue;
+            }
 
             if (*pResp == nullptr)
             {
-                ret = NETMDERR_USB;
+                ret = NETMDERR_CMD_FAILED;
+            }
+            else if (((*pResp)[0] == NETMD_STATUS_INTERIM) && (expected != NETMD_STATUS_INTERIM))
+            {
+                mLOG(DEBUG) << "Re-read ...!";
+                (*pResp) = nullptr;
+                ret = getResponse(*pResp);
+
+                if (*pResp == nullptr)
+                {
+                    ret = NETMDERR_USB;
+                }
+            }
+            else if (((*pResp)[0] == NETMD_STATUS_INTERIM) && (expected == NETMD_STATUS_INTERIM))
+            {
+                mLOG(DEBUG) << "Expected INTERIM return value: 0x" << std::hex << std::setw(2)
+                               << std::setfill('0') << static_cast<int>((*pResp)[0]) << std::dec;
+            }
+            else if (((*pResp)[0] == NETMD_STATUS_NOT_IMPLEMENTED) && (expected == NETMD_STATUS_NOT_IMPLEMENTED))
+            {
+                mLOG(DEBUG) << "Expected status 'NOT IMPLEMENTED' return value: 0x" << std::hex << std::setw(2)
+                               << std::setfill('0') << static_cast<int>((*pResp)[0]) << std::dec;
+            }
+            else if ((*pResp)[0] != NETMD_STATUS_ACCEPTED)
+            {
+                ret = NETMDERR_CMD_FAILED;
             }
         }
-        else if (((*pResp)[0] == NETMD_STATUS_INTERIM) && (expected == NETMD_STATUS_INTERIM))
-        {
-            mLOG(DEBUG) << "Expected INTERIM return value: 0x" << std::hex << std::setw(2)
-                           << std::setfill('0') << static_cast<int>((*pResp)[0]) << std::dec;
-        }
-        else if (((*pResp)[0] == NETMD_STATUS_NOT_IMPLEMENTED) && (expected == NETMD_STATUS_NOT_IMPLEMENTED))
-        {
-            mLOG(DEBUG) << "Expected status 'NOT IMPLEMENTED' return value: 0x" << std::hex << std::setw(2)
-                           << std::setfill('0') << static_cast<int>((*pResp)[0]) << std::dec;
-        }
-        else if ((*pResp)[0] != NETMD_STATUS_ACCEPTED)
-        {
-            ret = NETMDERR_CMD_FAILED;
-        }
+        redo = 0;
     }
+    while(redo > 0);
 
     return ret;
 }
