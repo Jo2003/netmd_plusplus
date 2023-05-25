@@ -94,9 +94,6 @@ void CNetMdTOC::import(int trackCount, uint32_t lenInMs, uint8_t* data)
 
         // get whole groups count
         mDAOGroups = daoGroupCount();
-
-        // free used DAO track fragment in TOC
-        mpToc->mTracks.trackmap[mDAOTrack] = 0;
     }
 }
 
@@ -119,6 +116,12 @@ int CNetMdTOC::addTrack(uint8_t no, uint32_t lengthMs, const std::string& title)
     if (mpToc == nullptr)
     {
         return -1;
+    }
+
+    if (no == 1)
+    {
+        // free used DAO track fragment in TOC
+        mpToc->mTracks.trackmap[mDAOTrack] = 0;
     }
 
     // track audio data splitting...

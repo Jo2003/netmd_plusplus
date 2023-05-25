@@ -420,16 +420,16 @@ int CNetMdDev::getResponse(NetMDResp& response)
         }
 
         // Double wait time every 10 attempts up to 1 sec
-        uint32_t sleep = std::min<uint32_t>(NETMD_REPLY_SZ_INTERVAL_USEC * pow(2, i / 10),
+        uint32_t sleep = std::min<uint32_t>(NETMD_REPLY_SZ_INTERVAL_USEC * pow(2, static_cast<uint32_t>(i / 10)),
                                             NETMD_MAX_REPLY_SZ_INTERVAL_USEC);
-
-        usleep(sleep);
-        i++;
 
         if (!(i % 10))
         {
-            mLOG(DEBUG) << "still polling ... (" << i << " / " << NETMD_RECV_TRIES << ")";
+            mLOG(DEBUG) << "still polling ... (" << i << " / " << NETMD_RECV_TRIES << " / " << sleep / 1000 << " ms)";
         }
+
+        usleep(sleep);
+        i++;
     }
 
     response = NetMDResp(new unsigned char[ret]);
