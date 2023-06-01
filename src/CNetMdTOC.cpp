@@ -27,6 +27,8 @@
  *
  */
 
+#include <cmath>
+#include <string>
 #include <vector>
 #include <algorithm>
 #include "CNetMdTOC.h"
@@ -130,7 +132,9 @@ int CNetMdTOC::addTrack(uint8_t no, uint32_t lengthMs, const std::string& title)
     int      currTrack   = mDAOTrack + no - 1;
     int      fragNo      = nextFreeTrackFragment();
 
-    // start new track at new sector
+    // One group has a size of 212 Bytes (11.6 ms of mono audio) and is the smallest addressable unit.
+    // Since we've got hearable artifacts we tried different group offsets and ended up with
+    // whole sector offset. Nevertheless, this issue still exists in rare cases.
     trackGroups += (trackGroups % CSG::SECTOR_SIZE) ? (CSG::SECTOR_SIZE - (trackGroups % CSG::SECTOR_SIZE)) : 0;
 
     mpToc->mTracks.ntracks = currTrack;
@@ -320,12 +324,14 @@ std::string CNetMdTOC::trackInfo(int trackNo) const
             CSG begin(mpToc->mTracks.fraglist[fragment].start);
             CSG end(mpToc->mTracks.fraglist[fragment].end);
 
+            uint32_t groups = static_cast<uint32_t>(end) - static_cast<uint32_t>(begin);
+            bool     stereo = !!(mpToc->mTracks.fraglist[fragment].mode & toc::F_STEREO);
+
             oss << "Fragment #" << fragment << ": begin=" << static_cast<uint32_t>(begin)
-                << ", end=" << static_cast<uint32_t>(end) << ", mode=0x" << std::hex
+                << " (" << static_cast<std::string>(begin) << "), end=" << static_cast<uint32_t>(end)
+                << " (" << static_cast<std::string>(end) << "), groups: " << groups << ", mode=0x" << std::hex
                 << static_cast<int>(mpToc->mTracks.fraglist[fragment].mode) << std::dec
-                << ", length: " << CSG::toTime(static_cast<uint32_t>(end) - static_cast<uint32_t>(begin),
-                                               mpToc->mTracks.fraglist[fragment].mode & toc::F_STEREO)
-                << std::endl;
+                << ", length: " << CSG::toTime(groups, stereo) << std::endl;
 
             fragment = mpToc->mTracks.fraglist[fragment].link;
         }
@@ -474,7 +480,7 @@ CNetMdTOC::DAOFragments CNetMdTOC::getTrackFragments(int trackNo, uint32_t group
         start   = mCurPos;
         end     = start + groups - 1;
         // take care for DAO fragment border crossing
-        end     = (end < it->mEnd) ? end : it->mEnd;
+        end     = std::min(end, it->mEnd);
         mCurPos = end + 1;
         groups -= ((end - start) + 1);
 

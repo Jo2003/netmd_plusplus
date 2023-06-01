@@ -26,6 +26,7 @@
 #include <fstream>
 #include <iostream>
 #include <netmd++.h>
+#include <cstring>
 
 using namespace netmd;
 
@@ -46,6 +47,39 @@ void addArrayData(NetMDByteVector& vec, const uint8_t* data, size_t dataSz)
 
 int main (int argc, char* argv[])
 {
+    if ((argc == 3) && !strcmp("printToc", argv[1]))
+    {
+        std::ifstream toc(argv[2], std::ios_base::in | std::ios_base::binary);
+        if (toc)
+        {
+            // get length of file:
+            toc.seekg (0, toc.end);
+            int length = toc.tellg();
+            toc.seekg (0, toc.beg);
+
+            char * buffer = new char [length];
+
+            if (buffer)
+            {
+                std::cout << "Reading " << length << " characters... ";
+                // read data as a block:
+                toc.read(buffer, length);
+
+                CNetMdTOC utoc(3, 459'000, reinterpret_cast<uint8_t*>(buffer));
+
+                std::cout << utoc.discInfo() << std::endl;
+
+                for (int i = 1; i <= utoc.trackCount(); i++)
+                {
+                    std::cout << utoc.trackInfo(i) << std::endl;
+                }
+
+                delete [] buffer;
+            }
+
+        }
+        return 0;
+    }
     netmd_pp* pNetMD = new netmd_pp();
 
     if (pNetMD)

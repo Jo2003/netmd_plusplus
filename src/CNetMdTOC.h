@@ -422,7 +422,12 @@ public:
     //--------------------------------------------------------------------------
     operator std::string() const
     {
-        return toTime(mGroups);
+        std::ostringstream oss;
+        uint16_t cluster =   mGroups / CLUSTER_SIZE;
+        uint16_t  sector  =  (mGroups % CLUSTER_SIZE) / SECTOR_SIZE;
+        uint16_t  group   = ((mGroups % CLUSTER_SIZE) % SECTOR_SIZE);
+        oss << cluster << "c:" << sector << "s:" << group << "g";
+        return oss.str();
     }
 
 private:
