@@ -72,6 +72,7 @@ CMDiscHeader::~CMDiscHeader()
 int CMDiscHeader::fromString(const std::string& header)
 {
     int ret;
+    mGroupId = 0;
     constexpr int GROUP_TRACKS = 1;
     constexpr int GROUP_NAME   = 2;
 
@@ -525,6 +526,8 @@ int CMDiscHeader::delTrack(int16_t track)
 int CMDiscHeader::delGroup(int gid)
 {
     int ret = -1;
+
+    listGroups();
 
     Groups::const_iterator cit;
 
