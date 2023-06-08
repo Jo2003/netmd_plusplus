@@ -31,15 +31,9 @@ add_library("netmd++" ${LIB_SRC})
 target_link_libraries("netmd++" usb-1.0 gcrypt gpg-error)
 
 if (APPLE)
-    target_include_directories("netmd++" PRIVATE
-        /usr/local/include
-    )
-    target_link_directories("netmd++" PRIVATE
-        /usr/local/lib
-    )
+    target_include_directories("netmd++" PRIVATE /usr/local/include)
+    target_link_directories("netmd++" PRIVATE /usr/local/lib)
 endif()
-
-set(MYCFLAGS -W -Wall -Wextra)
 
 if (CMAKE_BUILD_TYPE MATCHES Release)
     if (APPLE)
@@ -49,8 +43,6 @@ if (CMAKE_BUILD_TYPE MATCHES Release)
         set_source_files_properties(${PATCH} ${SRC} PROPERTIES COMPILE_FLAGS -O2)
 	endif()
 endif()
-
-target_compile_options( "netmd++" PRIVATE $<$<CONFIG:Release>:${MYCFLAGS}> )
 
 if (BUILD_SHARED_LIBS)
     target_compile_options("netmd++" PRIVATE -fPIC)
