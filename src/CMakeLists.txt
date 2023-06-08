@@ -1,4 +1,3 @@
-set(CMAKE_BUILD_TYPE Release)
 set (CMAKE_CXX_STANDARD 17)
 set (CMAKE_VERBOSE_BUILD 1)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
@@ -7,15 +6,17 @@ if(MSVC OR MSYS OR MINGW)
     set(WINDOWS TRUE)
 endif()
 
-set(LIB_SRC
+set(PATCH CNetMdPatch.cpp)
+set(SRC 
     netmd_utils.cpp
     CMDiscHeader.cpp
     CNetMdApi.cpp
     CNetMdSecure.cpp
     CNetMdDev.cpp
-    CNetMdPatch.cpp
     CNetMdTOC.cpp
 )
+
+set(LIB_SRC ${PATCH} ${SRC})
 
 if (NOT BUILD_SHARED_LIBS)
     set(BUILD_SHARED_LIBS OFF)
@@ -25,31 +26,29 @@ if (UNIX AND NOT APPLE)
 	set(LINUX TRUE)
 endif()
 
-if (BUILD_TYPE)
-    set(CMAKE_BUILD_TYPE ${BUILD_TYPE})
-endif()
-
-
 # STATIC or SHARED is decided by option BUILD_SHARED_LIBS = ON
 add_library("netmd++" ${LIB_SRC})
 target_link_libraries("netmd++" usb-1.0 gcrypt gpg-error)
 
 if (APPLE)
     target_include_directories("netmd++" PRIVATE
-        /usr/local/Cellar/libusb/1.0.24/include
-        /usr/local/Cellar/libgcrypt/1.9.4_1/include
-        /usr/local/Cellar/libgpg-error/1.43/include
         /usr/local/include
     )
     target_link_directories("netmd++" PRIVATE
-        /usr/local/Cellar/libusb/1.0.24/lib
-        /usr/local/Cellar/libgcrypt/1.9.4_1/lib
-        /usr/local/Cellar/libgpg-error/1.43/lib
         /usr/local/lib
     )
 endif()
 
-set(MYCFLAGS -W -Wall)
+set(MYCFLAGS -W -Wall -Wextra)
+
+if (CMAKE_BUILD_TYPE MATCHES Release)
+    if (APPLE)
+        set_source_files_properties(${PATCH} PROPERTIES COMPILE_FLAGS -O1)
+        set_source_files_properties(${SRC} PROPERTIES COMPILE_FLAGS -O2)
+    else()
+        set_source_files_properties(${PATCH} ${SRC} PROPERTIES COMPILE_FLAGS -O2)
+	endif()
+endif()
 
 target_compile_options( "netmd++" PRIVATE $<$<CONFIG:Release>:${MYCFLAGS}> )
 
