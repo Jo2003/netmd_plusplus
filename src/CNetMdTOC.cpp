@@ -128,14 +128,12 @@ int CNetMdTOC::addTrack(uint8_t no, uint32_t lengthMs, const std::string& title)
 
     // track audio data splitting...
     float    allGroups   = mDAOGroups;
-    uint32_t trackGroups = static_cast<uint32_t>(static_cast<float>(lengthMs) * allGroups /  static_cast<float>(mLengthInMs));
+    uint32_t trackGroups = std::round(static_cast<float>(lengthMs) * allGroups /  static_cast<float>(mLengthInMs));
     int      currTrack   = mDAOTrack + no - 1;
     int      fragNo      = nextFreeTrackFragment();
 
-    // One group has a size of 212 Bytes (11.6 ms of mono audio) and is the smallest addressable unit.
-    // Since we've got hearable artifacts we tried different group offsets and ended up with
-    // whole sector offset. Nevertheless, this issue still exists in rare cases.
-    trackGroups += (trackGroups % CSG::SECTOR_SIZE) ? (CSG::SECTOR_SIZE - (trackGroups % CSG::SECTOR_SIZE)) : 0;
+    // Splitting can be done on each sound group.
+    // Most important is the addressing scheme.
 
     mpToc->mTracks.ntracks = currTrack;
     mpToc->mTracks.trackmap[currTrack] = fragNo;

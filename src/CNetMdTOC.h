@@ -238,22 +238,26 @@ private:
 //------------------------------------------------------------------------------
 class CSG
 {
-    //! The disc start and end addresses each consist of a cluster, sector, and sound group,
-    //! all packed into 3 bytes. The sound group is the MiniDisc's smallest addressable unit,
-    //! representing 11.6ms of mono audio (212 bytes). A sector contains 11 sound groups (2332 bytes).
-    //! A cluster is an aggregate of 32 sectors (352 sound groups) representing 2.03 seconds
-    //! of stereo audio; it is the smallest unit of data that can be written to a MiniDisc.
-    //! In the 3 byte packing, there are 14 bits allocated to the cluster number,
-    //! 6 bits to the sector, and 4 bits to the soundgroup; this arrangement allows addressing
-    //! of up to 9.2 hours of stereo audio.
+    //! A sector has 11 sound frames / 5.5 sound groups. Addressing must be done through sound group.
+    //! Sound groups are numbered  0 ... 10. Sound groups 0 ... 5 are part of the even sector, 
+    //! while sound groups 5 ... 10 are part of the odd sector. Group 5 is part of the even and the odd sector 
+    //! and can therefore be addressed with both sectors.
+
+    //! +-------------------------------------------+
+    //! |              sector pair                  |
+    //! +---------------------+---------------------+
+    //! |   even sector (2n)  |  odd sector (2n+1)  |
+    //! +---+---+---+---+---+-+-+---+---+---+---+---+
+    //! | 0 | 1 | 2 | 3 | 4 | 5 | 6 | 7 | 8 | 9 | 10| <- sound groups
+    //! +---+---+---+---+---+---+---+---+---+---+---+
 
 public:
-    /// groups in a sector
-    static constexpr uint32_t SECTOR_SIZE  = 11;
+    /// We handle a pair to avoid floating point usage. 
+    /// groups in a sector pair
+    static constexpr uint32_t SECTOR_PAIR = 11;
 
-    /// sectors in a cluster
-    static constexpr uint32_t CLUSTER_SIZE = SECTOR_SIZE * 32;
-
+    /// sector pairs in a cluster
+    static constexpr uint32_t CLUSTER_SIZE = SECTOR_PAIR * 16;
 
     //--------------------------------------------------------------------------
     //! @brief      Constructs a new instance.
@@ -263,7 +267,6 @@ public:
     CSG(uint32_t groups = 0) :mGroups(groups)
     {
     }
-
 
     //--------------------------------------------------------------------------
     //! @brief      Constructs a new instance.
@@ -284,8 +287,13 @@ public:
     static toc::discaddr fromGroups(uint32_t groups)
     {
         uint16_t cluster =   groups / CLUSTER_SIZE;
-        uint8_t  sector  =  (groups % CLUSTER_SIZE) / SECTOR_SIZE;
-        uint8_t  group   = ((groups % CLUSTER_SIZE) % SECTOR_SIZE);
+        uint8_t  sector  =  ((groups % CLUSTER_SIZE) / SECTOR_PAIR) << 1;
+        uint8_t  group   = ((groups % CLUSTER_SIZE) % SECTOR_PAIR);
+
+        if (group > 5)
+        {
+            sector ++;
+        }
 
         toc::discaddr csg;
         csg.csg[0] = static_cast<uint8_t>((cluster >> 6) & 0xff);
@@ -307,7 +315,7 @@ public:
         uint8_t  sector   = ((csg.csg[1] & 0b11) << 4) | (csg.csg[2] >> 4);
         uint8_t  group    = csg.csg[2] & 0xf;
 
-        return cluster * CLUSTER_SIZE + sector * SECTOR_SIZE + group;
+        return cluster * CLUSTER_SIZE + (sector >> 1) * SECTOR_PAIR + group;
     }
 
     //--------------------------------------------------------------------------
@@ -322,10 +330,10 @@ public:
     {
         std::ostringstream oss;
 
-        // one group is about 11.6ms, in stereo two groups are 11.6ms
-        if (stereo)
+        // one group is about 11.6ms in stereo
+        if (!stereo)
         {
-            groupCount = std::round(static_cast<float>(groupCount) / 2.0);
+            groupCount *= 2;
         }
 
         // time in ms
@@ -424,8 +432,13 @@ public:
     {
         std::ostringstream oss;
         uint16_t cluster =   mGroups / CLUSTER_SIZE;
-        uint16_t  sector  =  (mGroups % CLUSTER_SIZE) / SECTOR_SIZE;
-        uint16_t  group   = ((mGroups % CLUSTER_SIZE) % SECTOR_SIZE);
+        uint8_t  sector  =  ((mGroups % CLUSTER_SIZE) / SECTOR_PAIR) << 1;
+        uint8_t  group   = ((mGroups % CLUSTER_SIZE) % SECTOR_PAIR);
+
+        if (group > 5)
+        {
+            sector ++;
+        }
         oss << cluster << "c:" << sector << "s:" << group << "g";
         return oss.str();
     }
