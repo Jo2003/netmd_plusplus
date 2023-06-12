@@ -39,8 +39,6 @@ if (CMAKE_BUILD_TYPE MATCHES Release)
     if (APPLE)
         set_source_files_properties(${PATCH} PROPERTIES COMPILE_FLAGS -O1)
         set_source_files_properties(${SRC} PROPERTIES COMPILE_FLAGS -O2)
-    else()
-        set_source_files_properties(${PATCH} ${SRC} PROPERTIES COMPILE_FLAGS -O2)
 	endif()
 endif()
 
