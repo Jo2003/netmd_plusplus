@@ -957,4 +957,25 @@ bool CNetMdApi::tocManipSupported()
     return mpSecure->tocManipSupported();
 }
 
+//--------------------------------------------------------------------------
+//! @brief      is PCM speedup supportd
+//!
+//! @return     true if supported, false if not
+//--------------------------------------------------------------------------
+bool CNetMdApi::pcmSpeedupSupported()
+{
+    return mpSecure->pcmSpeedupSupported();
+}
+
+//--------------------------------------------------------------------------
+//! @brief      apply PCM speedup patch
+//!
+//! @return     NetMdErr
+//! @see        NetMdErr
+//--------------------------------------------------------------------------
+int CNetMdApi::applyPCMSpeedupPatch()
+{
+    return mpSecure->applyPCMSpeedupPatch();
+}
+
 } // ~namespace

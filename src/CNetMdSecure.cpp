@@ -1664,4 +1664,25 @@ bool CNetMdSecure::tocManipSupported()
     return mPatch.tocManipSupported();
 }
 
+//--------------------------------------------------------------------------
+//! @brief      is PCM speedup supportd
+//!
+//! @return     true if supported, false if not
+//--------------------------------------------------------------------------
+bool CNetMdSecure::pcmSpeedupSupported()
+{
+    return mPatch.pcmSpeedupSupported();
+}
+
+//--------------------------------------------------------------------------
+//! @brief      apply PCM speedup patch
+//!
+//! @return     NetMdErr
+//! @see        NetMdErr
+//--------------------------------------------------------------------------
+int CNetMdSecure::applyPCMSpeedupPatch()
+{
+    return mPatch.applyPCMSpeedupPatch();
+}
+
 } // ~namespace

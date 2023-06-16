@@ -82,6 +82,8 @@ class CNetMdPatch
         PID_TRACK_TYPE,
         PID_SAFETY,
         PID_USB_EXE,
+        PID_PCM_SPEEDUP_1,
+        PID_PCM_SPEEDUP_2,
     };
 
     /// exploit ID
@@ -115,7 +117,7 @@ class CNetMdPatch
     using PatchPayloadTab   = std::map<PatchId, std::vector<PayLoad>>;
     using ExploitPayload    = std::map<SonyDevInfo, NetMDByteVector>;
     using ExploitPayloadTab = std::map<ExploitId, ExploitPayload>;
-    using ExploitCmds        = std::map<uint32_t, uint8_t>;
+    using ExploitCmds       = std::map<uint32_t, uint8_t>;
 
     /// patch addresses with for devices
     static const PatchAdrrTab    smPatchAddrTab;
@@ -417,6 +419,21 @@ class CNetMdPatch
     //! @return     true if supported, false if not
     //--------------------------------------------------------------------------
     bool tocManipSupported();
+
+    //--------------------------------------------------------------------------
+    //! @brief      is PCM speedup supportd
+    //!
+    //! @return     true if supported, false if not
+    //--------------------------------------------------------------------------
+    bool pcmSpeedupSupported();
+
+    //--------------------------------------------------------------------------
+    //! @brief      apply PCM speedup patch
+    //!
+    //! @return     NetMdErr
+    //! @see        NetMdErr
+    //--------------------------------------------------------------------------
+    int applyPCMSpeedupPatch();
 
     CNetMdDev& mNetMd;
 };

@@ -146,6 +146,30 @@ const CNetMdPatch::PatchAdrrTab CNetMdPatch::smPatchAddrTab =
             {SDI_S1500, 0x0000e538},
             {SDI_S1600, 0x0000e69c}
         }
+    },
+    {
+        PID_PCM_SPEEDUP_1,
+        {
+            {SDI_S1000, 0x0007852c},
+            {SDI_S1100, 0x00071c04},
+            {SDI_S1200, 0x0007258c},
+            {SDI_S1300, 0x00073c40},
+            {SDI_S1400, 0x00077300},
+            {SDI_S1500, 0x000779d4},
+            {SDI_S1600, 0x000783cc}
+        }
+    },
+    {
+        PID_PCM_SPEEDUP_2,
+        {
+            {SDI_S1000, 0x0001ad94},
+            {SDI_S1100, 0x00019464},
+            {SDI_S1200, 0x00019628},
+            {SDI_S1300, 0x000198f8},
+            {SDI_S1400, 0x0001a820},
+            {SDI_S1500, 0x0001aa94},
+            {SDI_S1600, 0x0001ac9c}
+        }
     }
 };
 
@@ -194,7 +218,19 @@ const CNetMdPatch::PatchPayloadTab CNetMdPatch::smPatchPayloadTab =
             {SDI_S1000 | SDI_S1100 | SDI_S1200 | SDI_S1300 | SDI_S1400 | SDI_S1500 | SDI_S1600, {0x13,0x48,0x00,0x47}},
             {SDI_R1000 | SDI_R1100 | SDI_R1200 | SDI_R1300 | SDI_R1400                        , {0x1a,0x48,0x00,0x47}},
         }
-    }
+    },
+    {
+        PID_PCM_SPEEDUP_1,
+        {
+            {SDI_S1000 | SDI_S1100 | SDI_S1200 | SDI_S1300 | SDI_S1400 | SDI_S1500 | SDI_S1600, {0x41,0x31,0x01,0x60}}
+        }
+    },
+    {
+        PID_PCM_SPEEDUP_2,
+        {
+            {SDI_S1000 | SDI_S1100 | SDI_S1200 | SDI_S1300 | SDI_S1400 | SDI_S1500 | SDI_S1600, {0x00,0x0f,0x0f,0xe0}}
+        }
+    },
 };
 
 /// exploit command lookup
@@ -1552,6 +1588,117 @@ bool CNetMdPatch::tocManipSupported()
     }
 
     return ret;
+}
+
+//--------------------------------------------------------------------------
+//! @brief      is PCM speedup supportd
+//!
+//! @return     true if supported, false if not
+//--------------------------------------------------------------------------
+bool CNetMdPatch::pcmSpeedupSupported()
+{
+    mLOG(DEBUG);
+    bool ret = false;
+
+    // only available on Sony devices!
+    if (mNetMd.isMaybePatchable())
+    {
+        mLOG(DEBUG) << "Enable factory ...";
+        if (enableFactory() == NETMDERR_NO_ERROR)
+        {
+            mLOG(DEBUG) << "Get extended device info!";
+            SonyDevInfo devCode = devCodeEx();
+            if (static_cast<uint32_t>(devCode) & (SDI_S1000|SDI_S1100|SDI_S1200|SDI_S1300|SDI_S1400|SDI_S1500|SDI_S1600))
+            {
+                mLOG(DEBUG) << "Supported device!";
+                ret = true;
+            }
+        }
+    }
+
+    return ret;
+}
+
+//--------------------------------------------------------------------------
+//! @brief      apply PCM speedup patch
+//!
+//! @return     NetMdErr
+//! @see        NetMdErr
+//--------------------------------------------------------------------------
+int CNetMdPatch::applyPCMSpeedupPatch()
+{
+    mLOG(DEBUG);
+    if (!mNetMd.isMaybePatchable())
+    {
+        return NETMDERR_NOT_SUPPORTED;
+    }
+
+    try
+    {
+        mLOG(DEBUG) << "Enable factory ...";
+        if (enableFactory() != NETMDERR_NO_ERROR)
+        {
+            mNetMdThrow(NETMDERR_USB, "Can't enable factory mode!");
+        }
+
+        mLOG(DEBUG) << "Apply safety patch ...";
+        if (safetyPatch() != NETMDERR_NO_ERROR)
+        {
+            mNetMdThrow(NETMDERR_USB, "Can't enable safety patch!");
+        }
+
+        mLOG(DEBUG) << "Try to get device code ...";
+        SonyDevInfo devcode = devCodeEx();
+        if (!(static_cast<uint32_t>(devcode) & (SDI_S1000|SDI_S1100|SDI_S1200|SDI_S1300|SDI_S1400|SDI_S1500|SDI_S1600)))
+        {
+            mNetMdThrow(NETMDERR_OTHER, "Unknown or unsupported NetMD device!");
+        }
+
+        // check, if patch is already active ...
+        if (checkPatch(PID_PCM_SPEEDUP_1, devcode) == 0)
+        {
+            // patch ...
+            mLOG(DEBUG) << "=== Apply PCM Speedup Patch #1 ===";
+            if (patch(patchAddress(devcode, PID_PCM_SPEEDUP_1),
+                      patchPayload(devcode, PID_PCM_SPEEDUP_1),
+                      nextFreePatch(PID_PCM_SPEEDUP_1)) != NETMDERR_NO_ERROR)
+            {
+                mNetMdThrow(NETMDERR_USB, "Can't apply PCM Speedup Patch #1!");
+            }
+        }
+
+        // check, if patch is already active ...
+        if (checkPatch(PID_PCM_SPEEDUP_2, devcode) == 0)
+        {
+            // patch ...
+            mLOG(DEBUG) << "=== Apply PCM Speedup Patch #2 ===";
+            if (patch(patchAddress(devcode, PID_PCM_SPEEDUP_2),
+                      patchPayload(devcode, PID_PCM_SPEEDUP_2),
+                      nextFreePatch(PID_PCM_SPEEDUP_2)) != NETMDERR_NO_ERROR)
+            {
+                mNetMdThrow(NETMDERR_USB, "Can't apply PCM Speedup Patch #1!");
+            }
+        }
+    }
+    catch(const ThrownData& e)
+    {
+        if (e.mErr == NETMDERR_NO_ERROR)
+        {
+            LOG(DEBUG) << e.mErrDescr;
+        }
+        else
+        {
+            LOG(CRITICAL) << e.mErrDescr;
+        }
+        return e.mErr;
+    }
+    catch(...)
+    {
+        mLOG(CRITICAL) << "Unknown error while patching NetMD Device!";
+        return NETMDERR_OTHER;
+    }
+
+    return NETMDERR_NO_ERROR;
 }
 
 } // ~namespace

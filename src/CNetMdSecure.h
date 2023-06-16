@@ -461,6 +461,21 @@ class CNetMdSecure
     //--------------------------------------------------------------------------
     int finalizeTOC(bool reset);
 
+    //--------------------------------------------------------------------------
+    //! @brief      is PCM speedup supportd
+    //!
+    //! @return     true if supported, false if not
+    //--------------------------------------------------------------------------
+    bool pcmSpeedupSupported();
+
+    //--------------------------------------------------------------------------
+    //! @brief      apply PCM speedup patch
+    //!
+    //! @return     NetMdErr
+    //! @see        NetMdErr
+    //--------------------------------------------------------------------------
+    int applyPCMSpeedupPatch();
+
     CNetMdDev& mNetMd;
 
     /// patch support class
