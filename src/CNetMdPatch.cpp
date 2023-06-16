@@ -606,7 +606,7 @@ int CNetMdPatch::prepareTOCManip()
         }
 
         // check, if patch is already active ...
-        if (checkPatch(PID_USB_EXE, devcode) == 0)
+        if (!checkUSBExec(devcode))
         {
             // patch ...
             mLOG(DEBUG) << "=== Apply USB code execution patch ===";
@@ -616,6 +616,10 @@ int CNetMdPatch::prepareTOCManip()
             {
                 mNetMdThrow(NETMDERR_USB, "Can't apply USB code execution patch!");
             }
+        }
+        else
+        {
+            mLOG(INFO) << "USB execution patch active";
         }
     }
     catch(const ThrownData& e)
@@ -698,6 +702,42 @@ int CNetMdPatch::USBExecute(SonyDevInfo devInfo, const NetMDByteVector& execData
 }
 
 //--------------------------------------------------------------------------
+//! @brief      check if USB execution works
+//!
+//! @param[in]  devcode   The device information
+//!
+//! @return     true if it works, false if not
+//--------------------------------------------------------------------------
+bool CNetMdPatch::checkUSBExec(const SonyDevInfo& devcode)
+{
+    mLOG(DEBUG);
+    if (devcode != SDI_UNKNOWN)
+    {
+        NetMDResp resp;
+        NetMDParams params;
+        int ret;
+        if ((ret = USBExecute(devcode, 
+                             {0x01, 0x00, 0xa0, 0xe3, 0x00, 
+                              0x00, 0xcf, 0xe5, 0x1e, 0xff, 
+                              0x2f, 0xe1, 0x00}, 
+                              &resp)) == 13)
+        {
+            if (scanQuery(resp.get(), ret, "0100a0e30000cfe51eff2fe1 %b", params) == NETMDERR_NO_ERROR)
+            {
+                if ((params.size() == 1) && (params.at(0).index() == UINT8_T))
+                {
+                    int err = 0, result;
+                    result = simple_get<uint8_t>(params.at(0), &err);
+                    return ((err == 0) && !!result);
+                }
+            }
+        }
+    }
+
+    return false;
+}
+
+//--------------------------------------------------------------------------
 //! @brief      finalize TOC though exploit
 //!
 //! @param[in]  reset  do device reset if true
@@ -709,11 +749,11 @@ int CNetMdPatch::finalizeTOC(bool reset)
 {
     SonyDevInfo devcode = devCodeEx();
 
-    mLOG(CAPTURE) << "Finalizing TOC: 00%";
-
     // check, if patch is already active ...
-    if (checkPatch(PID_USB_EXE, devcode))
+    if (checkUSBExec(devcode))
     {
+        mLOG(CAPTURE) << "Finalizing TOC: 00%";
+
         if (USBExecute(devcode, exploitData(devcode, EID_LOWER_HEAD)) == NETMDERR_NO_ERROR)
         {
             mLOG(DEBUG) << "Lower head success!";
@@ -747,6 +787,10 @@ int CNetMdPatch::finalizeTOC(bool reset)
         mLOG(CAPTURE) << "Finalizing TOC: 90%";
 
         return NETMDERR_NO_ERROR;
+    }
+    else
+    {
+        mLOG(CRITICAL) << "USB execution not active / supportd!";
     }
     return NETMDERR_OTHER;
 }

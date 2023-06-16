@@ -418,6 +418,15 @@ class CNetMdPatch
     //--------------------------------------------------------------------------
     bool tocManipSupported();
 
+    //--------------------------------------------------------------------------
+    //! @brief      check if USB execution works
+    //!
+    //! @param[in]  devcode   The device information
+    //!
+    //! @return     true if it works, false if not
+    //--------------------------------------------------------------------------
+    bool checkUSBExec(const SonyDevInfo& devcode);
+
     CNetMdDev& mNetMd;
 };
 
