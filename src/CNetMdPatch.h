@@ -115,7 +115,7 @@ class CNetMdPatch
     using PatchPayloadTab   = std::map<PatchId, std::vector<PayLoad>>;
     using ExploitPayload    = std::map<SonyDevInfo, NetMDByteVector>;
     using ExploitPayloadTab = std::map<ExploitId, ExploitPayload>;
-    using ExploitCmds        = std::map<uint32_t, uint8_t>;
+    using ExploitCmds       = std::map<uint32_t, uint8_t>;
 
     /// structure packed with patch information
     struct PatchComplect

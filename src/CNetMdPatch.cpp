@@ -1139,7 +1139,7 @@ CNetMdPatch::SonyDevInfo CNetMdPatch::devCodeEx()
     mLOG(DEBUG);
     SonyDevInfo ret = SonyDevInfo::SDI_UNKNOWN;
     uint8_t query[] = {0x00, 0x18, 0x12, 0xff};
-    uint8_t chip    = 255, hwid = 255, version = 255;
+    uint8_t chip    = 255, hwid = 255, version = 255, subversion = 255;
 
     std::ostringstream code;
 
@@ -1147,11 +1147,12 @@ CNetMdPatch::SonyDevInfo CNetMdPatch::devCodeEx()
 
     if ((mNetMd.exchange(query, sizeof(query), &respone, true) >= 8) && (respone != nullptr))
     {
-        chip    = respone[4];
-        hwid    = respone[5];
-        version = respone[7];
+        chip       = respone[4];
+        hwid       = respone[5];
+        subversion = respone[6];
+        version    = respone[7];
 
-        if ((chip != 255) || (hwid != 255) || (version != 255))
+        if ((chip != 255) || (hwid != 255) || (version != 255) || (subversion != 255))
         {
             switch (chip)
             {
@@ -1161,8 +1162,14 @@ CNetMdPatch::SonyDevInfo CNetMdPatch::devCodeEx()
             case 0x21:
                 code << "S";
                 break;
+            case 0x22:
+                code << "Hn";
+                break;
             case 0x24:
-                code << "Hi";
+                code << "Hr";
+                break;
+            case 0x25:
+                code << "Hx";
                 break;
             default:
                 code << "0x" << std::hex << std::setw(2) << std::setfill('0')
@@ -1170,7 +1177,8 @@ CNetMdPatch::SonyDevInfo CNetMdPatch::devCodeEx()
                 break;
             }
 
-            code << static_cast<int>(version >> 4) << "." << static_cast<int>(version & 0xf) << "00";
+            code << static_cast<int>(version >> 4) << "." << static_cast<int>(version & 0xf)
+                 << std::hex << std::setw(2) << std::setfill('0') << static_cast<int>(subversion);
 
             mLOG(DEBUG) << "Found device info: " << code.str();
 
@@ -1189,6 +1197,10 @@ CNetMdPatch::SonyDevInfo CNetMdPatch::devCodeEx()
             else if (code.str() == "R1.300")
             {
                 ret = SonyDevInfo::SDI_R1300;
+            }
+            else if (code.str() == "R1.400")
+            {
+                ret = SonyDevInfo::SDI_R1400;
             }
             else if (code.str() == "S1.000")
             {
