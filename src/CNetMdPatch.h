@@ -44,7 +44,7 @@ class CNetMdPatch
     friend CNetMdSecure;
 
     static constexpr uint32_t PERIPHERAL_BASE = 0x03802000;
-    static constexpr uint8_t  MAX_PATCH       = 8;
+    static constexpr uint8_t  MAX_PATCH       = 16; ///< HiMD supports up to 16
 
     /// device info flags
     enum SonyDevInfo : uint32_t
@@ -179,16 +179,19 @@ class CNetMdPatch
     /// exmploit command lookup
     static const ExploitCmds smExploidCmds;
 
-    //! @brief patch areas used
-    static PatchId smUsedPatches[MAX_PATCH];
-
     //--------------------------------------------------------------------------
     //! @brief      Constructs a new instance.
     //!
     //! @param      netMd  The net md device reference
     //--------------------------------------------------------------------------
-    CNetMdPatch(CNetMdDev& netMd) : mNetMd(netMd)
-    {}
+    CNetMdPatch(CNetMdDev& netMd); 
+
+    //--------------------------------------------------------------------------
+    //! @brief      get number of max patches
+    //!
+    //! @return     -1 -> error; else max number of patches
+    //--------------------------------------------------------------------------
+    int maxPatches() const;
 
     //--------------------------------------------------------------------------
     //! @brief      get next pree patch index
@@ -197,7 +200,7 @@ class CNetMdPatch
     //!
     //! @return     -1 -> no more free | > -1 -> free patch index
     //--------------------------------------------------------------------------
-    static int nextFreePatch(PatchId pid);
+    int nextFreePatch(PatchId pid);
 
     //--------------------------------------------------------------------------
     //! @brief      mark patch as unused
@@ -206,7 +209,7 @@ class CNetMdPatch
     //!
     //! @return     -1 -> not found | > -1 -> last used patch index
     //--------------------------------------------------------------------------
-    static int patchUnused(PatchId pid);
+    int patchUnused(PatchId pid);
 
     //------------------------------------------------------------------------------
     //! @brief      get patch address by name and device info
@@ -510,6 +513,12 @@ class CNetMdPatch
     int fillPatchComplect(PatchId pid, SonyDevInfo dev, PatchComplect& patch, PatchId plpid = PID_UNUSED);
 
     CNetMdDev& mNetMd;
+
+    /// device info
+    SonyDevInfo mDevInfo;
+
+    //! @brief patch areas used
+    PatchId mUsedPatches[MAX_PATCH];
 };
 
 } // ~namespace

@@ -277,9 +277,6 @@ const CNetMdPatch::ExploitPayloadTab CNetMdPatch::smExplPayloadTab =
     }
 };
 
-/// used patches
-CNetMdPatch::PatchId CNetMdPatch::smUsedPatches[MAX_PATCH] = {PID_UNUSED,};
-
 //--------------------------------------------------------------------------
 //! @brief      print helper for SonyDevInfo
 //!
@@ -372,6 +369,37 @@ std::ostream& operator<<(std::ostream& os, const CNetMdPatch::PatchComplect& pat
 }
 
 //--------------------------------------------------------------------------
+//! @brief      Constructs a new instance.
+//!
+//! @param      netMd  The net md device reference
+//--------------------------------------------------------------------------
+CNetMdPatch::CNetMdPatch(CNetMdDev& netMd) 
+    : mNetMd(netMd), mDevInfo(SonyDevInfo::SDI_UNKNOWN), 
+    mUsedPatches{PatchId::PID_UNUSED,}
+{
+}
+
+//--------------------------------------------------------------------------
+//! @brief      get number of max patches
+//!
+//! @return     -1 -> error; else max number of patches
+//--------------------------------------------------------------------------
+int CNetMdPatch::maxPatches() const
+{
+    if ((mDevInfo >= SDI_S_START) && (mDevInfo <= SDI_S_END))
+    {
+        // 8
+        return MAX_PATCH / 2;
+    }
+    else if ((mDevInfo >= SDI_R_START) && (mDevInfo <= SDI_R_END))
+    {
+        // 4
+        return MAX_PATCH / 4;
+    }
+    return -1;
+}
+
+//--------------------------------------------------------------------------
 //! @brief      get next pree patch index
 //!
 //! @param[in]  pid   The pid
@@ -380,11 +408,11 @@ std::ostream& operator<<(std::ostream& os, const CNetMdPatch::PatchComplect& pat
 //--------------------------------------------------------------------------
 int CNetMdPatch::nextFreePatch(PatchId pid)
 {
-    for (int i = 0; i < MAX_PATCH; i++)
+    for (int i = 0; i < maxPatches(); i++)
     {
-        if ((smUsedPatches[i] == pid) || (smUsedPatches[i] == PID_UNUSED))
+        if ((mUsedPatches[i] == pid) || (mUsedPatches[i] == PID_UNUSED))
         {
-            smUsedPatches[i] = pid;
+            mUsedPatches[i] = pid;
             return i;
         }
     }
@@ -401,12 +429,12 @@ int CNetMdPatch::nextFreePatch(PatchId pid)
 int CNetMdPatch::patchUnused(PatchId pid)
 {
     int used = -1;
-    for (int i = 0; i < MAX_PATCH; i++)
+    for (int i = 0; i < maxPatches(); i++)
     {
-        if (smUsedPatches[i] == pid)
+        if (mUsedPatches[i] == pid)
         {
             used = i;
-            smUsedPatches[i] = PID_UNUSED;
+            mUsedPatches[i] = PID_UNUSED;
         }
     }
     return used;
@@ -573,7 +601,7 @@ int CNetMdPatch::checkPatch(PatchId pid, SonyDevInfo devinfo)
             if ((cur_patch_addr == addr) && (cur_patch_data == patch_cnt))
             {
                 mLOG(DEBUG) << "patch " << static_cast<int>(pid) << " found at patch slot #" << i << ".";
-                smUsedPatches[i] = pid;
+                mUsedPatches[i] = pid;
                 return 1;
             }
         }
@@ -1193,6 +1221,8 @@ CNetMdPatch::SonyDevInfo CNetMdPatch::devCodeEx()
         }
     }
 
+    mDevInfo = ret;
+
     return ret;
 }
 
@@ -1261,8 +1291,15 @@ int CNetMdPatch::patch(uint32_t addr, const NetMDByteVector& data, int patchNo)
             mNetMdThrow(NETMDERR_PARAM, "Patch content needs to be 4 bytes! Have: " << data.size());
         }
 
+        int iMaxPatches = maxPatches();
+
+        if ((iMaxPatches < 0) || (patchNo < 0))
+        {
+            mNetMdThrow(NETMDERR_PARAM, "Error with patch number(s)!");
+        }
+
         const uint32_t base    = PERIPHERAL_BASE + patchNo   * 0x10;
-        const uint32_t control = PERIPHERAL_BASE + MAX_PATCH * 0x10;
+        const uint32_t control = PERIPHERAL_BASE + iMaxPatches * 0x10;
 
         NetMDByteVector reply;
 
@@ -1373,14 +1410,20 @@ int CNetMdPatch::unpatch(PatchId pid)
     try
     {
         int patch_number = patchUnused(pid);
+        int iMaxPatches  = maxPatches();
 
         if (patch_number == -1)
         {
             mNetMdThrow(NETMDERR_PARAM, "Can't find patch to undo: " << static_cast<int>(pid));
         }
 
+        if (iMaxPatches < 0)
+        {
+            mNetMdThrow(NETMDERR_PARAM, "Error with patch number!");
+        }
+
         const uint32_t base    = PERIPHERAL_BASE + patch_number  * 0x10;
-        const uint32_t control = PERIPHERAL_BASE + MAX_PATCH     * 0x10;
+        const uint32_t control = PERIPHERAL_BASE + iMaxPatches   * 0x10;
 
         NetMDByteVector reply;
 
@@ -1467,7 +1510,7 @@ int CNetMdPatch::safetyPatch()
             {
                 mLOG(DEBUG) << "Safety patch found at patch slot #" << i << ".";
                 safety_loaded   = 1;
-                smUsedPatches[i] = PID_SAFETY;
+                mUsedPatches[i] = PID_SAFETY;
             }
 
             // developer device
@@ -1475,7 +1518,7 @@ int CNetMdPatch::safetyPatch()
             {
                 mLOG(DEBUG) << "Dev patch found at patch slot #" << i << ".";
                 safety_loaded   = 1;
-                smUsedPatches[i] = PID_SAFETY;
+                mUsedPatches[i] = PID_SAFETY;
             }
         }
 
