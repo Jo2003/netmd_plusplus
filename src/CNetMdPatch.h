@@ -117,6 +117,56 @@ class CNetMdPatch
     using ExploitPayloadTab = std::map<ExploitId, ExploitPayload>;
     using ExploitCmds        = std::map<uint32_t, uint8_t>;
 
+    /// structure packed with patch information
+    struct PatchComplect
+    {
+        SonyDevInfo mDev;           ///< device
+        PatchId mPid;               ///< patch id
+        uint32_t mAddr;             ///< patch address
+        NetMDByteVector mPatchData; ///< patch data
+        int mNextFreePatch;         ///< next free patch slot
+    };
+
+    //--------------------------------------------------------------------------
+    //! @brief      print helper for SonyDevInfo
+    //!
+    //! @param[in, out] os ref. to ostream
+    //! @param[in]      dinfo device info
+    //!
+    //! @returns       ref. to os
+    //--------------------------------------------------------------------------
+    friend std::ostream& operator<<(std::ostream& os, const SonyDevInfo& dinfo);
+
+    //--------------------------------------------------------------------------
+    //! @brief      print helper for PatchId
+    //!
+    //! @param[in, out] os ref. to ostream
+    //! @param[in]      pid patch id
+    //!
+    //! @returns       ref. to os
+    //--------------------------------------------------------------------------
+    friend std::ostream& operator<<(std::ostream& os, const PatchId& pid);
+
+    //--------------------------------------------------------------------------
+    //! @brief      print helper for NetMDByteVector
+    //!
+    //! @param[in, out] os ref. to ostream
+    //! @param[in]      pdata patch data
+    //!
+    //! @returns       ref. to os
+    //--------------------------------------------------------------------------
+    friend std::ostream& operator<<(std::ostream& os, const NetMDByteVector& pdata);
+
+    //--------------------------------------------------------------------------
+    //! @brief      print helper for PatchComplect
+    //!
+    //! @param[in, out] os ref. to ostream
+    //! @param[in]      patch patch complect
+    //!
+    //! @returns       ref. to os
+    //--------------------------------------------------------------------------
+    friend std::ostream& operator<<(std::ostream& os, const PatchComplect& patch);
+
     /// patch addresses with for devices
     static const PatchAdrrTab    smPatchAddrTab;
 
@@ -148,6 +198,15 @@ class CNetMdPatch
     //! @return     -1 -> no more free | > -1 -> free patch index
     //--------------------------------------------------------------------------
     static int nextFreePatch(PatchId pid);
+
+    //--------------------------------------------------------------------------
+    //! @brief      mark patch as unused
+    //!
+    //! @param[in]  pid   The pid
+    //!
+    //! @return     -1 -> not found | > -1 -> last used patch index
+    //--------------------------------------------------------------------------
+    static int patchUnused(PatchId pid);
 
     //------------------------------------------------------------------------------
     //! @brief      get patch address by name and device info
@@ -364,6 +423,16 @@ class CNetMdPatch
     int patch(uint32_t addr, const NetMDByteVector& data, int patchNo);
 
     //--------------------------------------------------------------------------
+    //! @brief      do one patch
+    //!
+    //! @param[in]  pc    The patch complect
+    //!
+    //! @return     NetMdErr
+    //! @see        NetMdErr
+    //--------------------------------------------------------------------------
+    int patch(const PatchComplect& pc);
+
+    //--------------------------------------------------------------------------
     //! @brief      unpatch a patch
     //!
     //! @param[in]  pid   patch id of patch to undo
@@ -426,6 +495,19 @@ class CNetMdPatch
     //! @return     true if it works, false if not
     //--------------------------------------------------------------------------
     bool checkUSBExec(const SonyDevInfo& devcode);
+
+    //--------------------------------------------------------------------------
+    //! @brief      collect patch data
+    //!
+    //! @param[in]  pid   The patch id
+    //! @param[in]  dev   The device information
+    //! @param[out] patch Buffer for patch complect
+    //! @param[in]  plpid The optional payload pid (if different)
+    //!
+    //! @return     NetMdErr
+    //! @see        NetMdErr
+    //--------------------------------------------------------------------------
+    int fillPatchComplect(PatchId pid, SonyDevInfo dev, PatchComplect& patch, PatchId plpid = PID_UNUSED);
 
     CNetMdDev& mNetMd;
 };

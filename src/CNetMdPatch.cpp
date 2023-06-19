@@ -127,7 +127,7 @@ const CNetMdPatch::PatchAdrrTab CNetMdPatch::smPatchAddrTab =
             {SDI_S1600, 0x000000c4},
             {SDI_S1500, 0x000000c4},
             {SDI_S1400, 0x000000c4},
-            {SDI_S1300, 0x000000c4}
+            {SDI_S1000, 0x000000c4}
         }
     },
     {
@@ -185,7 +185,7 @@ const CNetMdPatch::PatchPayloadTab CNetMdPatch::smPatchPayloadTab =
     {   //! anti brick patch
         PID_SAFETY,
         {
-            {SDI_S1400 | SDI_S1500 | SDI_S1600, {0xdc,0xff,0xff,0xea}}
+            {SDI_S1000 | SDI_S1400 | SDI_S1500 | SDI_S1600, {0xdc,0xff,0xff,0xea}}
         }
     },
     {
@@ -281,6 +281,97 @@ const CNetMdPatch::ExploitPayloadTab CNetMdPatch::smExplPayloadTab =
 CNetMdPatch::PatchId CNetMdPatch::smUsedPatches[MAX_PATCH] = {PID_UNUSED,};
 
 //--------------------------------------------------------------------------
+//! @brief      print helper for SonyDevInfo
+//!
+//! @param[in, out] os ref. to ostream
+//! @param[in]      dinfo device info
+//!
+//! @returns       ref. to os
+//--------------------------------------------------------------------------
+std::ostream& operator<<(std::ostream& os, const CNetMdPatch::SonyDevInfo& dinfo)
+{
+    switch(dinfo)
+    {
+        case CNetMdPatch::SonyDevInfo::SDI_R1000  : os << "SDI_R1000"  ; break;
+        case CNetMdPatch::SonyDevInfo::SDI_R1100  : os << "SDI_R1100"  ; break;
+        case CNetMdPatch::SonyDevInfo::SDI_R1200  : os << "SDI_R1200"  ; break;
+        case CNetMdPatch::SonyDevInfo::SDI_R1300  : os << "SDI_R1300"  ; break;
+        case CNetMdPatch::SonyDevInfo::SDI_R1400  : os << "SDI_R1400"  ; break;
+        case CNetMdPatch::SonyDevInfo::SDI_S1000  : os << "SDI_S1000"  ; break;
+        case CNetMdPatch::SonyDevInfo::SDI_S1100  : os << "SDI_S1100"  ; break;
+        case CNetMdPatch::SonyDevInfo::SDI_S1200  : os << "SDI_S1200"  ; break;
+        case CNetMdPatch::SonyDevInfo::SDI_S1300  : os << "SDI_S1300"  ; break;
+        case CNetMdPatch::SonyDevInfo::SDI_S1400  : os << "SDI_S1400"  ; break;
+        case CNetMdPatch::SonyDevInfo::SDI_S1500  : os << "SDI_S1500"  ; break;
+        case CNetMdPatch::SonyDevInfo::SDI_S1600  : os << "SDI_S1600"  ; break;
+        case CNetMdPatch::SonyDevInfo::SDI_UNKNOWN: os << "SDI_UNKNOWN"; break;
+        default                                   : os << "SDI_UNKNOWN"; break;
+    }
+    return os;
+}
+
+//--------------------------------------------------------------------------
+//! @brief      print helper for PatchId
+//!
+//! @param[in, out] os ref. to ostream
+//! @param[in]      pid patch id
+//!
+//! @returns       ref. to os
+//--------------------------------------------------------------------------
+std::ostream& operator<<(std::ostream& os, const CNetMdPatch::PatchId& pid)
+{
+    switch(pid)
+    {
+        case CNetMdPatch::PatchId::PID_UNUSED     : os << "PID_UNUSED"     ; break;
+        case CNetMdPatch::PatchId::PID_DEVTYPE    : os << "PID_DEVTYPE"    ; break;
+        case CNetMdPatch::PatchId::PID_PATCH_0_A  : os << "PID_PATCH_0_A"  ; break;
+        case CNetMdPatch::PatchId::PID_PATCH_0_B  : os << "PID_PATCH_0_B"  ; break;
+        case CNetMdPatch::PatchId::PID_PATCH_0    : os << "PID_PATCH_0"    ; break;
+        case CNetMdPatch::PatchId::PID_PREP_PATCH : os << "PID_PREP_PATCH" ; break;
+        case CNetMdPatch::PatchId::PID_PATCH_CMN_1: os << "PID_PATCH_CMN_1"; break;
+        case CNetMdPatch::PatchId::PID_PATCH_CMN_2: os << "PID_PATCH_CMN_2"; break;
+        case CNetMdPatch::PatchId::PID_TRACK_TYPE : os << "PID_TRACK_TYPE" ; break;
+        case CNetMdPatch::PatchId::PID_SAFETY     : os << "PID_SAFETY"     ; break;
+        case CNetMdPatch::PatchId::PID_USB_EXE    : os << "PID_USB_EXE"    ; break;
+        default                                   : os << "n/a"            ; break;
+    }
+    return os;
+}
+
+//--------------------------------------------------------------------------
+//! @brief      print helper for NetMDByteVector
+//!
+//! @param[in, out] os ref. to ostream
+//! @param[in]      pdata patch data
+//!
+//! @returns       ref. to os
+//--------------------------------------------------------------------------
+std::ostream& operator<<(std::ostream& os, const NetMDByteVector& pdata)
+{
+    for (const auto& a : pdata)
+    {
+        os << " 0x" << std::hex << std::setw(2) << std::setfill('0') << static_cast<int>(a) << std::dec;
+    }
+    return os;
+}
+
+//--------------------------------------------------------------------------
+//! @brief      print helper for PatchComplect
+//!
+//! @param[in, out] os ref. to ostream
+//! @param[in]      patch patch complect
+//!
+//! @returns       ref. to os
+//--------------------------------------------------------------------------
+std::ostream& operator<<(std::ostream& os, const CNetMdPatch::PatchComplect& patch)
+{
+    os << "Device: " << patch.mDev << ", patch: " << patch.mPid 
+       << ", address: 0x" << std::hex << std::setw(8) << std::setfill('0') << patch.mAddr << std::dec
+       << ", content: " << patch.mPatchData << ", free slot: " << patch.mNextFreePatch;
+    return os;
+}
+
+//--------------------------------------------------------------------------
 //! @brief      get next pree patch index
 //!
 //! @param[in]  pid   The pid
@@ -298,6 +389,27 @@ int CNetMdPatch::nextFreePatch(PatchId pid)
         }
     }
     return -1;
+}
+
+//--------------------------------------------------------------------------
+//! @brief      mark patch as unused
+//!
+//! @param[in]  pid   The pid
+//!
+//! @return     -1 -> not found | > -1 -> last used patch index
+//--------------------------------------------------------------------------
+int CNetMdPatch::patchUnused(PatchId pid)
+{
+    int used = -1;
+    for (int i = 0; i < MAX_PATCH; i++)
+    {
+        if (smUsedPatches[i] == pid)
+        {
+            used = i;
+            smUsedPatches[i] = PID_UNUSED;
+        }
+    }
+    return used;
 }
 
 //------------------------------------------------------------------------------
@@ -339,7 +451,7 @@ NetMDByteVector CNetMdPatch::patchPayload(SonyDevInfo devinfo, PatchId pid)
     {
         for(const auto& pld : pl->second)
         {
-            if (devinfo & pld.mDevs)
+            if (static_cast<uint32_t>(devinfo) & pld.mDevs)
             {
                 return pld.mPtData;
             }
@@ -347,6 +459,41 @@ NetMDByteVector CNetMdPatch::patchPayload(SonyDevInfo devinfo, PatchId pid)
     }
 
     return NetMDByteVector{};
+}
+
+//--------------------------------------------------------------------------
+//! @brief      collect patch data
+//!
+//! @param[in]  pid   The patch id
+//! @param[in]  dev   The device information
+//! @param[out] patch Buffer for patch complect
+//! @param[in]  plpid The optional payload pid (if different)
+//!
+//! @return     NetMdErr
+//! @see        NetMdErr
+//--------------------------------------------------------------------------
+int CNetMdPatch::fillPatchComplect(PatchId pid, SonyDevInfo dev, PatchComplect& patch, PatchId plpid)
+{
+    if (plpid == PatchId::PID_UNUSED)
+    {
+        plpid = pid;
+    }
+
+    patch.mDev           = dev;
+    patch.mPid           = pid;
+    patch.mAddr          = patchAddress(dev, pid);
+    patch.mPatchData     = patchPayload(dev, plpid);
+    patch.mNextFreePatch = nextFreePatch(plpid);
+
+    mLOG(INFO) << patch;
+
+    if ((patch.mAddr > 0) && !patch.mPatchData.empty() && (patch.mNextFreePatch != -1))
+    {
+        return NETMDERR_NO_ERROR;
+    }
+
+    patchUnused(plpid);
+    return NETMDERR_NOT_SUPPORTED;
 }
 
 //--------------------------------------------------------------------------
@@ -360,7 +507,7 @@ uint8_t CNetMdPatch::exploitCmd(SonyDevInfo devinfo)
 {
     for(const auto& cmd : smExploidCmds)
     {
-        if(cmd.first & devinfo)
+        if(cmd.first & static_cast<uint32_t>(devinfo))
         {
             return cmd.second;
         }
@@ -609,10 +756,13 @@ int CNetMdPatch::prepareTOCManip()
         if (!checkUSBExec(devcode))
         {
             // patch ...
+            PatchComplect pc;
             mLOG(DEBUG) << "=== Apply USB code execution patch ===";
-            if (patch(patchAddress(devcode, PID_USB_EXE),
-                      patchPayload(devcode, PID_USB_EXE),
-                      nextFreePatch(PID_USB_EXE)) != NETMDERR_NO_ERROR)
+            if (fillPatchComplect(PID_USB_EXE, devcode, pc) != NETMDERR_NO_ERROR)
+            {
+                mNetMdThrow(NETMDERR_OTHER, "Can't find patch data USB code execution patch!");
+            }
+            if (patch(pc) != NETMDERR_NO_ERROR)
             {
                 mNetMdThrow(NETMDERR_USB, "Can't apply USB code execution patch!");
             }
@@ -1079,6 +1229,19 @@ int CNetMdPatch::readPatchData(int patchNo, uint32_t& addr, NetMDByteVector& pat
 //--------------------------------------------------------------------------
 //! @brief      do one patch
 //!
+//! @param[in]  pc    The patch complect
+//!
+//! @return     NetMdErr
+//! @see        NetMdErr
+//--------------------------------------------------------------------------
+int CNetMdPatch::patch(const PatchComplect& pc)
+{
+    return patch(pc.mAddr, pc.mPatchData, pc.mNextFreePatch);
+}
+
+//--------------------------------------------------------------------------
+//! @brief      do one patch
+//!
 //! @param[in]  addr     The address
 //! @param[in]  data     The patch data
 //! @param[in]  patchNo  The patch no
@@ -1209,16 +1372,7 @@ int CNetMdPatch::unpatch(PatchId pid)
     mLOG(DEBUG);
     try
     {
-        int patch_number = -1;
-
-        for (int i = 0; i < MAX_PATCH; i++)
-        {
-            if (smUsedPatches[i] == pid)
-            {
-                smUsedPatches[i] = PID_UNUSED;
-                patch_number = i;
-            }
-        }
+        int patch_number = patchUnused(pid);
 
         if (patch_number == -1)
         {
@@ -1288,20 +1442,19 @@ int CNetMdPatch::unpatch(PatchId pid)
 int CNetMdPatch::safetyPatch()
 {
     mLOG(DEBUG);
-    SonyDevInfo     devcode   = devCodeEx();
-    uint32_t        addr      = patchAddress(devcode, PID_SAFETY);
-    NetMDByteVector patch_cnt = patchPayload(devcode, PID_SAFETY);
+    SonyDevInfo   devcode   = devCodeEx();
+    PatchComplect pc;
 
     try
     {
-        NetMDByteVector cur_patch_data;
-        uint32_t        cur_patch_addr = 0;
-        int             safety_loaded = 0;
-
-        if ((addr == 0) || patch_cnt.empty())
+        if (fillPatchComplect(PID_SAFETY, devcode, pc) != NETMDERR_NO_ERROR)
         {
             mNetMdThrow(NETMDERR_NO_ERROR, "Safety patch data not found!");
         }
+    
+        NetMDByteVector cur_patch_data;
+        uint32_t        cur_patch_addr = 0;
+        int             safety_loaded  = 0;
 
         for (int i = 0; i < MAX_PATCH; i++)
         {
@@ -1310,7 +1463,7 @@ int CNetMdPatch::safetyPatch()
                 mNetMdThrow(NETMDERR_USB, "Can't read patch data fro patch #" << i << ".");
             }
 
-            if ((cur_patch_addr == addr) && (cur_patch_data == patch_cnt))
+            if ((cur_patch_addr == pc.mAddr) && (cur_patch_data == pc.mPatchData))
             {
                 mLOG(DEBUG) << "Safety patch found at patch slot #" << i << ".";
                 safety_loaded   = 1;
@@ -1328,7 +1481,7 @@ int CNetMdPatch::safetyPatch()
 
         if (safety_loaded == 0)
         {
-            if (patch(addr, patch_cnt, nextFreePatch(PID_SAFETY)) != NETMDERR_NO_ERROR)
+            if (patch(pc) != NETMDERR_NO_ERROR)
             {
                 mNetMdThrow(NETMDERR_USB, "Can't write safety patch.");
             }
@@ -1450,44 +1603,55 @@ int CNetMdPatch::applySpPatch(int chanNo)
             mNetMdThrow(NETMDERR_USB, "Can't find out patch 0!");
         }
 
+        PatchComplect pc;
+
         mLOG(DEBUG) << "=== Apply patch 0 ===";
-        if (patch(patchAddress(devcode, patch0),
-                  patchPayload(devcode, PID_PATCH_0),
-                  nextFreePatch(PID_PATCH_0)) != NETMDERR_NO_ERROR)
+        if (fillPatchComplect(patch0, devcode, pc, PID_PATCH_0) != NETMDERR_NO_ERROR)
+        {
+            mNetMdThrow(NETMDERR_NOT_SUPPORTED, "Can't find patch data patch 0!");
+        }
+        if (patch(pc) != NETMDERR_NO_ERROR)
         {
             mNetMdThrow(NETMDERR_USB, "Can't apply patch 0!");
         }
 
         mLOG(DEBUG) << "=== Apply patch common 1 ===";
-        if (patch(patchAddress(devcode, PID_PATCH_CMN_1),
-                  patchPayload(devcode, PID_PATCH_CMN_1),
-                  nextFreePatch(PID_PATCH_CMN_1)) != NETMDERR_NO_ERROR)
+        if (fillPatchComplect(PID_PATCH_CMN_1, devcode, pc) != NETMDERR_NO_ERROR)
+        {
+            mNetMdThrow(NETMDERR_NOT_SUPPORTED, "Can't find patch data patch common 1!");
+        }
+        if (patch(pc) != NETMDERR_NO_ERROR)
         {
             mNetMdThrow(NETMDERR_USB, "Can't apply patch common 1!");
         }
 
         mLOG(DEBUG) << "=== Apply patch common 2 ===";
-        if (patch(patchAddress(devcode, PID_PATCH_CMN_2),
-                  patchPayload(devcode, PID_PATCH_CMN_2),
-                  nextFreePatch(PID_PATCH_CMN_2)) != NETMDERR_NO_ERROR)
+        if (fillPatchComplect(PID_PATCH_CMN_2, devcode, pc) != NETMDERR_NO_ERROR)
+        {
+            mNetMdThrow(NETMDERR_NOT_SUPPORTED, "Can't find patch data patch common 2!");
+        }
+        if (patch(pc) != NETMDERR_NO_ERROR)
         {
             mNetMdThrow(NETMDERR_USB, "Can't apply patch common 2!");
         }
 
         mLOG(DEBUG) << "=== Apply prep patch ===";
-        if (patch(patchAddress(devcode, PID_PREP_PATCH),
-                  patchPayload(devcode, PID_PREP_PATCH),
-                  nextFreePatch(PID_PREP_PATCH)) != NETMDERR_NO_ERROR)
+        if (fillPatchComplect(PID_PREP_PATCH, devcode, pc) != NETMDERR_NO_ERROR)
+        {
+            mNetMdThrow(NETMDERR_NOT_SUPPORTED, "Can't find patch data prep patch!");
+        }
+        if (patch(pc) != NETMDERR_NO_ERROR)
         {
             mNetMdThrow(NETMDERR_USB, "Can't apply prep patch!");
         }
 
         mLOG(DEBUG) << "=== Apply track type patch ===";
-        data    = patchPayload(devcode, PID_TRACK_TYPE);
-        data[1] = (chanNo == 1) ? 4 : 6; // mono or stereo
-        if (patch(patchAddress(devcode, PID_TRACK_TYPE),
-                  data,
-                  nextFreePatch(PID_TRACK_TYPE)) != NETMDERR_NO_ERROR)
+        if (fillPatchComplect(PID_TRACK_TYPE, devcode, pc) != NETMDERR_NO_ERROR)
+        {
+            mNetMdThrow(NETMDERR_NOT_SUPPORTED, "Can't find patch data track type!");
+        }
+        pc.mPatchData[1] = (chanNo == 1) ? 4 : 6; // mono or stereo
+        if (patch(pc) != NETMDERR_NO_ERROR)
         {
             mNetMdThrow(NETMDERR_USB, "Can't track type patch!");
         }
