@@ -591,7 +591,7 @@ int CNetMdPatch::checkPatch(PatchId pid, SonyDevInfo devinfo)
             mNetMdThrow(NETMDERR_NO_ERROR, "Patch data not found!");
         }
 
-        for (int i = 0; i < MAX_PATCH; i++)
+        for (int i = 0; i < maxPatches(); i++)
         {
             if (readPatchData(i, cur_patch_addr, cur_patch_data) != NETMDERR_NO_ERROR)
             {
@@ -1511,7 +1511,7 @@ int CNetMdPatch::safetyPatch()
         uint32_t        cur_patch_addr = 0;
         int             safety_loaded  = 0;
 
-        for (int i = 0; i < MAX_PATCH; i++)
+        for (int i = 0; i < maxPatches(); i++)
         {
             if (readPatchData(i, cur_patch_addr, cur_patch_data) != NETMDERR_NO_ERROR)
             {
