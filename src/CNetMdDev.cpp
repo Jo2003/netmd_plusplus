@@ -196,7 +196,7 @@ int CNetMdDev::initDevice()
                                 mDevice.mDevHdl = nullptr;
                             }
 
-                            usleep(100'000);
+                            uwait(100'000);
                         }
                         while(!success && cycle--);
 
@@ -334,29 +334,6 @@ int CNetMdDev::responseLength(uint8_t& req)
 }
 
 //--------------------------------------------------------------------------
-//! @brief      read any garbage which might still be in send queue of
-//!             the NetMD device
-//--------------------------------------------------------------------------
-void CNetMdDev::cleanupRespQueue()
-{
-    uint8_t req = 0;
-    int ret = responseLength(req);
-
-    if (ret > 0)
-    {
-        NetMDResp response = NetMDResp(new unsigned char[ret]);
-
-        static constexpr uint8_t REQ_TYPE = LIBUSB_ENDPOINT_IN | LIBUSB_REQUEST_TYPE_VENDOR | LIBUSB_RECIPIENT_INTERFACE;
-
-        // receive data
-        if (libusb_control_transfer(mDevice.mDevHdl, REQ_TYPE, req, 0, 0, response.get(), ret, NETMD_RECV_TIMEOUT) > 0)
-        {
-            mLOG(DEBUG) << "Read garbage: " << LOG::hexFormat(DEBUG, response.get(), ret);
-        }
-    }
-}
-
-//--------------------------------------------------------------------------
 //! @brief      Sends a standard command.
 //!
 //! @param      cmd     The new value
@@ -368,10 +345,6 @@ void CNetMdDev::cleanupRespQueue()
 //--------------------------------------------------------------------------
 int CNetMdDev::sendCmd(unsigned char* cmd, size_t cmdLen, bool factory)
 {
-    // read any data still in response queue
-    // of the NetMD device
-    cleanupRespQueue();
-
     // send data
     mLOG(DEBUG) << (factory ? "factory " : "") << "command:" << LOG::hexFormat(DEBUG, cmd, cmdLen);
 
@@ -428,7 +401,7 @@ int CNetMdDev::getResponse(NetMDResp& response)
             mLOG(DEBUG) << "still polling ... (" << i << " / " << NETMD_RECV_TRIES << " / " << sleep / 1000 << " ms)";
         }
 
-        usleep(sleep);
+        uwait(sleep);
         i++;
     }
 
@@ -609,7 +582,7 @@ int CNetMdDev::waitForSync()
             break;
         }
 
-        usleep(100'000);
+        uwait(100'000);
     }
     while (tries);
 

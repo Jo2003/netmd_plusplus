@@ -936,7 +936,7 @@ int CNetMdPatch::finalizeTOC(bool reset)
         {
             mLOG(DEBUG) << "Lower head success!";
         }
-        usleep(1'000'000);
+        uwait(1'000'000);
         mLOG(CAPTURE) << "Finalizing TOC: 01%";
         if (USBExecute(devcode, exploitData(devcode, EID_TRIGGER)) == NETMDERR_NO_ERROR)
         {
@@ -945,7 +945,7 @@ int CNetMdPatch::finalizeTOC(bool reset)
 
         for(int i = 2; i <= 89; i++)
         {
-            usleep(600'000);
+            uwait(700'000);
             mLOG(CAPTURE) << "Finalizing TOC: " << std::setw(2) << std::setfill('0') << i << "%";
         }
 

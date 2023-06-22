@@ -645,7 +645,7 @@ int CNetMdApi::trackBitRate(uint16_t track, AudioEncoding& encoding, uint8_t& ch
 
     if (((ret = formatQuery(format, {{track}}, query)) == 19) && (query != nullptr))
     {
-        usleep(5'000);
+        uwait(5'000);
 
         if ((mpNetMd->exchange(query.get(), ret, &response) >= 29) && (response != nullptr))
         {
@@ -938,7 +938,7 @@ int CNetMdApi::finalizeTOC(bool reset, uint8_t resetWait)
         int wait = resetWait * 1'000'000 / 10;
         for(int i = 91; i < 100; i++)
         {
-            usleep(wait);
+            uwait(wait);
             mLOG(CAPTURE) << "Finalizing TOC: " << std::setw(2) << std::setfill('0') << i << "%";
         }
         ret = initDevice();
