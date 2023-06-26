@@ -847,7 +847,7 @@ int CNetMdPatch::USBExecute(SonyDevInfo devInfo, const NetMDByteVector& execData
             return mNetMd.sendCmd(query.get(), ret, false);
         }
 
-        if ((ret = mNetMd.exchange(query.get(), ret, &resp, false, CNetMdDev::NETMD_STATUS_NOT_IMPLEMENTED)) > 0)
+        if ((ret = mNetMd.exchange(query.get(), ret, &resp, false, CNetMdDev::NETMD_STATUS_NOT_IMPLEMENTED, ret + 1)) > 0)
         {
             // capture result
             if (scanQuery(resp.get(), ret, "%? 18%? ff %*", params) == NETMDERR_NO_ERROR)
@@ -898,7 +898,7 @@ bool CNetMdPatch::checkUSBExec(const SonyDevInfo& devcode)
                              {0x01, 0x00, 0xa0, 0xe3, 0x00, 
                               0x00, 0xcf, 0xe5, 0x1e, 0xff, 
                               0x2f, 0xe1, 0x00}, 
-                              &resp)) == 13)
+                              &resp)) >= 0)
         {
             if (scanQuery(resp.get(), ret, "0100a0e30000cfe51eff2fe1 %b", params) == NETMDERR_NO_ERROR)
             {
@@ -925,52 +925,70 @@ bool CNetMdPatch::checkUSBExec(const SonyDevInfo& devcode)
 //--------------------------------------------------------------------------
 int CNetMdPatch::finalizeTOC(bool reset)
 {
-    SonyDevInfo devcode = devCodeEx();
-
-    // check, if patch is already active ...
-    if (checkUSBExec(devcode))
+    try
     {
+        SonyDevInfo devcode = devCodeEx();
+
+        if (devcode == SonyDevInfo::SDI_UNKNOWN)
+        {
+            mNetMdThrow(NETMDERR_OTHER, "Unknown or unsupported NetMD device!");
+        }
+
         mLOG(CAPTURE) << "Finalizing TOC: 00%";
 
-        if (USBExecute(devcode, exploitData(devcode, EID_LOWER_HEAD)) == NETMDERR_NO_ERROR)
+        if (USBExecute(devcode, exploitData(devcode, EID_LOWER_HEAD)) != NETMDERR_NO_ERROR)
         {
-            mLOG(DEBUG) << "Lower head success!";
+            mNetMdThrow(NETMDERR_OTHER, "Exploit 'lower head' failed!");
         }
-        uwait(1'000'000);
-        mLOG(CAPTURE) << "Finalizing TOC: 01%";
-        if (USBExecute(devcode, exploitData(devcode, EID_TRIGGER)) == NETMDERR_NO_ERROR)
-        {
-            mLOG(DEBUG) << "Trigger success!";
-        }
+        mLOG(DEBUG) << "Lower head success!";
 
-        for(int i = 2; i <= 89; i++)
+        for(int i = 1; i <= 5; i++)
         {
-            uwait(700'000);
+            uwait(250'000);
+            mLOG(CAPTURE) << "Finalizing TOC: " << std::setw(2) << std::setfill('0') << i << "%";
+        }
+        
+        if (USBExecute(devcode, exploitData(devcode, EID_TRIGGER)) != NETMDERR_NO_ERROR)
+        {
+            mNetMdThrow(NETMDERR_OTHER, "Exploit 'trigger' failed!");
+        }
+        mLOG(DEBUG) << "Trigger success!";
+
+        for(int i = 6; i <= 89; i++)
+        {
+            uwait(250'000);
             mLOG(CAPTURE) << "Finalizing TOC: " << std::setw(2) << std::setfill('0') << i << "%";
         }
 
-        if (USBExecute(devcode, exploitData(devcode, EID_RAISE_HEAD)) == NETMDERR_NO_ERROR)
+        if (USBExecute(devcode, exploitData(devcode, EID_RAISE_HEAD)) != NETMDERR_NO_ERROR)
         {
-            mLOG(DEBUG) << "Raise head success!";
+            mNetMdThrow(NETMDERR_OTHER, "Exploit 'raise head' failed!");
         }
+        mLOG(DEBUG) << "Raise head success!";
 
         if (reset)
         {
-            if (USBExecute(devcode, exploitData(devcode, EID_DEV_RESET), nullptr, true) == NETMDERR_NO_ERROR)
+            if (USBExecute(devcode, exploitData(devcode, EID_DEV_RESET), nullptr, true) != NETMDERR_NO_ERROR)
             {
-                mLOG(DEBUG) << "Device reset success!";
+                mNetMdThrow(NETMDERR_OTHER, "Exploit 'device reset' failed!");
             }
+            mLOG(DEBUG) << "Device reset success!";
         }
 
         mLOG(CAPTURE) << "Finalizing TOC: 90%";
-
-        return NETMDERR_NO_ERROR;
     }
-    else
+    catch(const ThrownData& e)
     {
-        mLOG(CRITICAL) << "USB execution not active / supportd!";
+        LOG(CRITICAL) << e.mErrDescr;
+        return e.mErr;
     }
-    return NETMDERR_OTHER;
+    catch(...)
+    {
+        mLOG(CRITICAL) << "Unknown error while patching NetMD Device!";
+        return NETMDERR_OTHER;
+    }
+
+    return NETMDERR_NO_ERROR;
 }
 
 //------------------------------------------------------------------------------

@@ -89,7 +89,7 @@ class CNetMdDev
     /// 1000ms
     static constexpr unsigned int NETMD_POLL_TIMEOUT = 1000;
     static constexpr unsigned int NETMD_SEND_TIMEOUT = 1000;
-    static constexpr unsigned int NETMD_RECV_TIMEOUT = 1000;
+    static constexpr unsigned int NETMD_RECV_TIMEOUT = 3000;
     static constexpr unsigned int NETMD_RECV_TRIES   =  100;
     static constexpr unsigned int NETMD_SYNC_TRIES   =    5;
     static constexpr uint8_t    NETMD_STATUS_CONTROL = 0x00;
@@ -222,25 +222,28 @@ class CNetMdDev
     //--------------------------------------------------------------------------
     //! @brief      Gets the response.
     //!
-    //! @param[out] response  The response
+    //! @param[out] response           The response
+    //! @param[in]  overrideRespLength override response length (optional)
     //!
     //! @return     The response size or NetMdErr.
     //--------------------------------------------------------------------------
-    int getResponse(NetMDResp& response);
+    int getResponse(NetMDResp& response, int overrideRespLength = -1);
 
     //--------------------------------------------------------------------------
     //! @brief      exchange data with NetMD device
     //!
-    //! @param[in]  cmd       The command
-    //! @param[in]  cmdLen    The command length
-    //! @param[out] response  The response pointer (optional)
-    //! @param[in]  factory   if true, use factory mode (optional)
-    //! @param[in]  expected  The expected status (optional)
+    //! @param[in]  cmd                The command
+    //! @param[in]  cmdLen             The command length
+    //! @param[out] response           The response pointer (optional)
+    //! @param[in]  factory            if true, use factory mode (optional)
+    //! @param[in]  expected           The expected status (optional)
+    //! @param[in]  overrideRespLength override response length (optional)
     //!
     //! @return     The response size or NetMdErr.
     //--------------------------------------------------------------------------
     int exchange(unsigned char* cmd, size_t cmdLen, NetMDResp* response = nullptr,
-                 bool factory = false, NetMdStatus expected =  NETMD_STATUS_ACCEPTED);
+                 bool factory = false, NetMdStatus expected = NETMD_STATUS_ACCEPTED, 
+                 int overrideRespLength = -1);
 
     //--------------------------------------------------------------------------
     //! @brief      do a bulk transfer
