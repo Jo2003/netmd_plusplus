@@ -33,7 +33,8 @@ var netmd_09_09_8h =
       [ "NETMDERR_PARAM", "netmd_09_09_8h.html#a7f6ad6ca6ff713af5d26f8ffc816421ba6953a3dab87054efb3bc8a56480ec107", null ],
       [ "NETMDERR_OTHER", "netmd_09_09_8h.html#a7f6ad6ca6ff713af5d26f8ffc816421bafc96b87edcd3a473a11ae752061963f4", null ],
       [ "NETMDERR_NOT_SUPPORTED", "netmd_09_09_8h.html#a7f6ad6ca6ff713af5d26f8ffc816421ba15c695f5fe2967baca91c9cddee1ed26", null ],
-      [ "NETMDERR_INTERIM", "netmd_09_09_8h.html#a7f6ad6ca6ff713af5d26f8ffc816421bad582d983bd169324e1cce7edb9885667", null ]
+      [ "NETMDERR_INTERIM", "netmd_09_09_8h.html#a7f6ad6ca6ff713af5d26f8ffc816421bad582d983bd169324e1cce7edb9885667", null ],
+      [ "NETMDERR_AGAIN", "netmd_09_09_8h.html#a7f6ad6ca6ff713af5d26f8ffc816421ba1f8764d0a482c927b77372d4f99527b9", null ]
     ] ],
     [ "TrackProtection", "netmd_09_09_8h.html#a10d2c2737ae3346999ca0a52b59e76b2", [
       [ "UNPROTECTED", "netmd_09_09_8h.html#a10d2c2737ae3346999ca0a52b59e76b2a937e6a98c210e6d3d0af5ed55de70d3b", null ],

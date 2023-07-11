@@ -11,7 +11,7 @@ var classnetmd_1_1_c_net_md_api =
     [ "discFlags", "classnetmd_1_1_c_net_md_api.html#a050fadefacb02c8a78675fc938c78463", null ],
     [ "discTitle", "classnetmd_1_1_c_net_md_api.html#a951213bc24fcc8b05c3fbe97b8329e07", null ],
     [ "eraseDisc", "classnetmd_1_1_c_net_md_api.html#a3219143e25a7b4826761e0a3f33f2e1b", null ],
-    [ "finalizeTOC", "classnetmd_1_1_c_net_md_api.html#a3e5bec6921c573917b3083824242dd37", null ],
+    [ "finalizeTOC", "classnetmd_1_1_c_net_md_api.html#ab91925b1bf138b27b7d4171a546a3ee6", null ],
     [ "getDeviceName", "classnetmd_1_1_c_net_md_api.html#ae298aec0918f3957bdbb6ddb5b183beb", null ],
     [ "groups", "classnetmd_1_1_c_net_md_api.html#a5b501d988f22a6abe45f92e3f116c0f9", null ],
     [ "initDevice", "classnetmd_1_1_c_net_md_api.html#abf0c795194e0e617c5a4f44687ad9a12", null ],

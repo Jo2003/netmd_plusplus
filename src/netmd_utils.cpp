@@ -28,6 +28,7 @@
  */
 #include "netmd_utils.h"
 #include "log.h"
+#include <time.h>
 
 namespace netmd {
 
@@ -549,5 +550,22 @@ NetMDByteVector subVec(const NetMDByteVector& src, size_t offset, size_t count)
     return ret;
 }
 
+//------------------------------------------------------------------------------
+//! @brief      wait using nanosleep not less then ms microseconds
+//!
+//! @param[in]  us - microseconds to wait
+//------------------------------------------------------------------------------
+void uwait(uint32_t us)
+{
+    int ret;
+    timespec ts{0,0}, remain{0,0};
+    ts.tv_sec  = us / 1'000'000;
+    ts.tv_nsec = (us % 1'000'000) * 1'000;
+    
+    while(nanosleep(&ts, &remain) == EINTR)
+    {
+        ts = remain;
+    }
+}
 
 } // ~namespace

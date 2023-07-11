@@ -1522,7 +1522,7 @@ int CNetMdSecure::sendAudioTrack(const std::string& filename, const std::string&
         mLOG(DEBUG) << "sessionKeyForget() failed!";
     }
 
-    usleep(1'000'000);
+    uwait(1'000'000);
 
     // leave session
     if (leaveSession() != NETMDERR_NO_ERROR)

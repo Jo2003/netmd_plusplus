@@ -196,7 +196,7 @@ int CNetMdDev::initDevice()
                                 mDevice.mDevHdl = nullptr;
                             }
 
-                            usleep(100'000);
+                            uwait(100'000);
                         }
                         while(!success && cycle--);
 
@@ -334,29 +334,6 @@ int CNetMdDev::responseLength(uint8_t& req)
 }
 
 //--------------------------------------------------------------------------
-//! @brief      read any garbage which might still be in send queue of
-//!             the NetMD device
-//--------------------------------------------------------------------------
-void CNetMdDev::cleanupRespQueue()
-{
-    uint8_t req = 0;
-    int ret = responseLength(req);
-
-    if (ret > 0)
-    {
-        NetMDResp response = NetMDResp(new unsigned char[ret]);
-
-        static constexpr uint8_t REQ_TYPE = LIBUSB_ENDPOINT_IN | LIBUSB_REQUEST_TYPE_VENDOR | LIBUSB_RECIPIENT_INTERFACE;
-
-        // receive data
-        if (libusb_control_transfer(mDevice.mDevHdl, REQ_TYPE, req, 0, 0, response.get(), ret, NETMD_RECV_TIMEOUT) > 0)
-        {
-            mLOG(DEBUG) << "Read garbage: " << LOG::hexFormat(DEBUG, response.get(), ret);
-        }
-    }
-}
-
-//--------------------------------------------------------------------------
 //! @brief      Sends a standard command.
 //!
 //! @param      cmd     The new value
@@ -368,10 +345,6 @@ void CNetMdDev::cleanupRespQueue()
 //--------------------------------------------------------------------------
 int CNetMdDev::sendCmd(unsigned char* cmd, size_t cmdLen, bool factory)
 {
-    // read any data still in response queue
-    // of the NetMD device
-    cleanupRespQueue();
-
     // send data
     mLOG(DEBUG) << (factory ? "factory " : "") << "command:" << LOG::hexFormat(DEBUG, cmd, cmdLen);
 
@@ -392,44 +365,55 @@ int CNetMdDev::sendCmd(unsigned char* cmd, size_t cmdLen, bool factory)
 //--------------------------------------------------------------------------
 //! @brief      Gets the response.
 //!
-//! @param[out] response  The response
+//! @param[out] response           The response
+//! @param[in]  overrideRespLength override response length
 //!
 //! @return     The response size or NetMdErr.
 //--------------------------------------------------------------------------
-int CNetMdDev::getResponse(NetMDResp& response)
+int CNetMdDev::getResponse(NetMDResp& response, int overrideRespLength)
 {
     // poll for data that minidisc wants to send
     uint8_t req = 0;
     int ret;
     uint32_t i = 0;
+    int tmOut = NETMD_RECV_TIMEOUT;
 
-    while ((ret = responseLength(req)) <= 0)
+    if (overrideRespLength != -1)
     {
-        // a second chance
-        if (ret < 0)
+        ret   = overrideRespLength;
+        req   = 0x81; // 0xff for factory command
+        tmOut = 20'000;
+    }
+    else
+    {
+        while ((ret = responseLength(req)) <= 0)
         {
-            mLOG(DEBUG) << "try again ...";
-            return NETMDERR_AGAIN;
+            // a second chance
+            if (ret < 0)
+            {
+                mLOG(DEBUG) << "try again ...";
+                return NETMDERR_AGAIN;
+            }
+
+            // we shouldn't try forever ...
+            if (i == NETMD_RECV_TRIES)
+            {
+                mLOG(CRITICAL) << "Timeout while waiting for response length!";
+                return NETMDERR_TIMEOUT;
+            }
+
+            // Double wait time every 10 attempts up to 1 sec
+            uint32_t sleep = std::min<uint32_t>(NETMD_REPLY_SZ_INTERVAL_USEC * pow(2, static_cast<uint32_t>(i / 10)),
+                                                NETMD_MAX_REPLY_SZ_INTERVAL_USEC);
+
+            if (!(i % 10))
+            {
+                mLOG(DEBUG) << "still polling ... (" << i << " / " << NETMD_RECV_TRIES << " / " << sleep / 1000 << " ms)";
+            }
+
+            uwait(sleep);
+            i++;
         }
-
-        // we shouldn't try forever ...
-        if (i == NETMD_RECV_TRIES)
-        {
-            mLOG(CRITICAL) << "Timeout while waiting for response length!";
-            return NETMDERR_TIMEOUT;
-        }
-
-        // Double wait time every 10 attempts up to 1 sec
-        uint32_t sleep = std::min<uint32_t>(NETMD_REPLY_SZ_INTERVAL_USEC * pow(2, static_cast<uint32_t>(i / 10)),
-                                            NETMD_MAX_REPLY_SZ_INTERVAL_USEC);
-
-        if (!(i % 10))
-        {
-            mLOG(DEBUG) << "still polling ... (" << i << " / " << NETMD_RECV_TRIES << " / " << sleep / 1000 << " ms)";
-        }
-
-        usleep(sleep);
-        i++;
     }
 
     response = NetMDResp(new unsigned char[ret]);
@@ -438,7 +422,7 @@ int CNetMdDev::getResponse(NetMDResp& response)
     if ((ret = libusb_control_transfer(mDevice.mDevHdl,
                                        LIBUSB_ENDPOINT_IN | LIBUSB_REQUEST_TYPE_VENDOR | LIBUSB_RECIPIENT_INTERFACE,
                                        req, 0, 0, response.get(), ret,
-                                       NETMD_RECV_TIMEOUT)) < 0)
+                                       tmOut)) < 0)
     {
         mLOG(CRITICAL) << "libusb_control_transfer failed! " << libusb_strerror(static_cast<libusb_error>(ret));
         return NETMDERR_USB;
@@ -455,16 +439,17 @@ int CNetMdDev::getResponse(NetMDResp& response)
 //--------------------------------------------------------------------------
 //! @brief      exchange data with NetMD device
 //!
-//! @param[in]  cmd       The command
-//! @param[in]  cmdLen    The command length
-//! @param[out] response  The response pointer (optional)
-//! @param[in]  factory   if true, use factory mode (optional)
-//! @param[in]  expected  The expected status (optional)
+//! @param[in]  cmd                The command
+//! @param[in]  cmdLen             The command length
+//! @param[out] response           The response pointer (optional)
+//! @param[in]  factory            if true, use factory mode (optional)
+//! @param[in]  expected           The expected status (optional)
+//! @param[in]  overrideRespLength override response length (optional)
 //!
 //! @return     The response size or NetMdErr.
 //--------------------------------------------------------------------------
 int CNetMdDev::exchange(unsigned char* cmd, size_t cmdLen, NetMDResp* response,
-                        bool factory, NetMdStatus expected)
+                        bool factory, NetMdStatus expected, int overrideRespLength)
 {
     if (mDevice.mDevHdl == nullptr)
     {
@@ -481,7 +466,7 @@ int CNetMdDev::exchange(unsigned char* cmd, size_t cmdLen, NetMDResp* response,
     {
         if ((ret = sendCmd(cmd, cmdLen, factory)) == NETMDERR_NO_ERROR)
         {
-            if ((ret = getResponse(*pResp)) == NETMDERR_AGAIN)
+            if ((ret = getResponse(*pResp, overrideRespLength)) == NETMDERR_AGAIN)
             {
                 redo --;
                 continue;
@@ -495,7 +480,7 @@ int CNetMdDev::exchange(unsigned char* cmd, size_t cmdLen, NetMDResp* response,
             {
                 mLOG(DEBUG) << "Re-read ...!";
                 (*pResp) = nullptr;
-                ret = getResponse(*pResp);
+                ret = getResponse(*pResp, overrideRespLength);
 
                 if (*pResp == nullptr)
                 {
@@ -609,7 +594,7 @@ int CNetMdDev::waitForSync()
             break;
         }
 
-        usleep(100'000);
+        uwait(100'000);
     }
     while (tries);
 

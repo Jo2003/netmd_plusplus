@@ -27,7 +27,7 @@
   <td id="projectlogo"><img alt="Logo" src="minidisc.png"/></td>
   <td id="projectalign" style="padding-left: 0.5em;">
    <div id="projectname">netmd++
-   &#160;<span id="projectnumber">1.0.1</span>
+   &#160;<span id="projectnumber">1.0.2</span>
    </div>
    <div id="projectbrief">C++ API to access NetMD devices</div>
   </td>
@@ -100,8 +100,8 @@ Usage</h2>
 <li>include the header file into your project: <div class="fragment"><div class="line"><span class="preprocessor">#include &quot;path/to/netmd++.h&quot;</span></div>
 </div><!-- fragment --></li>
 <li>create an instance of the API: <div class="fragment"><div class="line"><a class="code" href="classnetmd_1_1_c_net_md_api.html">netmd::netmd_pp</a>* pNetMd = <span class="keyword">new</span> <a class="code" href="namespacenetmd.html#a8bc42e14d176e366d3d70a1e43963856">netmd::netmd_pp</a>();</div>
-<div class="ttc" id="aclassnetmd_1_1_c_net_md_api_html"><div class="ttname"><a href="classnetmd_1_1_c_net_md_api.html">netmd::CNetMdApi</a></div><div class="ttdoc">This class describes a C++ NetMD access library.</div><div class="ttdef"><b>Definition:</b> netmd++.h:342</div></div>
-<div class="ttc" id="anamespacenetmd_html_a8bc42e14d176e366d3d70a1e43963856"><div class="ttname"><a href="namespacenetmd.html#a8bc42e14d176e366d3d70a1e43963856">netmd::netmd_pp</a></div><div class="ttdeci">CNetMdApi netmd_pp</div><div class="ttdoc">use netmd_pp instead of CNetMdApi</div><div class="ttdef"><b>Definition:</b> netmd++.h:336</div></div>
+<div class="ttc" id="aclassnetmd_1_1_c_net_md_api_html"><div class="ttname"><a href="classnetmd_1_1_c_net_md_api.html">netmd::CNetMdApi</a></div><div class="ttdoc">This class describes a C++ NetMD access library.</div><div class="ttdef"><b>Definition:</b> netmd++.h:356</div></div>
+<div class="ttc" id="anamespacenetmd_html_a8bc42e14d176e366d3d70a1e43963856"><div class="ttname"><a href="namespacenetmd.html#a8bc42e14d176e366d3d70a1e43963856">netmd::netmd_pp</a></div><div class="ttdeci">CNetMdApi netmd_pp</div><div class="ttdoc">use netmd_pp instead of CNetMdApi</div><div class="ttdef"><b>Definition:</b> netmd++.h:350</div></div>
 </div><!-- fragment --></li>
 <li>initialize the first found NetMD device: <div class="fragment"><div class="line"><span class="keywordflow">if</span> (pNetMd != <span class="keyword">nullptr</span>)</div>
 <div class="line">{</div>
@@ -137,9 +137,9 @@ Track transfer</h3>
 <div class="line">}</div>
 <div class="ttc" id="aclassnetmd_1_1_c_net_md_api_html_a587bfc4a87f306cc78623af0aaa856a0"><div class="ttname"><a href="classnetmd_1_1_c_net_md_api.html#a587bfc4a87f306cc78623af0aaa856a0">netmd::CNetMdApi::otfEncodeSupported</a></div><div class="ttdeci">bool otfEncodeSupported()</div><div class="ttdoc">is on the fly encoding supported by device</div></div>
 <div class="ttc" id="aclassnetmd_1_1_c_net_md_api_html_aed63b256e38db624e595a5057530858f"><div class="ttname"><a href="classnetmd_1_1_c_net_md_api.html#aed63b256e38db624e595a5057530858f">netmd::CNetMdApi::sendAudioFile</a></div><div class="ttdeci">int sendAudioFile(const std::string &amp;filename, const std::string &amp;title, DiskFormat otf)</div><div class="ttdoc">Sends an audio track.</div></div>
-<div class="ttc" id="anamespacenetmd_html_a7f6ad6ca6ff713af5d26f8ffc816421bac6236f63c09822b1900f9a14a63233e0"><div class="ttname"><a href="namespacenetmd.html#a7f6ad6ca6ff713af5d26f8ffc816421bac6236f63c09822b1900f9a14a63233e0">netmd::NETMDERR_NO_ERROR</a></div><div class="ttdeci">@ NETMDERR_NO_ERROR</div><div class="ttdoc">success</div><div class="ttdef"><b>Definition:</b> netmd++.h:184</div></div>
-<div class="ttc" id="anamespacenetmd_html_abe72764632e8fa864f691a2a752c6b03ab9402b9cf1ec53af5362b80c15af09ec"><div class="ttname"><a href="namespacenetmd.html#abe72764632e8fa864f691a2a752c6b03ab9402b9cf1ec53af5362b80c15af09ec">netmd::NETMD_DISKFORMAT_LP2</a></div><div class="ttdeci">@ NETMD_DISKFORMAT_LP2</div><div class="ttdoc">LP2.</div><div class="ttdef"><b>Definition:</b> netmd++.h:175</div></div>
-<div class="ttc" id="anamespacenetmd_html_abe72764632e8fa864f691a2a752c6b03af43db39c04b1593fa9ec35e6c33919d0"><div class="ttname"><a href="namespacenetmd.html#abe72764632e8fa864f691a2a752c6b03af43db39c04b1593fa9ec35e6c33919d0">netmd::NO_ONTHEFLY_CONVERSION</a></div><div class="ttdeci">@ NO_ONTHEFLY_CONVERSION</div><div class="ttdoc">dont do on-the-fly encoding</div><div class="ttdef"><b>Definition:</b> netmd++.h:178</div></div>
+<div class="ttc" id="anamespacenetmd_html_a7f6ad6ca6ff713af5d26f8ffc816421bac6236f63c09822b1900f9a14a63233e0"><div class="ttname"><a href="namespacenetmd.html#a7f6ad6ca6ff713af5d26f8ffc816421bac6236f63c09822b1900f9a14a63233e0">netmd::NETMDERR_NO_ERROR</a></div><div class="ttdeci">@ NETMDERR_NO_ERROR</div><div class="ttdoc">success</div><div class="ttdef"><b>Definition:</b> netmd++.h:197</div></div>
+<div class="ttc" id="anamespacenetmd_html_abe72764632e8fa864f691a2a752c6b03ab9402b9cf1ec53af5362b80c15af09ec"><div class="ttname"><a href="namespacenetmd.html#abe72764632e8fa864f691a2a752c6b03ab9402b9cf1ec53af5362b80c15af09ec">netmd::NETMD_DISKFORMAT_LP2</a></div><div class="ttdeci">@ NETMD_DISKFORMAT_LP2</div><div class="ttdoc">LP2.</div><div class="ttdef"><b>Definition:</b> netmd++.h:188</div></div>
+<div class="ttc" id="anamespacenetmd_html_abe72764632e8fa864f691a2a752c6b03af43db39c04b1593fa9ec35e6c33919d0"><div class="ttname"><a href="namespacenetmd.html#abe72764632e8fa864f691a2a752c6b03af43db39c04b1593fa9ec35e6c33919d0">netmd::NO_ONTHEFLY_CONVERSION</a></div><div class="ttdeci">@ NO_ONTHEFLY_CONVERSION</div><div class="ttdoc">dont do on-the-fly encoding</div><div class="ttdef"><b>Definition:</b> netmd++.h:191</div></div>
 <div class="ttc" id="anetmd_09_09_8h_html"><div class="ttname"><a href="netmd_09_09_8h.html">netmd++.h</a></div></div>
 </div><!-- fragment --><h3><a class="anchor" id="autotoc_md5"></a>
 Erase disc and set new title</h3>
@@ -164,7 +164,15 @@ MDs UTOC</h1>
 <p>For the UTOC structure please have a look at this great site on <a href="https://www.minidisc.org/md_toc.html">minidisc.org</a></p>
 <h2><a class="anchor" id="autotoc_md7"></a>
 Addressing in UTOC</h2>
-<p>"The disc start and end addresses each consist of a cluster, sector, and sound group, all packed into 3 bytes. The sound group is the MiniDisc's smallest addressable unit, representing 11.6ms of mono audio (212 bytes). A sector contains 11 sound groups (2332 bytes). A cluster is an aggregate of 32 sectors (352 sound groups) representing 2.03 seconds of stereo audio; it is the smallest unit of data that can be written to a MiniDisc. In the 3 byte packing, there are 14 bits allocated to the cluster number, 6 bits to the sector, and 4 bits to the soundgroup; this arrangement allows addressing of up to 9.2 hours of stereo audio."</p>
+<p>The disc start and end addresses each consist of a cluster, sector, and sound group, all packed into 3 bytes. The smallest unit is a sound frame, representing 11.6ms of mono audio (212 bytes), while the smallest <b>addressable</b> unit is the sound group, containing 2 sound frames. A sector contains 11 sound frames / 5.5 sound groups. Addressing must be done through sound group. Sound groups are numbered 0 ... 10. Sound groups 0 ... 5 are part of the even sector, while sound groups 5 ... 10 are part of the odd sector. Group 5 overlaps both even and odd sectors and can therefore be addressed on both sectors. </p><pre>
++-------------------------------------------+
+|                sector pair                |
++---------------------+---------------------+
+|   even sector (2n)  |  odd sector (2n+1)  |
++---+---+---+---+---+-+-+---+---+---+---+---+
+| 0 | 1 | 2 | 3 | 4 | 5 | 6 | 7 | 8 | 9 | 10| &lt;- sound groups
++---+---+---+---+---+---+---+---+---+---+---+
+</pre><p> A cluster is an aggregate of 32 audio sectors (176 sound groups) representing 2.04 seconds of stereo audio; it is the smallest unit of data that can be written to a MiniDisc. In the 3 byte packing, there are 14 bits allocated to the cluster number, 6 bits to the sector, and 4 bits to the soundgroup; this arrangement allows addressing of up to 9.2 hours of stereo audio.</p>
 <h2><a class="anchor" id="autotoc_md8"></a>
 Modifying the UTOC</h2>
 <ol type="1">
@@ -177,8 +185,8 @@ Modifying the UTOC</h2>
 <div class="line">}</div>
 <div class="ttc" id="aclassnetmd_1_1_c_net_md_api_html_ae92c4f4fc9243585c46ec03b7402318d"><div class="ttname"><a href="classnetmd_1_1_c_net_md_api.html#ae92c4f4fc9243585c46ec03b7402318d">netmd::CNetMdApi::readUTOCSector</a></div><div class="ttdeci">NetMDByteVector readUTOCSector(UTOCSector s)</div><div class="ttdoc">Reads an utoc sector.</div></div>
 <div class="ttc" id="aclassnetmd_1_1_c_net_md_api_html_af7ea90ebc6ac259f539d57448acf000f"><div class="ttname"><a href="classnetmd_1_1_c_net_md_api.html#af7ea90ebc6ac259f539d57448acf000f">netmd::CNetMdApi::prepareTOCManip</a></div><div class="ttdeci">int prepareTOCManip()</div><div class="ttdoc">prepare TOC manipulation</div></div>
-<div class="ttc" id="anamespacenetmd_html_ac0ff9cdf9dc7784c232f4fabeadc13d0"><div class="ttname"><a href="namespacenetmd.html#ac0ff9cdf9dc7784c232f4fabeadc13d0">netmd::UTOCSector</a></div><div class="ttdeci">UTOCSector</div><div class="ttdoc">TOC sector names.</div><div class="ttdef"><b>Definition:</b> netmd++.h:233</div></div>
-<div class="ttc" id="anamespacenetmd_html_acb561428b15aeb16c85e854ccc2c2938"><div class="ttname"><a href="namespacenetmd.html#acb561428b15aeb16c85e854ccc2c2938">netmd::NetMDByteVector</a></div><div class="ttdeci">std::vector&lt; uint8_t &gt; NetMDByteVector</div><div class="ttdoc">byte vector</div><div class="ttdef"><b>Definition:</b> netmd++.h:281</div></div>
+<div class="ttc" id="anamespacenetmd_html_ac0ff9cdf9dc7784c232f4fabeadc13d0"><div class="ttname"><a href="namespacenetmd.html#ac0ff9cdf9dc7784c232f4fabeadc13d0">netmd::UTOCSector</a></div><div class="ttdeci">UTOCSector</div><div class="ttdoc">TOC sector names.</div><div class="ttdef"><b>Definition:</b> netmd++.h:247</div></div>
+<div class="ttc" id="anamespacenetmd_html_acb561428b15aeb16c85e854ccc2c2938"><div class="ttname"><a href="namespacenetmd.html#acb561428b15aeb16c85e854ccc2c2938">netmd::NetMDByteVector</a></div><div class="ttdeci">std::vector&lt; uint8_t &gt; NetMDByteVector</div><div class="ttdoc">byte vector</div><div class="ttdef"><b>Definition:</b> netmd++.h:295</div></div>
 </div><!-- fragment --></li>
 <li>create toc class instance and add some track data <div class="fragment"><div class="line">uint8_t *pData = <span class="keyword">new</span> uint8_t[tocData.size()];</div>
 <div class="line"><span class="keywordflow">for</span>(<span class="keywordtype">size_t</span> i = 0; i &lt; tocData.size(); i++)</div>
@@ -188,7 +196,7 @@ Modifying the UTOC</h2>
 <div class="line"><a class="code" href="classnetmd_1_1_c_net_md_t_o_c.html">netmd::CNetMdTOC</a> utoc(8, 459&#39;000, pData);</div>
 <div class="line">utoc.addTrack(1, 60&#39;000, <span class="stringliteral">&quot;Funky Track One Minute Part #1&quot;</span>);</div>
 <div class="line">utoc.addTrack(2, 60&#39;000, <span class="stringliteral">&quot;Funky Track One Minute Part #2&quot;</span>);</div>
-<div class="ttc" id="aclassnetmd_1_1_c_net_md_t_o_c_html"><div class="ttname"><a href="classnetmd_1_1_c_net_md_t_o_c.html">netmd::CNetMdTOC</a></div><div class="ttdoc">This class describes a net md TOC.</div><div class="ttdef"><b>Definition:</b> netmd++.h:656</div></div>
+<div class="ttc" id="aclassnetmd_1_1_c_net_md_t_o_c_html"><div class="ttname"><a href="classnetmd_1_1_c_net_md_t_o_c.html">netmd::CNetMdTOC</a></div><div class="ttdoc">This class describes a net md TOC.</div><div class="ttdef"><b>Definition:</b> netmd++.h:672</div></div>
 </div><!-- fragment --></li>
 <li>upload changed TOC data to NetMD <div class="fragment"><div class="line"><span class="keywordtype">bool</span> doit = <span class="keyword">true</span>;</div>
 <div class="line"><span class="keywordflow">for</span> (<span class="keywordtype">int</span> x = 0; x &lt; 3; x++)</div>
