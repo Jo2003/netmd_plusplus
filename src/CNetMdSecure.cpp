@@ -913,7 +913,7 @@ int CNetMdSecure::transferSongPackets(TrackPackets* packets, size_t fullLength)
             params.push_back(data);
             if (((ret = formatQuery("%>q %*", params, query)) > 0) && (query != nullptr))
             {
-                if ((transferred = mNetMd.bulkTransfer(query.get(), ret, 80'000)) == packet_size)
+                if ((transferred = mNetMd.bulkTransfer(query.get(), ret)) == packet_size)
                 {
                     total_transferred += static_cast<size_t>(transferred);
                     ret = NETMDERR_NO_ERROR;
@@ -933,7 +933,7 @@ int CNetMdSecure::transferSongPackets(TrackPackets* packets, size_t fullLength)
         else
         {
             packet_size = p->length;
-            if ((transferred = mNetMd.bulkTransfer(p->data, p->length, 80'000)) == packet_size)
+            if ((transferred = mNetMd.bulkTransfer(p->data, p->length)) == packet_size)
             {
                 total_transferred += static_cast<size_t>(transferred);
                 ret = NETMDERR_NO_ERROR;

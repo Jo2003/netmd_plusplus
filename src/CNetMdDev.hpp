@@ -87,12 +87,13 @@ class CNetMdDev
     friend CNetMdSecure;
 
     /// 1000ms
-    static constexpr unsigned int NETMD_POLL_TIMEOUT = 1000;
-    static constexpr unsigned int NETMD_SEND_TIMEOUT = 1000;
-    static constexpr unsigned int NETMD_RECV_TIMEOUT = 3000;
-    static constexpr unsigned int NETMD_RECV_TRIES   =  100;
-    static constexpr unsigned int NETMD_SYNC_TRIES   =    5;
-    static constexpr uint8_t    NETMD_STATUS_CONTROL = 0x00;
+    static constexpr unsigned int NETMD_POLL_TIMEOUT =  1'000;
+    static constexpr unsigned int NETMD_SEND_TIMEOUT =  1'000;
+    static constexpr unsigned int NETMD_RECV_TIMEOUT =  3'000;
+    static constexpr unsigned int NETMD_BULK_TIMEOUT = 80'000;
+    static constexpr unsigned int NETMD_RECV_TRIES   =    100;
+    static constexpr unsigned int NETMD_SYNC_TRIES   =      5;
+    static constexpr uint8_t    NETMD_STATUS_CONTROL =   0x00;
 
     /// reply retry interval
     static constexpr unsigned int NETMD_REPLY_SZ_INTERVAL_USEC     =    10'000;
@@ -250,11 +251,10 @@ class CNetMdDev
     //!
     //! @param      cmd      The command bytes
     //! @param[in]  cmdLen   The command length
-    //! @param[in]  timeOut  The time out
     //!
     //! @return     The response size or NetMdErr.
     //--------------------------------------------------------------------------
-    int bulkTransfer(unsigned char* cmd, size_t cmdLen, int timeOut);
+    int bulkTransfer(unsigned char* cmd, size_t cmdLen);
 
     //--------------------------------------------------------------------------
     //! @brief      wait for the device respond to a command

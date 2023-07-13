@@ -355,18 +355,20 @@ std::ostream& operator<<(std::ostream& os, const CNetMdPatch::PatchId& pid)
 {
     switch(pid)
     {
-        case CNetMdPatch::PatchId::PID_UNUSED     : os << "PID_UNUSED"     ; break;
-        case CNetMdPatch::PatchId::PID_DEVTYPE    : os << "PID_DEVTYPE"    ; break;
-        case CNetMdPatch::PatchId::PID_PATCH_0_A  : os << "PID_PATCH_0_A"  ; break;
-        case CNetMdPatch::PatchId::PID_PATCH_0_B  : os << "PID_PATCH_0_B"  ; break;
-        case CNetMdPatch::PatchId::PID_PATCH_0    : os << "PID_PATCH_0"    ; break;
-        case CNetMdPatch::PatchId::PID_PREP_PATCH : os << "PID_PREP_PATCH" ; break;
-        case CNetMdPatch::PatchId::PID_PATCH_CMN_1: os << "PID_PATCH_CMN_1"; break;
-        case CNetMdPatch::PatchId::PID_PATCH_CMN_2: os << "PID_PATCH_CMN_2"; break;
-        case CNetMdPatch::PatchId::PID_TRACK_TYPE : os << "PID_TRACK_TYPE" ; break;
-        case CNetMdPatch::PatchId::PID_SAFETY     : os << "PID_SAFETY"     ; break;
-        case CNetMdPatch::PatchId::PID_USB_EXE    : os << "PID_USB_EXE"    ; break;
-        default                                   : os << "n/a"            ; break;
+        case CNetMdPatch::PatchId::PID_UNUSED       : os << "PID_UNUSED"       ; break;
+        case CNetMdPatch::PatchId::PID_DEVTYPE      : os << "PID_DEVTYPE"      ; break;
+        case CNetMdPatch::PatchId::PID_PATCH_0_A    : os << "PID_PATCH_0_A"    ; break;
+        case CNetMdPatch::PatchId::PID_PATCH_0_B    : os << "PID_PATCH_0_B"    ; break;
+        case CNetMdPatch::PatchId::PID_PATCH_0      : os << "PID_PATCH_0"      ; break;
+        case CNetMdPatch::PatchId::PID_PREP_PATCH   : os << "PID_PREP_PATCH"   ; break;
+        case CNetMdPatch::PatchId::PID_PATCH_CMN_1  : os << "PID_PATCH_CMN_1"  ; break;
+        case CNetMdPatch::PatchId::PID_PATCH_CMN_2  : os << "PID_PATCH_CMN_2"  ; break;
+        case CNetMdPatch::PatchId::PID_TRACK_TYPE   : os << "PID_TRACK_TYPE"   ; break;
+        case CNetMdPatch::PatchId::PID_SAFETY       : os << "PID_SAFETY"       ; break;
+        case CNetMdPatch::PatchId::PID_USB_EXE      : os << "PID_USB_EXE"      ; break;
+        case CNetMdPatch::PatchId::PID_PCM_SPEEDUP_1: os << "PID_PCM_SPEEDUP_1"; break;
+        case CNetMdPatch::PatchId::PID_PCM_SPEEDUP_2: os << "PID_PCM_SPEEDUP_2"; break;
+        default                                     : os << "n/a"              ; break;
     }
     return os;
 }
@@ -1935,14 +1937,18 @@ int CNetMdPatch::applyPCMSpeedupPatch()
             mNetMdThrow(NETMDERR_OTHER, "Unknown or unsupported NetMD device!");
         }
 
+        PatchComplect pc;
+        
         // check, if patch is already active ...
         if (checkPatch(PID_PCM_SPEEDUP_1, devcode) == 0)
         {
             // patch ...
             mLOG(DEBUG) << "=== Apply PCM Speedup Patch #1 ===";
-            if (patch(patchAddress(devcode, PID_PCM_SPEEDUP_1),
-                      patchPayload(devcode, PID_PCM_SPEEDUP_1),
-                      nextFreePatch(PID_PCM_SPEEDUP_1)) != NETMDERR_NO_ERROR)
+            if (fillPatchComplect(PID_PCM_SPEEDUP_1, devcode, pc) != NETMDERR_NO_ERROR)
+            {
+                mNetMdThrow(NETMDERR_NOT_SUPPORTED, "Can't find patch data PCM Speedup Patch #1!");
+            }
+            if (patch(pc) != NETMDERR_NO_ERROR)
             {
                 mNetMdThrow(NETMDERR_USB, "Can't apply PCM Speedup Patch #1!");
             }
@@ -1953,11 +1959,13 @@ int CNetMdPatch::applyPCMSpeedupPatch()
         {
             // patch ...
             mLOG(DEBUG) << "=== Apply PCM Speedup Patch #2 ===";
-            if (patch(patchAddress(devcode, PID_PCM_SPEEDUP_2),
-                      patchPayload(devcode, PID_PCM_SPEEDUP_2),
-                      nextFreePatch(PID_PCM_SPEEDUP_2)) != NETMDERR_NO_ERROR)
+            if (fillPatchComplect(PID_PCM_SPEEDUP_2, devcode, pc) != NETMDERR_NO_ERROR)
             {
-                mNetMdThrow(NETMDERR_USB, "Can't apply PCM Speedup Patch #1!");
+                mNetMdThrow(NETMDERR_NOT_SUPPORTED, "Can't find patch data PCM Speedup Patch #2!");
+            }
+            if (patch(pc) != NETMDERR_NO_ERROR)
+            {
+                mNetMdThrow(NETMDERR_USB, "Can't apply PCM Speedup Patch #2!");
             }
         }
     }
