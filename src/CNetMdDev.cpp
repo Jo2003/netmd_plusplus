@@ -69,20 +69,20 @@ const CNetMdDev::KnownDevices CNetMdDev::smKnownDevices = {
     { mkDevEntry(0x054c, 0x0119, "Sony CMT-SE9"                                  , false, false) },
     { mkDevEntry(0x054c, 0x013f, "Sony MDS-S500"                                 , false, false) },
     { mkDevEntry(0x054c, 0x014c, "Aiwa AM-NX9"                                   , false, true ) },
-    { mkDevEntry(0x054c, 0x017e, "Sony MZ-NH1"                                   , false, true ) },
-    { mkDevEntry(0x054c, 0x0180, "Sony MZ-NH3D"                                  , false, true ) },
-    { mkDevEntry(0x054c, 0x0182, "Sony MZ-NH900"                                 , false, true ) },
-    { mkDevEntry(0x054c, 0x0184, "Sony MZ-NH700/800"                             , false, true ) },
-    { mkDevEntry(0x054c, 0x0186, "Sony MZ-NH600/600D"                            , false, true ) },
+    { mkDevEntry(0x054c, 0x017e, "Sony MZ-NH1"                                   , false, false) },
+    { mkDevEntry(0x054c, 0x0180, "Sony MZ-NH3D"                                  , false, false) },
+    { mkDevEntry(0x054c, 0x0182, "Sony MZ-NH900"                                 , false, false) },
+    { mkDevEntry(0x054c, 0x0184, "Sony MZ-NH700/800"                             , false, false) },
+    { mkDevEntry(0x054c, 0x0186, "Sony MZ-NH600/600D"                            , false, false) },
     { mkDevEntry(0x054c, 0x0188, "Sony MZ-N920"                                  , false, true ) },
     { mkDevEntry(0x054c, 0x018a, "Sony LAM-3"                                    , false, false) },
-    { mkDevEntry(0x054c, 0x01e9, "Sony MZ-DH10P"                                 , false, true ) },
-    { mkDevEntry(0x054c, 0x0219, "Sony MZ-RH10"                                  , false, true ) },
-    { mkDevEntry(0x054c, 0x021b, "Sony MZ-RH910"                                 , false, true ) },
+    { mkDevEntry(0x054c, 0x01e9, "Sony MZ-DH10P"                                 , false, false) },
+    { mkDevEntry(0x054c, 0x0219, "Sony MZ-RH10"                                  , false, false) },
+    { mkDevEntry(0x054c, 0x021b, "Sony MZ-RH910"                                 , false, false) },
     { mkDevEntry(0x054c, 0x021d, "Sony CMT-AH10"                                 , false, false) },
     { mkDevEntry(0x054c, 0x022c, "Sony CMT-AH10"                                 , false, false) },
-    { mkDevEntry(0x054c, 0x023c, "Sony DS-HMD1"                                  , false, true ) },
-    { mkDevEntry(0x054c, 0x0286, "Sony MZ-RH1"                                   , false, true ) },
+    { mkDevEntry(0x054c, 0x023c, "Sony DS-HMD1"                                  , false, false) },
+    { mkDevEntry(0x054c, 0x0286, "Sony MZ-RH1"                                   , false, false) },
     { mkDevEntry(0x04dd, 0x7202, "Sharp IM-MT880H/MT899H"                        , false, false) },
     { mkDevEntry(0x04dd, 0x9013, "Sharp IM-DR400/DR410"                          , true , false) },
     { mkDevEntry(0x04dd, 0x9014, "Sharp IM-DR80/DR420/DR580 or Kenwood DMC-S9NET", false, false) },
@@ -334,6 +334,29 @@ int CNetMdDev::responseLength(uint8_t& req)
 }
 
 //--------------------------------------------------------------------------
+//! @brief      read any garbage which might still be in send queue of
+//!             the NetMD device
+//--------------------------------------------------------------------------
+void CNetMdDev::cleanupRespQueue()
+{
+    uint8_t req = 0;
+    int ret = responseLength(req);
+
+    if (ret > 0)
+    {
+        NetMDResp response = NetMDResp(new unsigned char[ret]);
+
+        constexpr uint8_t REQ_TYPE = LIBUSB_ENDPOINT_IN | LIBUSB_REQUEST_TYPE_VENDOR | LIBUSB_RECIPIENT_INTERFACE;
+
+        // receive data
+        if (libusb_control_transfer(mDevice.mDevHdl, REQ_TYPE, req, 0, 0, response.get(), ret, NETMD_RECV_TIMEOUT) > 0)
+        {
+            mLOG(DEBUG) << "Read garbage: " << LOG::hexFormat(DEBUG, response.get(), ret);
+        }
+    }
+}
+
+//--------------------------------------------------------------------------
 //! @brief      Sends a standard command.
 //!
 //! @param      cmd     The new value
@@ -347,6 +370,10 @@ int CNetMdDev::sendCmd(unsigned char* cmd, size_t cmdLen, bool factory)
 {
     // send data
     mLOG(DEBUG) << (factory ? "factory " : "") << "command:" << LOG::hexFormat(DEBUG, cmd, cmdLen);
+
+    // read any data still in response queue
+    // of the NetMD device
+    cleanupRespQueue();
 
     int ret;
 

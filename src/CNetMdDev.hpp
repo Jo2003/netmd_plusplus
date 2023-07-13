@@ -208,6 +208,12 @@ class CNetMdDev
     int responseLength(uint8_t& req);
 
     //--------------------------------------------------------------------------
+    //! @brief      read any garbage which might still be in send queue of
+    //!             the NetMD device
+    //--------------------------------------------------------------------------
+    void cleanupRespQueue();
+
+    //--------------------------------------------------------------------------
     //! @brief      Sends a standard command.
     //!
     //! @param      cmd      The new value
