@@ -27,7 +27,7 @@
   <td id="projectlogo"><img alt="Logo" src="minidisc.png"/></td>
   <td id="projectalign" style="padding-left: 0.5em;">
    <div id="projectname">netmd++
-   &#160;<span id="projectnumber">1.0.2</span>
+   &#160;<span id="projectnumber">1.0.3</span>
    </div>
    <div id="projectbrief">C++ API to access NetMD devices</div>
   </td>
@@ -92,16 +92,118 @@ $(document).ready(function(){initNavTree('index.html',''); initResizable(); });
 netmd++</h1>
 <p>This C++ API was written to ease the handling of NetMD devices. It is a synchronous API. So, function calls might block your program flow. If you want to use this API in an GUI app, better put the API calls into a background thread.</p>
 <h2><a class="anchor" id="autotoc_md1"></a>
+Supported Devices</h2>
+<table class="markdownTable">
+<tr class="markdownTableHead">
+<th class="markdownTableHeadNone">Manufacturer   </th><th class="markdownTableHeadNone">Manufacturer ID   </th><th class="markdownTableHeadNone">Device ID   </th><th class="markdownTableHeadNone">Name   </th><th class="markdownTableHeadNone">Type    </th></tr>
+<tr class="markdownTableRowOdd">
+<td class="markdownTableBodyNone"><b>Sony</b>   </td><td class="markdownTableBodyNone">0x054c   </td><td class="markdownTableBodyNone">0x0034   </td><td class="markdownTableBodyNone">Sony PCLK-XX   </td><td class="markdownTableBodyNone">NetMD    </td></tr>
+<tr class="markdownTableRowEven">
+<td class="markdownTableBodyNone"></td><td class="markdownTableBodyNone">0x054c   </td><td class="markdownTableBodyNone">0x0036   </td><td class="markdownTableBodyNone">Sony NetMD Walkman   </td><td class="markdownTableBodyNone">NetMD    </td></tr>
+<tr class="markdownTableRowOdd">
+<td class="markdownTableBodyNone"></td><td class="markdownTableBodyNone">0x054c   </td><td class="markdownTableBodyNone">0x006F   </td><td class="markdownTableBodyNone">Sony NW-E7   </td><td class="markdownTableBodyNone">NetMD    </td></tr>
+<tr class="markdownTableRowEven">
+<td class="markdownTableBodyNone"></td><td class="markdownTableBodyNone">0x054c   </td><td class="markdownTableBodyNone">0x0075   </td><td class="markdownTableBodyNone">Sony MZ-N1   </td><td class="markdownTableBodyNone">NetMD    </td></tr>
+<tr class="markdownTableRowOdd">
+<td class="markdownTableBodyNone"></td><td class="markdownTableBodyNone">0x054c   </td><td class="markdownTableBodyNone">0x007c   </td><td class="markdownTableBodyNone">Sony NetMD Walkman   </td><td class="markdownTableBodyNone">NetMD    </td></tr>
+<tr class="markdownTableRowEven">
+<td class="markdownTableBodyNone"></td><td class="markdownTableBodyNone">0x054c   </td><td class="markdownTableBodyNone">0x0080   </td><td class="markdownTableBodyNone">Sony LAM-1   </td><td class="markdownTableBodyNone">NetMD    </td></tr>
+<tr class="markdownTableRowOdd">
+<td class="markdownTableBodyNone"></td><td class="markdownTableBodyNone">0x054c   </td><td class="markdownTableBodyNone">0x0081   </td><td class="markdownTableBodyNone">Sony MDS-JE780/JB980   </td><td class="markdownTableBodyNone">NetMD    </td></tr>
+<tr class="markdownTableRowEven">
+<td class="markdownTableBodyNone"></td><td class="markdownTableBodyNone">0x054c   </td><td class="markdownTableBodyNone">0x0084   </td><td class="markdownTableBodyNone">Sony MZ-N505   </td><td class="markdownTableBodyNone">NetMD    </td></tr>
+<tr class="markdownTableRowOdd">
+<td class="markdownTableBodyNone"></td><td class="markdownTableBodyNone">0x054c   </td><td class="markdownTableBodyNone">0x0085   </td><td class="markdownTableBodyNone">Sony MZ-S1   </td><td class="markdownTableBodyNone">NetMD    </td></tr>
+<tr class="markdownTableRowEven">
+<td class="markdownTableBodyNone"></td><td class="markdownTableBodyNone">0x054c   </td><td class="markdownTableBodyNone">0x0086   </td><td class="markdownTableBodyNone">Sony MZ-N707   </td><td class="markdownTableBodyNone">NetMD    </td></tr>
+<tr class="markdownTableRowOdd">
+<td class="markdownTableBodyNone"></td><td class="markdownTableBodyNone">0x054c   </td><td class="markdownTableBodyNone">0x008e   </td><td class="markdownTableBodyNone">Sony CMT-C7NT   </td><td class="markdownTableBodyNone">NetMD    </td></tr>
+<tr class="markdownTableRowEven">
+<td class="markdownTableBodyNone"></td><td class="markdownTableBodyNone">0x054c   </td><td class="markdownTableBodyNone">0x0097   </td><td class="markdownTableBodyNone">Sony PCGA-MDN1   </td><td class="markdownTableBodyNone">NetMD    </td></tr>
+<tr class="markdownTableRowOdd">
+<td class="markdownTableBodyNone"></td><td class="markdownTableBodyNone">0x054c   </td><td class="markdownTableBodyNone">0x00ad   </td><td class="markdownTableBodyNone">Sony CMT-L7HD   </td><td class="markdownTableBodyNone">NetMD    </td></tr>
+<tr class="markdownTableRowEven">
+<td class="markdownTableBodyNone"></td><td class="markdownTableBodyNone">0x054c   </td><td class="markdownTableBodyNone">0x00c6   </td><td class="markdownTableBodyNone">Sony MZ-N10   </td><td class="markdownTableBodyNone">NetMD    </td></tr>
+<tr class="markdownTableRowOdd">
+<td class="markdownTableBodyNone"></td><td class="markdownTableBodyNone">0x054c   </td><td class="markdownTableBodyNone">0x00c7   </td><td class="markdownTableBodyNone">Sony MZ-N910   </td><td class="markdownTableBodyNone">NetMD    </td></tr>
+<tr class="markdownTableRowEven">
+<td class="markdownTableBodyNone"></td><td class="markdownTableBodyNone">0x054c   </td><td class="markdownTableBodyNone">0x00c8   </td><td class="markdownTableBodyNone">Sony MZ-N710/NE810/NF810   </td><td class="markdownTableBodyNone">NetMD    </td></tr>
+<tr class="markdownTableRowOdd">
+<td class="markdownTableBodyNone"></td><td class="markdownTableBodyNone">0x054c   </td><td class="markdownTableBodyNone">0x00c9   </td><td class="markdownTableBodyNone">Sony MZ-N510/NF610   </td><td class="markdownTableBodyNone">NetMD    </td></tr>
+<tr class="markdownTableRowEven">
+<td class="markdownTableBodyNone"></td><td class="markdownTableBodyNone">0x054c   </td><td class="markdownTableBodyNone">0x00ca   </td><td class="markdownTableBodyNone">Sony MZ-NE410/DN430/NF520   </td><td class="markdownTableBodyNone">NetMD    </td></tr>
+<tr class="markdownTableRowOdd">
+<td class="markdownTableBodyNone"></td><td class="markdownTableBodyNone">0x054c   </td><td class="markdownTableBodyNone">0x00e7   </td><td class="markdownTableBodyNone">Sony CMT-M333NT/M373NT   </td><td class="markdownTableBodyNone">NetMD    </td></tr>
+<tr class="markdownTableRowEven">
+<td class="markdownTableBodyNone"></td><td class="markdownTableBodyNone">0x054c   </td><td class="markdownTableBodyNone">0x00eb   </td><td class="markdownTableBodyNone">Sony MZ-NE810/NE910   </td><td class="markdownTableBodyNone">NetMD    </td></tr>
+<tr class="markdownTableRowOdd">
+<td class="markdownTableBodyNone"></td><td class="markdownTableBodyNone">0x054c   </td><td class="markdownTableBodyNone">0x0101   </td><td class="markdownTableBodyNone">Sony LAM   </td><td class="markdownTableBodyNone">NetMD    </td></tr>
+<tr class="markdownTableRowEven">
+<td class="markdownTableBodyNone"><b>Aiwa</b>   </td><td class="markdownTableBodyNone">0x054c   </td><td class="markdownTableBodyNone">0x0113   </td><td class="markdownTableBodyNone">Aiwa AM-NX1   </td><td class="markdownTableBodyNone">NetMD    </td></tr>
+<tr class="markdownTableRowOdd">
+<td class="markdownTableBodyNone"><b>Sony</b>   </td><td class="markdownTableBodyNone">0x054c   </td><td class="markdownTableBodyNone">0x011a   </td><td class="markdownTableBodyNone">Sony CMT-SE7   </td><td class="markdownTableBodyNone">NetMD    </td></tr>
+<tr class="markdownTableRowEven">
+<td class="markdownTableBodyNone"></td><td class="markdownTableBodyNone">0x054c   </td><td class="markdownTableBodyNone">0x0119   </td><td class="markdownTableBodyNone">Sony CMT-SE9   </td><td class="markdownTableBodyNone">NetMD    </td></tr>
+<tr class="markdownTableRowOdd">
+<td class="markdownTableBodyNone"></td><td class="markdownTableBodyNone">0x054c   </td><td class="markdownTableBodyNone">0x013f   </td><td class="markdownTableBodyNone">Sony MDS-S500   </td><td class="markdownTableBodyNone">NetMD    </td></tr>
+<tr class="markdownTableRowEven">
+<td class="markdownTableBodyNone"></td><td class="markdownTableBodyNone">0x054c   </td><td class="markdownTableBodyNone">0x0148   </td><td class="markdownTableBodyNone">Sony MDS-A1   </td><td class="markdownTableBodyNone">NetMD    </td></tr>
+<tr class="markdownTableRowOdd">
+<td class="markdownTableBodyNone"><b>Aiwa</b>   </td><td class="markdownTableBodyNone">0x054c   </td><td class="markdownTableBodyNone">0x014c   </td><td class="markdownTableBodyNone">Aiwa AM-NX9   </td><td class="markdownTableBodyNone">NetMD    </td></tr>
+<tr class="markdownTableRowEven">
+<td class="markdownTableBodyNone"><b>Sony</b>   </td><td class="markdownTableBodyNone">0x054c   </td><td class="markdownTableBodyNone">0x017e   </td><td class="markdownTableBodyNone">Sony MZ-NH1   </td><td class="markdownTableBodyNone">HiMD    </td></tr>
+<tr class="markdownTableRowOdd">
+<td class="markdownTableBodyNone"></td><td class="markdownTableBodyNone">0x054c   </td><td class="markdownTableBodyNone">0x0180   </td><td class="markdownTableBodyNone">Sony MZ-NH3D   </td><td class="markdownTableBodyNone">HiMD    </td></tr>
+<tr class="markdownTableRowEven">
+<td class="markdownTableBodyNone"></td><td class="markdownTableBodyNone">0x054c   </td><td class="markdownTableBodyNone">0x0182   </td><td class="markdownTableBodyNone">Sony MZ-NH900   </td><td class="markdownTableBodyNone">HiMD    </td></tr>
+<tr class="markdownTableRowOdd">
+<td class="markdownTableBodyNone"></td><td class="markdownTableBodyNone">0x054c   </td><td class="markdownTableBodyNone">0x0184   </td><td class="markdownTableBodyNone">Sony MZ-NH700/800   </td><td class="markdownTableBodyNone">HiMD    </td></tr>
+<tr class="markdownTableRowEven">
+<td class="markdownTableBodyNone"></td><td class="markdownTableBodyNone">0x054c   </td><td class="markdownTableBodyNone">0x0186   </td><td class="markdownTableBodyNone">Sony MZ-NH600   </td><td class="markdownTableBodyNone">HiMD    </td></tr>
+<tr class="markdownTableRowOdd">
+<td class="markdownTableBodyNone"></td><td class="markdownTableBodyNone">0x054c   </td><td class="markdownTableBodyNone">0x0187   </td><td class="markdownTableBodyNone">Sony MZ-NH600D   </td><td class="markdownTableBodyNone">HiMD    </td></tr>
+<tr class="markdownTableRowEven">
+<td class="markdownTableBodyNone"></td><td class="markdownTableBodyNone">0x054c   </td><td class="markdownTableBodyNone">0x0188   </td><td class="markdownTableBodyNone">Sony MZ-N920   </td><td class="markdownTableBodyNone">NetMD    </td></tr>
+<tr class="markdownTableRowOdd">
+<td class="markdownTableBodyNone"></td><td class="markdownTableBodyNone">0x054c   </td><td class="markdownTableBodyNone">0x018a   </td><td class="markdownTableBodyNone">Sony LAM-3   </td><td class="markdownTableBodyNone">NetMD    </td></tr>
+<tr class="markdownTableRowEven">
+<td class="markdownTableBodyNone"></td><td class="markdownTableBodyNone">0x054c   </td><td class="markdownTableBodyNone">0x01e9   </td><td class="markdownTableBodyNone">Sony MZ-DH10P   </td><td class="markdownTableBodyNone">HiMD    </td></tr>
+<tr class="markdownTableRowOdd">
+<td class="markdownTableBodyNone"></td><td class="markdownTableBodyNone">0x054c   </td><td class="markdownTableBodyNone">0x0219   </td><td class="markdownTableBodyNone">Sony MZ-RH10   </td><td class="markdownTableBodyNone">HiMD    </td></tr>
+<tr class="markdownTableRowEven">
+<td class="markdownTableBodyNone"></td><td class="markdownTableBodyNone">0x054c   </td><td class="markdownTableBodyNone">0x021b   </td><td class="markdownTableBodyNone">Sony MZ-RH910   </td><td class="markdownTableBodyNone">HiMD    </td></tr>
+<tr class="markdownTableRowOdd">
+<td class="markdownTableBodyNone"></td><td class="markdownTableBodyNone">0x054c   </td><td class="markdownTableBodyNone">0x021d   </td><td class="markdownTableBodyNone">Sony CMT-AH10   </td><td class="markdownTableBodyNone">HiMD    </td></tr>
+<tr class="markdownTableRowEven">
+<td class="markdownTableBodyNone"></td><td class="markdownTableBodyNone">0x054c   </td><td class="markdownTableBodyNone">0x022c   </td><td class="markdownTableBodyNone">Sony CMT-AH10   </td><td class="markdownTableBodyNone">HiMD    </td></tr>
+<tr class="markdownTableRowOdd">
+<td class="markdownTableBodyNone"></td><td class="markdownTableBodyNone">0x054c   </td><td class="markdownTableBodyNone">0x023c   </td><td class="markdownTableBodyNone">Sony DS-HMD1   </td><td class="markdownTableBodyNone">HiMD    </td></tr>
+<tr class="markdownTableRowEven">
+<td class="markdownTableBodyNone"></td><td class="markdownTableBodyNone">0x054c   </td><td class="markdownTableBodyNone">0x0286   </td><td class="markdownTableBodyNone">Sony MZ-RH1   </td><td class="markdownTableBodyNone">HiMD    </td></tr>
+<tr class="markdownTableRowOdd">
+<td class="markdownTableBodyNone"><b>Sharp</b>   </td><td class="markdownTableBodyNone">0x04dd   </td><td class="markdownTableBodyNone">0x7202   </td><td class="markdownTableBodyNone">Sharp IM-MT880H/MT899H   </td><td class="markdownTableBodyNone">NetMD    </td></tr>
+<tr class="markdownTableRowEven">
+<td class="markdownTableBodyNone"></td><td class="markdownTableBodyNone">0x04dd   </td><td class="markdownTableBodyNone">0x9013   </td><td class="markdownTableBodyNone">Sharp IM-DR400/DR410   </td><td class="markdownTableBodyNone">NetMD    </td></tr>
+<tr class="markdownTableRowOdd">
+<td class="markdownTableBodyNone"></td><td class="markdownTableBodyNone">0x04dd   </td><td class="markdownTableBodyNone">0x9014   </td><td class="markdownTableBodyNone">Sharp IM-DR80/DR420/DR580   </td><td class="markdownTableBodyNone">NetMD    </td></tr>
+<tr class="markdownTableRowEven">
+<td class="markdownTableBodyNone"><b>Panasonic</b>   </td><td class="markdownTableBodyNone">0x04da   </td><td class="markdownTableBodyNone">0x23b3   </td><td class="markdownTableBodyNone">Panasonic SJ-MR250   </td><td class="markdownTableBodyNone">NetMD    </td></tr>
+<tr class="markdownTableRowOdd">
+<td class="markdownTableBodyNone"></td><td class="markdownTableBodyNone">0x04da   </td><td class="markdownTableBodyNone">0x23b6   </td><td class="markdownTableBodyNone">Panasonic SJ-MR270   </td><td class="markdownTableBodyNone">NetMD    </td></tr>
+<tr class="markdownTableRowEven">
+<td class="markdownTableBodyNone"><b>Kenwood</b>   </td><td class="markdownTableBodyNone">0x0b28   </td><td class="markdownTableBodyNone">0x1004   </td><td class="markdownTableBodyNone">Kenwood MDX-J9   </td><td class="markdownTableBodyNone">NetMD   </td></tr>
+</table>
+<h2><a class="anchor" id="autotoc_md2"></a>
 Namespace</h2>
 <p>This API uses the namespace <em>netmd</em>.</p>
-<h2><a class="anchor" id="autotoc_md2"></a>
+<h2><a class="anchor" id="autotoc_md3"></a>
 Usage</h2>
 <ul>
 <li>include the header file into your project: <div class="fragment"><div class="line"><span class="preprocessor">#include &quot;path/to/netmd++.h&quot;</span></div>
 </div><!-- fragment --></li>
 <li>create an instance of the API: <div class="fragment"><div class="line"><a class="code" href="classnetmd_1_1_c_net_md_api.html">netmd::netmd_pp</a>* pNetMd = <span class="keyword">new</span> <a class="code" href="namespacenetmd.html#a8bc42e14d176e366d3d70a1e43963856">netmd::netmd_pp</a>();</div>
-<div class="ttc" id="aclassnetmd_1_1_c_net_md_api_html"><div class="ttname"><a href="classnetmd_1_1_c_net_md_api.html">netmd::CNetMdApi</a></div><div class="ttdoc">This class describes a C++ NetMD access library.</div><div class="ttdef"><b>Definition:</b> netmd++.h:356</div></div>
-<div class="ttc" id="anamespacenetmd_html_a8bc42e14d176e366d3d70a1e43963856"><div class="ttname"><a href="namespacenetmd.html#a8bc42e14d176e366d3d70a1e43963856">netmd::netmd_pp</a></div><div class="ttdeci">CNetMdApi netmd_pp</div><div class="ttdoc">use netmd_pp instead of CNetMdApi</div><div class="ttdef"><b>Definition:</b> netmd++.h:350</div></div>
+<div class="ttc" id="aclassnetmd_1_1_c_net_md_api_html"><div class="ttname"><a href="classnetmd_1_1_c_net_md_api.html">netmd::CNetMdApi</a></div><div class="ttdoc">This class describes a C++ NetMD access library.</div><div class="ttdef"><b>Definition:</b> netmd++.h:409</div></div>
+<div class="ttc" id="anamespacenetmd_html_a8bc42e14d176e366d3d70a1e43963856"><div class="ttname"><a href="namespacenetmd.html#a8bc42e14d176e366d3d70a1e43963856">netmd::netmd_pp</a></div><div class="ttdeci">CNetMdApi netmd_pp</div><div class="ttdoc">use netmd_pp instead of CNetMdApi</div><div class="ttdef"><b>Definition:</b> netmd++.h:403</div></div>
 </div><!-- fragment --></li>
 <li>initialize the first found NetMD device: <div class="fragment"><div class="line"><span class="keywordflow">if</span> (pNetMd != <span class="keyword">nullptr</span>)</div>
 <div class="line">{</div>
@@ -111,9 +213,9 @@ Usage</h2>
 </div><!-- fragment --></li>
 <li>If you change or re-plug the device, simply run above code (initDevice()) again!</li>
 </ul>
-<h2><a class="anchor" id="autotoc_md3"></a>
+<h2><a class="anchor" id="autotoc_md4"></a>
 Examples</h2>
-<h3><a class="anchor" id="autotoc_md4"></a>
+<h3><a class="anchor" id="autotoc_md5"></a>
 Track transfer</h3>
 <p>Check for on-the-fly support and transfer a WAVE file to NetMD with on-the-fly encoding (LP2) or w/o encoding (SP).</p>
 <div class="fragment"><div class="line"><span class="preprocessor">#include &lt;<a class="code" href="netmd_09_09_8h.html">netmd++.h</a>&gt;</span></div>
@@ -137,11 +239,11 @@ Track transfer</h3>
 <div class="line">}</div>
 <div class="ttc" id="aclassnetmd_1_1_c_net_md_api_html_a587bfc4a87f306cc78623af0aaa856a0"><div class="ttname"><a href="classnetmd_1_1_c_net_md_api.html#a587bfc4a87f306cc78623af0aaa856a0">netmd::CNetMdApi::otfEncodeSupported</a></div><div class="ttdeci">bool otfEncodeSupported()</div><div class="ttdoc">is on the fly encoding supported by device</div></div>
 <div class="ttc" id="aclassnetmd_1_1_c_net_md_api_html_aed63b256e38db624e595a5057530858f"><div class="ttname"><a href="classnetmd_1_1_c_net_md_api.html#aed63b256e38db624e595a5057530858f">netmd::CNetMdApi::sendAudioFile</a></div><div class="ttdeci">int sendAudioFile(const std::string &amp;filename, const std::string &amp;title, DiskFormat otf)</div><div class="ttdoc">Sends an audio track.</div></div>
-<div class="ttc" id="anamespacenetmd_html_a7f6ad6ca6ff713af5d26f8ffc816421bac6236f63c09822b1900f9a14a63233e0"><div class="ttname"><a href="namespacenetmd.html#a7f6ad6ca6ff713af5d26f8ffc816421bac6236f63c09822b1900f9a14a63233e0">netmd::NETMDERR_NO_ERROR</a></div><div class="ttdeci">@ NETMDERR_NO_ERROR</div><div class="ttdoc">success</div><div class="ttdef"><b>Definition:</b> netmd++.h:197</div></div>
-<div class="ttc" id="anamespacenetmd_html_abe72764632e8fa864f691a2a752c6b03ab9402b9cf1ec53af5362b80c15af09ec"><div class="ttname"><a href="namespacenetmd.html#abe72764632e8fa864f691a2a752c6b03ab9402b9cf1ec53af5362b80c15af09ec">netmd::NETMD_DISKFORMAT_LP2</a></div><div class="ttdeci">@ NETMD_DISKFORMAT_LP2</div><div class="ttdoc">LP2.</div><div class="ttdef"><b>Definition:</b> netmd++.h:188</div></div>
-<div class="ttc" id="anamespacenetmd_html_abe72764632e8fa864f691a2a752c6b03af43db39c04b1593fa9ec35e6c33919d0"><div class="ttname"><a href="namespacenetmd.html#abe72764632e8fa864f691a2a752c6b03af43db39c04b1593fa9ec35e6c33919d0">netmd::NO_ONTHEFLY_CONVERSION</a></div><div class="ttdeci">@ NO_ONTHEFLY_CONVERSION</div><div class="ttdoc">dont do on-the-fly encoding</div><div class="ttdef"><b>Definition:</b> netmd++.h:191</div></div>
+<div class="ttc" id="anamespacenetmd_html_a7f6ad6ca6ff713af5d26f8ffc816421bac6236f63c09822b1900f9a14a63233e0"><div class="ttname"><a href="namespacenetmd.html#a7f6ad6ca6ff713af5d26f8ffc816421bac6236f63c09822b1900f9a14a63233e0">netmd::NETMDERR_NO_ERROR</a></div><div class="ttdeci">@ NETMDERR_NO_ERROR</div><div class="ttdoc">success</div><div class="ttdef"><b>Definition:</b> netmd++.h:250</div></div>
+<div class="ttc" id="anamespacenetmd_html_abe72764632e8fa864f691a2a752c6b03ab9402b9cf1ec53af5362b80c15af09ec"><div class="ttname"><a href="namespacenetmd.html#abe72764632e8fa864f691a2a752c6b03ab9402b9cf1ec53af5362b80c15af09ec">netmd::NETMD_DISKFORMAT_LP2</a></div><div class="ttdeci">@ NETMD_DISKFORMAT_LP2</div><div class="ttdoc">LP2.</div><div class="ttdef"><b>Definition:</b> netmd++.h:241</div></div>
+<div class="ttc" id="anamespacenetmd_html_abe72764632e8fa864f691a2a752c6b03af43db39c04b1593fa9ec35e6c33919d0"><div class="ttname"><a href="namespacenetmd.html#abe72764632e8fa864f691a2a752c6b03af43db39c04b1593fa9ec35e6c33919d0">netmd::NO_ONTHEFLY_CONVERSION</a></div><div class="ttdeci">@ NO_ONTHEFLY_CONVERSION</div><div class="ttdoc">dont do on-the-fly encoding</div><div class="ttdef"><b>Definition:</b> netmd++.h:244</div></div>
 <div class="ttc" id="anetmd_09_09_8h_html"><div class="ttname"><a href="netmd_09_09_8h.html">netmd++.h</a></div></div>
-</div><!-- fragment --><h3><a class="anchor" id="autotoc_md5"></a>
+</div><!-- fragment --><h3><a class="anchor" id="autotoc_md6"></a>
 Erase disc and set new title</h3>
 <div class="fragment"><div class="line"><span class="preprocessor">#include &lt;<a class="code" href="netmd_09_09_8h.html">netmd++.h</a>&gt;</span></div>
 <div class="line"> </div>
@@ -159,10 +261,10 @@ Erase disc and set new title</h3>
 <div class="line">}</div>
 <div class="ttc" id="aclassnetmd_1_1_c_net_md_api_html_a3219143e25a7b4826761e0a3f33f2e1b"><div class="ttname"><a href="classnetmd_1_1_c_net_md_api.html#a3219143e25a7b4826761e0a3f33f2e1b">netmd::CNetMdApi::eraseDisc</a></div><div class="ttdeci">int eraseDisc()</div><div class="ttdoc">erase MD</div></div>
 <div class="ttc" id="aclassnetmd_1_1_c_net_md_api_html_a67eab4676b69dd8034f62e1b4af24267"><div class="ttname"><a href="classnetmd_1_1_c_net_md_api.html#a67eab4676b69dd8034f62e1b4af24267">netmd::CNetMdApi::setDiscTitle</a></div><div class="ttdeci">int setDiscTitle(const std::string &amp;title)</div><div class="ttdoc">Sets the disc title.</div></div>
-</div><!-- fragment --><h1><a class="anchor" id="autotoc_md6"></a>
+</div><!-- fragment --><h1><a class="anchor" id="autotoc_md7"></a>
 MDs UTOC</h1>
 <p>For the UTOC structure please have a look at this great site on <a href="https://www.minidisc.org/md_toc.html">minidisc.org</a></p>
-<h2><a class="anchor" id="autotoc_md7"></a>
+<h2><a class="anchor" id="autotoc_md8"></a>
 Addressing in UTOC</h2>
 <p>The disc start and end addresses each consist of a cluster, sector, and sound group, all packed into 3 bytes. The smallest unit is a sound frame, representing 11.6ms of mono audio (212 bytes), while the smallest <b>addressable</b> unit is the sound group, containing 2 sound frames. A sector contains 11 sound frames / 5.5 sound groups. Addressing must be done through sound group. Sound groups are numbered 0 ... 10. Sound groups 0 ... 5 are part of the even sector, while sound groups 5 ... 10 are part of the odd sector. Group 5 overlaps both even and odd sectors and can therefore be addressed on both sectors. </p><pre>
 +-------------------------------------------+
@@ -173,7 +275,7 @@ Addressing in UTOC</h2>
 | 0 | 1 | 2 | 3 | 4 | 5 | 6 | 7 | 8 | 9 | 10| &lt;- sound groups
 +---+---+---+---+---+---+---+---+---+---+---+
 </pre><p> A cluster is an aggregate of 32 audio sectors (176 sound groups) representing 2.04 seconds of stereo audio; it is the smallest unit of data that can be written to a MiniDisc. In the 3 byte packing, there are 14 bits allocated to the cluster number, 6 bits to the sector, and 4 bits to the soundgroup; this arrangement allows addressing of up to 9.2 hours of stereo audio.</p>
-<h2><a class="anchor" id="autotoc_md8"></a>
+<h2><a class="anchor" id="autotoc_md9"></a>
 Modifying the UTOC</h2>
 <ol type="1">
 <li>download the UTOC sectors 0 ... 2 from NetMD Device: <div class="fragment"><div class="line">pNetMd-&gt;<a class="code" href="classnetmd_1_1_c_net_md_api.html#af7ea90ebc6ac259f539d57448acf000f">prepareTOCManip</a>();</div>
@@ -185,8 +287,8 @@ Modifying the UTOC</h2>
 <div class="line">}</div>
 <div class="ttc" id="aclassnetmd_1_1_c_net_md_api_html_ae92c4f4fc9243585c46ec03b7402318d"><div class="ttname"><a href="classnetmd_1_1_c_net_md_api.html#ae92c4f4fc9243585c46ec03b7402318d">netmd::CNetMdApi::readUTOCSector</a></div><div class="ttdeci">NetMDByteVector readUTOCSector(UTOCSector s)</div><div class="ttdoc">Reads an utoc sector.</div></div>
 <div class="ttc" id="aclassnetmd_1_1_c_net_md_api_html_af7ea90ebc6ac259f539d57448acf000f"><div class="ttname"><a href="classnetmd_1_1_c_net_md_api.html#af7ea90ebc6ac259f539d57448acf000f">netmd::CNetMdApi::prepareTOCManip</a></div><div class="ttdeci">int prepareTOCManip()</div><div class="ttdoc">prepare TOC manipulation</div></div>
-<div class="ttc" id="anamespacenetmd_html_ac0ff9cdf9dc7784c232f4fabeadc13d0"><div class="ttname"><a href="namespacenetmd.html#ac0ff9cdf9dc7784c232f4fabeadc13d0">netmd::UTOCSector</a></div><div class="ttdeci">UTOCSector</div><div class="ttdoc">TOC sector names.</div><div class="ttdef"><b>Definition:</b> netmd++.h:247</div></div>
-<div class="ttc" id="anamespacenetmd_html_acb561428b15aeb16c85e854ccc2c2938"><div class="ttname"><a href="namespacenetmd.html#acb561428b15aeb16c85e854ccc2c2938">netmd::NetMDByteVector</a></div><div class="ttdeci">std::vector&lt; uint8_t &gt; NetMDByteVector</div><div class="ttdoc">byte vector</div><div class="ttdef"><b>Definition:</b> netmd++.h:295</div></div>
+<div class="ttc" id="anamespacenetmd_html_ac0ff9cdf9dc7784c232f4fabeadc13d0"><div class="ttname"><a href="namespacenetmd.html#ac0ff9cdf9dc7784c232f4fabeadc13d0">netmd::UTOCSector</a></div><div class="ttdeci">UTOCSector</div><div class="ttdoc">TOC sector names.</div><div class="ttdef"><b>Definition:</b> netmd++.h:300</div></div>
+<div class="ttc" id="anamespacenetmd_html_acb561428b15aeb16c85e854ccc2c2938"><div class="ttname"><a href="namespacenetmd.html#acb561428b15aeb16c85e854ccc2c2938">netmd::NetMDByteVector</a></div><div class="ttdeci">std::vector&lt; uint8_t &gt; NetMDByteVector</div><div class="ttdoc">byte vector</div><div class="ttdef"><b>Definition:</b> netmd++.h:348</div></div>
 </div><!-- fragment --></li>
 <li>create toc class instance and add some track data <div class="fragment"><div class="line">uint8_t *pData = <span class="keyword">new</span> uint8_t[tocData.size()];</div>
 <div class="line"><span class="keywordflow">for</span>(<span class="keywordtype">size_t</span> i = 0; i &lt; tocData.size(); i++)</div>
@@ -196,7 +298,7 @@ Modifying the UTOC</h2>
 <div class="line"><a class="code" href="classnetmd_1_1_c_net_md_t_o_c.html">netmd::CNetMdTOC</a> utoc(8, 459&#39;000, pData);</div>
 <div class="line">utoc.addTrack(1, 60&#39;000, <span class="stringliteral">&quot;Funky Track One Minute Part #1&quot;</span>);</div>
 <div class="line">utoc.addTrack(2, 60&#39;000, <span class="stringliteral">&quot;Funky Track One Minute Part #2&quot;</span>);</div>
-<div class="ttc" id="aclassnetmd_1_1_c_net_md_t_o_c_html"><div class="ttname"><a href="classnetmd_1_1_c_net_md_t_o_c.html">netmd::CNetMdTOC</a></div><div class="ttdoc">This class describes a net md TOC.</div><div class="ttdef"><b>Definition:</b> netmd++.h:672</div></div>
+<div class="ttc" id="aclassnetmd_1_1_c_net_md_t_o_c_html"><div class="ttname"><a href="classnetmd_1_1_c_net_md_t_o_c.html">netmd::CNetMdTOC</a></div><div class="ttdoc">This class describes a net md TOC.</div><div class="ttdef"><b>Definition:</b> netmd++.h:725</div></div>
 </div><!-- fragment --></li>
 <li>upload changed TOC data to NetMD <div class="fragment"><div class="line"><span class="keywordtype">bool</span> doit = <span class="keyword">true</span>;</div>
 <div class="line"><span class="keywordflow">for</span> (<span class="keywordtype">int</span> x = 0; x &lt; 3; x++)</div>

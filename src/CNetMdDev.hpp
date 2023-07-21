@@ -86,14 +86,13 @@ class CNetMdDev
     friend CNetMdPatch;
     friend CNetMdSecure;
 
-    /// 1000ms
+    /// timeouts / tries
     static constexpr unsigned int NETMD_POLL_TIMEOUT = 1000;
     static constexpr unsigned int NETMD_SEND_TIMEOUT = 1000;
     static constexpr unsigned int NETMD_RECV_TIMEOUT = 3000;
     static constexpr unsigned int NETMD_RECV_TRIES   =  100;
     static constexpr unsigned int NETMD_SYNC_TRIES   =    5;
-    static constexpr uint8_t    NETMD_STATUS_CONTROL = 0x00;
-
+    
     /// reply retry interval
     static constexpr unsigned int NETMD_REPLY_SZ_INTERVAL_USEC     =    10'000;
     static constexpr unsigned int NETMD_MAX_REPLY_SZ_INTERVAL_USEC = 1'000'000;

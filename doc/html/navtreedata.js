@@ -26,16 +26,17 @@ var NAVTREE =
 [
   [ "netmd++", "index.html", [
     [ "netmd++", "index.html#autotoc_md0", [
-      [ "Namespace", "index.html#autotoc_md1", null ],
-      [ "Usage", "index.html#autotoc_md2", null ],
-      [ "Examples", "index.html#autotoc_md3", [
-        [ "Track transfer", "index.html#autotoc_md4", null ],
-        [ "Erase disc and set new title", "index.html#autotoc_md5", null ]
+      [ "Supported Devices", "index.html#autotoc_md1", null ],
+      [ "Namespace", "index.html#autotoc_md2", null ],
+      [ "Usage", "index.html#autotoc_md3", null ],
+      [ "Examples", "index.html#autotoc_md4", [
+        [ "Track transfer", "index.html#autotoc_md5", null ],
+        [ "Erase disc and set new title", "index.html#autotoc_md6", null ]
       ] ]
     ] ],
-    [ "MDs UTOC", "index.html#autotoc_md6", [
-      [ "Addressing in UTOC", "index.html#autotoc_md7", null ],
-      [ "Modifying the UTOC", "index.html#autotoc_md8", null ]
+    [ "MDs UTOC", "index.html#autotoc_md7", [
+      [ "Addressing in UTOC", "index.html#autotoc_md8", null ],
+      [ "Modifying the UTOC", "index.html#autotoc_md9", null ]
     ] ],
     [ "Namespaces", "namespaces.html", [
       [ "Namespace List", "namespaces.html", "namespaces_dup" ],

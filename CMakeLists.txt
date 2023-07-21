@@ -1,5 +1,5 @@
 cmake_minimum_required(VERSION 3.9)
-project("netmd++" VERSION 1.0.2 DESCRIPTION "NetMD C++ library")
+project("netmd++" VERSION 1.0.3 DESCRIPTION "NetMD C++ library")
 
 if (NOT CMAKE_BUILD_TYPE)
     set(CMAKE_BUILD_TYPE Release)
