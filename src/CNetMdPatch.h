@@ -82,6 +82,7 @@ class CNetMdPatch
         PID_TRACK_TYPE,
         PID_SAFETY,
         PID_USB_EXE,
+        PID_PCM_TO_MONO, ///< PCM upload, convert to mono on device
     };
 
     /// exploit ID
@@ -475,6 +476,19 @@ class CNetMdPatch
     //! @brief      undo the SP upload patch
     //--------------------------------------------------------------------------
     void undoSpPatch();
+
+    //--------------------------------------------------------------------------
+    //! @brief      apply the PCM to mono patch
+    //!
+    //! @return     NetMdErr
+    //! @see        NetMdErr
+    //--------------------------------------------------------------------------
+    int applyPCM2MonoPatch();
+
+    //--------------------------------------------------------------------------
+    //! @brief      undo the PCM to mono patch
+    //--------------------------------------------------------------------------
+    void undoPCM2MonoPatch();
 
     //--------------------------------------------------------------------------
     //! @brief      check if device supports SP upload

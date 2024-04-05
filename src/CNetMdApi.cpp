@@ -957,4 +957,33 @@ bool CNetMdApi::tocManipSupported()
     return mpSecure->tocManipSupported();
 }
 
+//--------------------------------------------------------------------------
+//! @brief      is PCM to mono supported?
+//!
+//! @return     true if supported, false if not
+//--------------------------------------------------------------------------
+bool CNetMdApi::pcm2MonoSupported()
+{
+    // same devices support PCM to mono
+    return mpSecure->tocManipSupported();
+}
+
+//--------------------------------------------------------------------------
+//! @brief      enable PCM to mono patch
+//!
+//! @return     @ref NetMdErr
+//--------------------------------------------------------------------------
+int CNetMdApi::enablePcm2Mono()
+{
+    return mpSecure->enablePcm2Mono();
+}
+
+//--------------------------------------------------------------------------
+//! @brief      disable PCM to mono patch
+//--------------------------------------------------------------------------
+void CNetMdApi::disablePcm2Mono()
+{
+    mpSecure->disablePcm2Mono();
+}
+
 } // ~namespace

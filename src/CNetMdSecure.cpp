@@ -1664,4 +1664,22 @@ bool CNetMdSecure::tocManipSupported()
     return mPatch.tocManipSupported();
 }
 
+//--------------------------------------------------------------------------
+//! @brief      enable PCM to mono patch
+//!
+//! @return     @ref NetMdErr
+//--------------------------------------------------------------------------
+int CNetMdSecure::enablePcm2Mono()
+{
+    return mPatch.applyPCM2MonoPatch();
+}
+
+//--------------------------------------------------------------------------
+//! @brief      disable PCM to mono patch
+//--------------------------------------------------------------------------
+void CNetMdSecure::disablePcm2Mono()
+{
+    mPatch.undoPCM2MonoPatch();
+}
+
 } // ~namespace

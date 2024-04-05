@@ -146,6 +146,23 @@ const CNetMdPatch::PatchAdrrTab CNetMdPatch::smPatchAddrTab =
             {SDI_S1500, 0x0000e538},
             {SDI_S1600, 0x0000e69c}
         }
+    },
+    {
+        PID_PCM_TO_MONO,
+        {
+            {SDI_S1600, 0x00013d78},
+            {SDI_S1500, 0x00013b8c},
+            {SDI_S1400, 0x00013a84},
+            {SDI_S1300, 0x00012c34},
+            {SDI_S1200, 0x000129c0},
+            {SDI_S1100, 0x00012910},
+            {SDI_S1000, 0x00013e6c},
+            {SDI_R1000, 0x000576e8},
+            {SDI_R1100, 0x00057f8c},
+            {SDI_R1200, 0x00058cf8},
+            {SDI_R1300, 0x0005904c},
+            {SDI_R1400, 0x000590ec}
+        }
     }
 };
 
@@ -193,6 +210,17 @@ const CNetMdPatch::PatchPayloadTab CNetMdPatch::smPatchPayloadTab =
         {
             {SDI_S1000 | SDI_S1100 | SDI_S1200 | SDI_S1300 | SDI_S1400 | SDI_S1500 | SDI_S1600, {0x13,0x48,0x00,0x47}},
             {SDI_R1000 | SDI_R1100 | SDI_R1200 | SDI_R1300 | SDI_R1400                        , {0x1a,0x48,0x00,0x47}},
+        }
+    },
+    {
+        PID_PCM_TO_MONO,
+        {
+            {SDI_S1000 | SDI_S1600 | SDI_S1500                        , {0x00,0x46,0x2a,0xf0}},
+            {SDI_S1400                                                , {0x00,0x46,0x29,0xf0}},
+            {SDI_S1300                                                , {0x00,0x46,0x28,0xf0}},
+            {SDI_S1200                                                , {0x00,0x46,0x27,0xf0}},
+            {SDI_S1100                                                , {0x28,0x1c,0x00,0x46}},
+            {SDI_R1000 | SDI_R1100 | SDI_R1200 | SDI_R1300 | SDI_R1400, {0x03,0x29,0x0b,0xe0}},
         }
     }
 };
@@ -330,6 +358,7 @@ std::ostream& operator<<(std::ostream& os, const CNetMdPatch::PatchId& pid)
         case CNetMdPatch::PatchId::PID_TRACK_TYPE : os << "PID_TRACK_TYPE" ; break;
         case CNetMdPatch::PatchId::PID_SAFETY     : os << "PID_SAFETY"     ; break;
         case CNetMdPatch::PatchId::PID_USB_EXE    : os << "PID_USB_EXE"    ; break;
+        case CNetMdPatch::PatchId::PID_PCM_TO_MONO: os << "PID_PCM_TO_MONO"; break;
         default                                   : os << "n/a"            ; break;
     }
     return os;
@@ -1775,6 +1804,96 @@ void CNetMdPatch::undoSpPatch()
 
     mLOG(DEBUG) << "=== Undo track type patch ===";
     static_cast<void>(unpatch(PID_TRACK_TYPE));
+}
+
+//--------------------------------------------------------------------------
+//! @brief      apply the PCM to mono patch
+//!
+//! @return     NetMdErr
+//! @see        NetMdErr
+//--------------------------------------------------------------------------
+int CNetMdPatch::applyPCM2MonoPatch()
+{
+    mLOG(DEBUG);
+    if (!mNetMd.isMaybePatchable())
+    {
+        return NETMDERR_NOT_SUPPORTED;
+    }
+
+    PatchId         patch0 = PID_UNUSED;
+    uint32_t        addr   = 0;
+    NetMDByteVector data;
+    SonyDevInfo     devcode;
+
+    try
+    {
+        mLOG(DEBUG) << "Enable factory ...";
+        if (enableFactory() != NETMDERR_NO_ERROR)
+        {
+            mNetMdThrow(NETMDERR_USB, "Can't enable factory mode!");
+        }
+
+        mLOG(DEBUG) << "Apply safety patch ...";
+        if (safetyPatch() != NETMDERR_NO_ERROR)
+        {
+            mNetMdThrow(NETMDERR_USB, "Can't enable safety patch!");
+        }
+
+        mLOG(DEBUG) << "Try to get device code ...";
+        devcode = devCodeEx();
+
+        mLOG(DEBUG) << "Check if patch is already active ...";
+        if (checkPatch(PID_PCM_TO_MONO, devcode) == 1)
+        {
+            mNetMdThrow(NETMDERR_NO_ERROR, "PCM to Mono Patch already active!");
+        }
+
+        PatchComplect pc;
+
+        mLOG(DEBUG) << "=== Apply PCM to mono patch ===";
+        if (fillPatchComplect(PID_PCM_TO_MONO, devcode, pc) != NETMDERR_NO_ERROR)
+        {
+            mNetMdThrow(NETMDERR_NOT_SUPPORTED, "Can't find patch data for PCM to mono patch!");
+        }
+        if (patch(pc) != NETMDERR_NO_ERROR)
+        {
+            mNetMdThrow(NETMDERR_USB, "Can't apply PCM to mono patch");
+        }
+    }
+    catch(const ThrownData& e)
+    {
+        if (e.mErr == NETMDERR_NO_ERROR)
+        {
+            LOG(DEBUG) << e.mErrDescr;
+        }
+        else
+        {
+            LOG(CRITICAL) << e.mErrDescr;
+        }
+        return e.mErr;
+    }
+    catch(...)
+    {
+        mLOG(CRITICAL) << "Unknown error while patching NetMD Device!";
+        return NETMDERR_OTHER;
+    }
+
+    return NETMDERR_NO_ERROR;
+}
+
+//--------------------------------------------------------------------------
+//! @brief      undo the PCM to mono patch
+//--------------------------------------------------------------------------
+void CNetMdPatch::undoPCM2MonoPatch()
+{
+    mLOG(DEBUG);
+    if (!mNetMd.isMaybePatchable())
+    {
+        return;
+    }
+
+    mLOG(DEBUG) << "=== Undo PCM to mono patch ===";
+    static_cast<void>(unpatch(PID_PCM_TO_MONO));
 }
 
 //--------------------------------------------------------------------------
