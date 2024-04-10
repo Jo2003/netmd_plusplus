@@ -175,14 +175,17 @@ int main (int argc, char* argv[])
                     std::cout << "TOC track #" << j << ": " << utoc.trackInfo(j);
                 }
 
-                utoc.addTrack(1, 60'000, "Funky Track One Minute Part #1");
-                utoc.addTrack(2, 60'000, "Funky Track One Minute Part #2");
-                utoc.addTrack(3, 60'000, "Funky Track One Minute Part #3");
-                utoc.addTrack(4, 60'000, "Funky Track One Minute Part #4");
-                utoc.addTrack(5, 60'000, "Funky Track One Minute Part #5");
-                utoc.addTrack(6, 60'000, "Funky Track One Minute Part #6");
-                utoc.addTrack(7, 60'000, "Funky Track One Minute Part #7");
-                utoc.addTrack(8, 39'000, "Funky Track Less Than One Minute Part #8");
+                std::time_t now = 0;
+                time(&now);
+
+                utoc.addTrack(1, 60'000, "Funky Track One Minute Part #1", now);
+                utoc.addTrack(2, 60'000, "Funky Track One Minute Part #2", now);
+                utoc.addTrack(3, 60'000, "Funky Track One Minute Part #3", now);
+                utoc.addTrack(4, 60'000, "Funky Track One Minute Part #4", now);
+                utoc.addTrack(5, 60'000, "Funky Track One Minute Part #5", now);
+                utoc.addTrack(6, 60'000, "Funky Track One Minute Part #6", now);
+                utoc.addTrack(7, 60'000, "Funky Track One Minute Part #7", now);
+                utoc.addTrack(8, 39'000, "Funky Track Less Than One Minute Part #8", now);
                 utoc.setDiscTitle("8 Funky tracks on gapless NetMD");
                 
                 /*

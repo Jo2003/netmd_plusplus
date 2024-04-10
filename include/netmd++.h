@@ -199,9 +199,13 @@ for(size_t i = 0; i < tocData.size(); i++)
 {
     pData[i] = toc.at(i);
 }
+
+time_t now = 0;
+time(&now);
+
 netmd::CNetMdTOC utoc(8, 459'000, pData);
-utoc.addTrack(1, 60'000, "Funky Track One Minute Part #1");
-utoc.addTrack(2, 60'000, "Funky Track One Minute Part #2");
+utoc.addTrack(1, 60'000, "Funky Track One Minute Part #1", now);
+utoc.addTrack(2, 60'000, "Funky Track One Minute Part #2", now);
 ~~~
  3. upload changed TOC data to NetMD
 ~~~
@@ -231,6 +235,7 @@ delete [] pData;
 #include <cstdint>
 #include <sstream>
 #include <vector>
+#include <ctime>
 
 namespace netmd {
 
@@ -787,10 +792,11 @@ public:
     //! @param[in]  no        track number (starting with 1)
     //! @param[in]  lengthMs  The length in milliseconds
     //! @param[in]  title     The track title
+    //! @param[in]  tstamp    The time stamp
     //!
     //! @return     0 -> ok; -1 -> error
     //--------------------------------------------------------------------------
-    int addTrack(uint8_t no, uint32_t lengthMs, const std::string& title);
+    int addTrack(uint8_t no, uint32_t lengthMs, const std::string& title, const std::time_t& tstamp);
 
     //--------------------------------------------------------------------------
     //! @brief      Sets the disc title.

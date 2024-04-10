@@ -47,6 +47,7 @@ We virtualy split the tracks and give them titles.
 #include <sstream>
 #include <iomanip>
 #include <vector>
+#include <ctime>
 #include "md_toc.h"
 
 namespace netmd {
@@ -105,10 +106,11 @@ public:
     //! @param[in]  no        track number (starting with 1)
     //! @param[in]  lengthMs  The length milliseconds
     //! @param[in]  title     The title
+    //! @param[in]  tstamp    The time stamp
     //!
     //! @return     0 -> ok; -1 -> error
     //--------------------------------------------------------------------------
-    int addTrack(uint8_t no, uint32_t lengthMs, const std::string& title);
+    int addTrack(uint8_t no, uint32_t lengthMs, const std::string& title, const std::time_t& tstamp);
 
     //--------------------------------------------------------------------------
     //! @brief      Sets the disc title.
@@ -173,11 +175,12 @@ protected:
     //--------------------------------------------------------------------------
     //! @brief      Sets the track time stamp.
     //!
-    //! @param[in]  no    The new value
+    //! @param[in]  no     The track number
+    //! @param[in]  tstamp The time stamp
     //!
     //! @return     0
     //--------------------------------------------------------------------------
-    int setTrackTStamp(int no);
+    int setTrackTStamp(int no, const std::time_t& tstamp);
 
     //--------------------------------------------------------------------------
     //! @brief      get next free title cell

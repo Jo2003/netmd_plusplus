@@ -108,12 +108,13 @@ void CNetMdTOC::import(int trackCount, uint32_t lenInMs, uint8_t* data)
 //! **Breaking the order will break the TOC!**
 //!
 //! @param[in]  no        track number (starting with 1)
-//! @param[in]  lengthMs  The length milliseconds
-//! @param[in]  title     The title
+//! @param[in]  lengthMs  The length in milliseconds
+//! @param[in]  title     The track title
+//! @param[in]  tstamp    The time stamp
 //!
 //! @return     0 -> ok; -1 -> error
 //--------------------------------------------------------------------------
-int CNetMdTOC::addTrack(uint8_t no, uint32_t lengthMs, const std::string& title)
+int CNetMdTOC::addTrack(uint8_t no, uint32_t lengthMs, const std::string& title, const std::time_t& tstamp)
 {
     if (mpToc == nullptr)
     {
@@ -153,7 +154,7 @@ int CNetMdTOC::addTrack(uint8_t no, uint32_t lengthMs, const std::string& title)
     }
 
     setTrackTitle(currTrack, title);
-    setTrackTStamp(currTrack);
+    setTrackTStamp(currTrack, tstamp);
 
     mpToc->mTracks.free_track_slot = nextFreeTrackFragment();
 
@@ -211,23 +212,29 @@ int CNetMdTOC::setTrackTitle(uint8_t no, const std::string& title)
 //--------------------------------------------------------------------------
 //! @brief      Sets the track time stamp.
 //!
-//! @param[in]  no    The new value
+//! @param[in]  no     The track number
+//! @param[in]  tstamp The time stamp
 //!
 //! @return     0
 //--------------------------------------------------------------------------
-int CNetMdTOC::setTrackTStamp(int no)
+int CNetMdTOC::setTrackTStamp(int no, const std::time_t& tstamp)
 {
     mpToc->mTimes.timemap[no] = no;
 
-    mpToc->mTimes.timelist[no].d  = 0x03;
-    mpToc->mTimes.timelist[no].mo = 0x05;
-    mpToc->mTimes.timelist[no].y  = 0x23;
-    mpToc->mTimes.timelist[no].h  = 0x11;
-    mpToc->mTimes.timelist[no].m  = 0x11;
-    mpToc->mTimes.timelist[no].s  = 0x11;
+    auto* tm = gmtime(&tstamp);
+
+#define mDecToHexDate(x__) (((x__ / 10) << 4) | ((x__ % 10) & 0xf))
+
+    mpToc->mTimes.timelist[no].d  = mDecToHexDate(tm->tm_mday);         // 1 ... 31
+    mpToc->mTimes.timelist[no].mo = mDecToHexDate((tm->tm_mon + 1));    // 0 ... 11
+    mpToc->mTimes.timelist[no].y  = mDecToHexDate((tm->tm_year % 100)); // since 1900
+    mpToc->mTimes.timelist[no].h  = mDecToHexDate(tm->tm_hour);         // 0 ... 23
+    mpToc->mTimes.timelist[no].m  = mDecToHexDate(tm->tm_min);          // 0 ... 59
+    mpToc->mTimes.timelist[no].s  = mDecToHexDate(tm->tm_sec);          // 0 ... 59
     mpToc->mTimes.timelist[no].signature = toBigEndian(toc::SIGNATURE);
 
     mpToc->mTimes.free_time_slot = no + 1;
+#undef mDecToHexDate
     return 0;
 }
 
