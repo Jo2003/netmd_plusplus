@@ -33,6 +33,7 @@
 #include <algorithm>
 #include "CNetMdTOC.h"
 #include "log.h"
+#include "md_toc.h"
 #include "netmd_utils.h"
 
 namespace netmd {
@@ -111,10 +112,12 @@ void CNetMdTOC::import(int trackCount, uint32_t lenInMs, uint8_t* data)
 //! @param[in]  lengthMs  The length in milliseconds
 //! @param[in]  title     The track title
 //! @param[in]  tstamp    The time stamp
+//! @param[in]  mono      The mono marker
 //!
 //! @return     0 -> ok; -1 -> error
 //--------------------------------------------------------------------------
-int CNetMdTOC::addTrack(uint8_t no, uint32_t lengthMs, const std::string& title, const std::time_t& tstamp)
+int CNetMdTOC::addTrack(uint8_t no, uint32_t lengthMs, const std::string& title, 
+                        const std::time_t& tstamp, bool mono)
 {
     if (mpToc == nullptr)
     {
@@ -148,7 +151,7 @@ int CNetMdTOC::addTrack(uint8_t no, uint32_t lengthMs, const std::string& title,
         fragment.link  = 0;
         fragment.start = static_cast<toc::discaddr>(CSG(it->mStart));
         fragment.end   = static_cast<toc::discaddr>(CSG(it->mEnd));
-        fragment.mode  = toc::DEF_TRACK_MODE;
+        fragment.mode  = mono ? toc::MONO_TRACK_MODE : toc::DEF_TRACK_MODE;
         fragNo         = (it == (trFrags.end() - 1)) ? 0 : nextFreeTrackFragment();
         fragment.link  = fragNo;
     }

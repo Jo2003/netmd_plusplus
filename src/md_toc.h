@@ -52,6 +52,9 @@ namespace toc
     //! default track mode
     constexpr uint8_t DEF_TRACK_MODE = (F_STEREO | F_SP_MODE | F_SCMS00 | F_WRTENB);
 
+    //! mono track mode
+    constexpr uint8_t MONO_TRACK_MODE = (F_SP_MODE | F_SCMS00 | F_WRTENB);
+
     //! Cluster, Sector, Group; 3 bytes, packed as follows:
     //! c = cluster, s = sector, g = sound group.
     //! byte 0    byte 1    byte 2

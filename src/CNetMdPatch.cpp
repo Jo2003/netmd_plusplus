@@ -1859,6 +1859,7 @@ int CNetMdPatch::applyPCM2MonoPatch()
         {
             mNetMdThrow(NETMDERR_USB, "Can't apply PCM to mono patch");
         }
+        mLOG(DEBUG) << "=== PCM to mono patch applied successfully ===";
     }
     catch(const ThrownData& e)
     {
