@@ -964,26 +964,17 @@ bool CNetMdApi::tocManipSupported()
 //--------------------------------------------------------------------------
 bool CNetMdApi::pcm2MonoSupported()
 {
-    // same devices support PCM to mono
-    return mpSecure->tocManipSupported();
+    return mpSecure->pcm2MonoSupported();
 }
 
 //--------------------------------------------------------------------------
-//! @brief      enable PCM to mono patch
+//! @brief      is native mono upload supported?
 //!
-//! @return     @ref NetMdErr
+//! @return     true if supported, false if not
 //--------------------------------------------------------------------------
-int CNetMdApi::enablePcm2Mono()
+bool CNetMdApi::nativeMonoUploadSupported()
 {
-    return mpSecure->enablePcm2Mono();
-}
-
-//--------------------------------------------------------------------------
-//! @brief      disable PCM to mono patch
-//--------------------------------------------------------------------------
-void CNetMdApi::disablePcm2Mono()
-{
-    mpSecure->disablePcm2Mono();
+    return mpSecure->nativeMonoUploadSupported();
 }
 
 } // ~namespace

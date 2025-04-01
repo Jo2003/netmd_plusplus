@@ -368,7 +368,6 @@ bool CNetMdSecure::audioSupported(const uint8_t* fileContent, size_t fSize, Wire
     if (fromLittleEndianArray<uint16_t>(fileContent + 20) == 1)
     {
         // needs conversion (byte swapping) for pcm raw data from wav file
-        patch = WAVE;
         wf    = NETMD_WIREFORMAT_PCM;
         if (fromLittleEndianArray<uint32_t>(fileContent + 24) != 44100)
         {
@@ -1328,6 +1327,26 @@ int CNetMdSecure::sendAudioTrack(const std::string& filename, const std::string&
             mNetMdThrow(NETMDERR_NOT_SUPPORTED, "audio format unknown or not supported");
         }
 
+        if ((wf == NETMD_WIREFORMAT_PCM)            // PCM
+            && (df == NETMD_DISKFORMAT_SP_STEREO)   // stereo
+            && (otf == NETMD_DISKFORMAT_SP_MONO))   // mono on disc
+        {
+            if (!pcm2MonoSupported() && !nativeMonoUploadSupported())
+            {
+                mNetMdThrow(NETMDERR_NOT_SUPPORTED, "device doesn't support mono upload!");
+                audio_patch = NO_PATCH;
+            }
+            else if (nativeMonoUploadSupported())
+            {
+                df = NETMD_DISKFORMAT_SP_MONO;
+                audio_patch = NO_PATCH;
+            }
+            else if (pcm2MonoSupported())
+            {
+                audio_patch = PCM2MONO;
+            }
+        }
+
         mLOG(DEBUG) << "supported audio file detected";
 
         if (audio_patch == SP)
@@ -1373,6 +1392,13 @@ int CNetMdSecure::sendAudioTrack(const std::string& filename, const std::string&
             if (mPatch.applySpPatch((channels == NETMD_CHANNELS_STEREO) ? 2 : 1) != NETMDERR_NO_ERROR)
             {
                 mNetMdThrow(NETMDERR_NOT_SUPPORTED, "Can't patch NetMD device for SP transfer!");
+            }
+        }
+        else if (audio_patch == PCM2MONO)
+        {
+            if (mPatch.applyPCM2MonoPatch() != NETMDERR_NO_ERROR)
+            {
+                mNetMdThrow(NETMDERR_NOT_SUPPORTED, "Can't patch NetMD device for mono transfer!");
             }
         }
 
@@ -1443,7 +1469,7 @@ int CNetMdSecure::sendAudioTrack(const std::string& filename, const std::string&
         }
 
         // conversion (byte swapping) for pcm raw data from wav file if needed
-        if (audio_patch == WAVE)
+        if (wf == NETMD_WIREFORMAT_PCM)
         {
             for (i = 0; i < audio_data_size; i += 2)
             {
@@ -1534,6 +1560,10 @@ int CNetMdSecure::sendAudioTrack(const std::string& filename, const std::string&
     {
         mPatch.undoSpPatch();
     }
+    else if (audio_patch == PCM2MONO)
+    {
+        mPatch.undoPCM2MonoPatch();
+    }
 
     // release device - needed by Sharp devices, may fail on Sony devices
     static_cast<void>(mNetMd.releaseDev());
@@ -1549,6 +1579,16 @@ int CNetMdSecure::sendAudioTrack(const std::string& filename, const std::string&
 bool CNetMdSecure::spUploadSupported()
 {
     return mPatch.supportsSpUpload();
+}
+
+//--------------------------------------------------------------------------
+//! @brief      is native mono upload supported?
+//!
+//! @return     true if supported, false if not
+//--------------------------------------------------------------------------
+bool CNetMdSecure::nativeMonoUploadSupported()
+{
+    return mNetMd.mDevice.mKnownDev.mNativeMonoUpload;
 }
 
 //--------------------------------------------------------------------------
@@ -1661,6 +1701,17 @@ int CNetMdSecure::finalizeTOC(bool reset)
 //--------------------------------------------------------------------------
 bool CNetMdSecure::tocManipSupported()
 {
+    return mPatch.tocManipSupported();
+}
+
+//--------------------------------------------------------------------------
+//! @brief      is PCM to mono supported?
+//!
+//! @return     true if supported, false if not
+//--------------------------------------------------------------------------
+bool CNetMdSecure::pcm2MonoSupported()
+{
+    // devices w/ toc manip support, support pcm2mono as well
     return mPatch.tocManipSupported();
 }
 

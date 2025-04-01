@@ -61,6 +61,7 @@ class CNetMdDev
         const char* mModel;     ///< model name
         bool mOtfEncode;        ///< device supports on-the-fly LP encoding
         bool mPatchAble;        ///< is the device (maybe) patchable?
+        bool mNativeMonoUpload; ///< is the device native mono upload capable?
     };
 
     /// dev handle is a pointer to libusb_device_handle

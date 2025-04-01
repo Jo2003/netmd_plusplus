@@ -300,16 +300,11 @@ public:
     bool pcm2MonoSupported();
 
     //--------------------------------------------------------------------------
-    //! @brief      enable PCM to mono patch
+    //! @brief      is native mono upload supported?
     //!
-    //! @return     @ref NetMdErr
+    //! @return     true if supported, false if not
     //--------------------------------------------------------------------------
-    int enablePcm2Mono();
-
-    //--------------------------------------------------------------------------
-    //! @brief      disable PCM to mono patch
-    //--------------------------------------------------------------------------
-    void disablePcm2Mono();
+    bool nativeMonoUploadSupported();
 
     //--------------------------------------------------------------------------
     //! @brief      Sends an audio track

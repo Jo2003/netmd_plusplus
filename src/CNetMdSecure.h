@@ -85,8 +85,8 @@ class CNetMdSecure
     enum AudioPatch : uint8_t
     {
         NO_PATCH, //!< no patch needed
-        WAVE,     //!< wave endianess patch
-        SP        //!< atrac1 SP padding patch
+        SP      , //!< atrac1 SP padding patch
+        PCM2MONO, //!< PCM to mono patch
     };
 
     static constexpr uint16_t NETMD_RIFF_FORMAT_TAG_ATRAC3 = 0x0270;
@@ -411,6 +411,20 @@ class CNetMdSecure
     //! @return     true if supported, false if not
     //--------------------------------------------------------------------------
     bool tocManipSupported();
+
+    //--------------------------------------------------------------------------
+    //! @brief      is PCM to mono supported?
+    //!
+    //! @return     true if supported, false if not
+    //--------------------------------------------------------------------------
+    bool pcm2MonoSupported();
+
+    //--------------------------------------------------------------------------
+    //! @brief      is native mono upload supported?
+    //!
+    //! @return     true if supported, false if not
+    //--------------------------------------------------------------------------
+    bool nativeMonoUploadSupported();
 
     //--------------------------------------------------------------------------
     //! @brief      enable PCM to mono patch
