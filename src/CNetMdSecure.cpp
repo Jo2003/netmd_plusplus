@@ -912,7 +912,7 @@ int CNetMdSecure::transferSongPackets(TrackPackets* packets, size_t fullLength)
             params.push_back(data);
             if (((ret = formatQuery("%>q %*", params, query)) > 0) && (query != nullptr))
             {
-                if ((transferred = mNetMd.bulkTransfer(query.get(), ret, 80'000)) == packet_size)
+                if ((transferred = mNetMd.bulkTransfer(query.get(), ret)) == packet_size)
                 {
                     total_transferred += static_cast<size_t>(transferred);
                     ret = NETMDERR_NO_ERROR;
@@ -932,7 +932,7 @@ int CNetMdSecure::transferSongPackets(TrackPackets* packets, size_t fullLength)
         else
         {
             packet_size = p->length;
-            if ((transferred = mNetMd.bulkTransfer(p->data, p->length, 80'000)) == packet_size)
+            if ((transferred = mNetMd.bulkTransfer(p->data, p->length)) == packet_size)
             {
                 total_transferred += static_cast<size_t>(transferred);
                 ret = NETMDERR_NO_ERROR;
@@ -1711,8 +1711,7 @@ bool CNetMdSecure::tocManipSupported()
 //--------------------------------------------------------------------------
 bool CNetMdSecure::pcm2MonoSupported()
 {
-    // devices w/ toc manip support, support pcm2mono as well
-    return mPatch.tocManipSupported();
+    return mPatch.pcmSpeedupSupported();
 }
 
 //--------------------------------------------------------------------------
@@ -1731,6 +1730,35 @@ int CNetMdSecure::enablePcm2Mono()
 void CNetMdSecure::disablePcm2Mono()
 {
     mPatch.undoPCM2MonoPatch();
+}
+
+//--------------------------------------------------------------------------
+//! @brief      is PCM speedup supportd
+//!
+//! @return     true if supported, false if not
+//--------------------------------------------------------------------------
+bool CNetMdSecure::pcmSpeedupSupported()
+{
+    return mPatch.pcmSpeedupSupported();
+}
+
+//--------------------------------------------------------------------------
+//! @brief      apply PCM speedup patch
+//!
+//! @return     NetMdErr
+//! @see        NetMdErr
+//--------------------------------------------------------------------------
+int CNetMdSecure::applyPCMSpeedupPatch()
+{
+    return mPatch.applyPCMSpeedupPatch();
+}
+
+//--------------------------------------------------------------------------
+//! @brief      apply PCM speedup patch
+//--------------------------------------------------------------------------
+void CNetMdSecure::undoPCMSpeedupPatch()
+{
+    return mPatch.undoPCMSpeedupPatch();
 }
 
 } // ~namespace

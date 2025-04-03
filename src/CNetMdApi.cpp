@@ -964,7 +964,8 @@ bool CNetMdApi::tocManipSupported()
 //--------------------------------------------------------------------------
 bool CNetMdApi::pcm2MonoSupported()
 {
-    return mpSecure->pcm2MonoSupported();
+    // same devices support PCM to mono
+    return mpSecure->tocManipSupported();
 }
 
 //--------------------------------------------------------------------------
@@ -975,6 +976,35 @@ bool CNetMdApi::pcm2MonoSupported()
 bool CNetMdApi::nativeMonoUploadSupported()
 {
     return mpSecure->nativeMonoUploadSupported();
+}
+
+//--------------------------------------------------------------------------
+//! @brief      is PCM speedup supportd
+//!
+//! @return     true if supported, false if not
+//--------------------------------------------------------------------------
+bool CNetMdApi::pcmSpeedupSupported()
+{
+    return mpSecure->pcmSpeedupSupported();
+}
+
+//--------------------------------------------------------------------------
+//! @brief      apply PCM speedup patch
+//!
+//! @return     NetMdErr
+//! @see        NetMdErr
+//--------------------------------------------------------------------------
+int CNetMdApi::applyPCMSpeedupPatch()
+{
+    return mpSecure->applyPCMSpeedupPatch();
+}
+
+//--------------------------------------------------------------------------
+//! @brief      apply PCM speedup patch
+//--------------------------------------------------------------------------
+void CNetMdApi::undoPCMSpeedupPatch()
+{
+    return mpSecure->undoPCMSpeedupPatch();
 }
 
 } // ~namespace

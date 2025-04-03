@@ -83,6 +83,8 @@ class CNetMdPatch
         PID_SAFETY,
         PID_USB_EXE,
         PID_PCM_TO_MONO, ///< PCM upload, convert to mono on device
+        PID_PCM_SPEEDUP_1,
+        PID_PCM_SPEEDUP_2,
     };
 
     /// exploit ID
@@ -525,6 +527,26 @@ class CNetMdPatch
     //! @see        NetMdErr
     //--------------------------------------------------------------------------
     int fillPatchComplect(PatchId pid, SonyDevInfo dev, PatchComplect& patch, PatchId plpid = PID_UNUSED);
+
+    //--------------------------------------------------------------------------
+    //! @brief      is PCM speedup supportd
+    //!
+    //! @return     true if supported, false if not
+    //--------------------------------------------------------------------------
+    bool pcmSpeedupSupported();
+
+    //--------------------------------------------------------------------------
+    //! @brief      apply PCM speedup patch
+    //!
+    //! @return     NetMdErr
+    //! @see        NetMdErr
+    //--------------------------------------------------------------------------
+    int applyPCMSpeedupPatch();
+
+    //--------------------------------------------------------------------------
+    //! @brief      apply PCM speedup patch
+    //--------------------------------------------------------------------------
+    void undoPCMSpeedupPatch();
 
     CNetMdDev& mNetMd;
 
