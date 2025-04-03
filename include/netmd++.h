@@ -346,6 +346,17 @@ struct Group
     std::string mName;  //!< group name
 };
 
+//-----------------------------------------------------------------------------
+//! @brief      NetMD homebrew features
+//-----------------------------------------------------------------------------
+enum HomebrewFeatures : uint32_t
+{
+    NOTHING     = 0x00, //!< no features
+    SP_UPLOAD   = 0x01, //!< SP upload
+    PCM_2_MONO  = 0x02, //!< PCM to mono
+    PCM_SPEEDUP = 0x04, //!< PCM speedup
+};
+
 /// netmd groups
 using Groups = std::vector<Group>;
 
@@ -636,6 +647,13 @@ public:
     bool nativeMonoUploadSupported();
 
     //--------------------------------------------------------------------------
+    //! @brief      is PCM speedup supportd
+    //!
+    //! @return     true if supported, false if not
+    //--------------------------------------------------------------------------
+    bool pcmSpeedupSupported();
+
+    //--------------------------------------------------------------------------
     //! @brief      Sends an audio track
     //!
     //! The audio file must be either an WAVE file (44.1kHz / 16 bit), or an
@@ -721,24 +739,24 @@ public:
     int finalizeTOC(bool reset = false, uint8_t resetWait = 15);
 
     //--------------------------------------------------------------------------
-    //! @brief      is PCM speedup supportd
-    //!
-    //! @return     true if supported, false if not
+    //! @brief start homebrew 
+    //
+    //! @param features OR'd HomebrewFeatures
+    //
+    //! @return NetMdErr
+    //! @see NetMdErr
     //--------------------------------------------------------------------------
-    bool pcmSpeedupSupported();
+    int startHBSession(uint32_t features);
 
     //--------------------------------------------------------------------------
-    //! @brief      apply PCM speedup patch
-    //!
-    //! @return     NetMdErr
-    //! @see        NetMdErr
+    //! @brief  stop homebrew session
+    //
+    //! @param features OR'd HomebrewFeatures
+    //
+    //! @return NetMdErr
+    //! @see NetMdErr
     //--------------------------------------------------------------------------
-    int applyPCMSpeedupPatch();
-
-    //--------------------------------------------------------------------------
-    //! @brief      apply PCM speedup patch
-    //--------------------------------------------------------------------------
-    void undoPCMSpeedupPatch();
+    void endHBSession(uint32_t features);
 
 private:
     /// disc header

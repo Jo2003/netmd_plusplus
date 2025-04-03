@@ -912,7 +912,7 @@ int CNetMdSecure::transferSongPackets(TrackPackets* packets, size_t fullLength)
             params.push_back(data);
             if (((ret = formatQuery("%>q %*", params, query)) > 0) && (query != nullptr))
             {
-                if ((transferred = mNetMd.bulkTransfer(query.get(), ret)) == packet_size)
+                if ((transferred = mNetMd.bulkTransfer(query.get(), ret, 80'000)) == packet_size)
                 {
                     total_transferred += static_cast<size_t>(transferred);
                     ret = NETMDERR_NO_ERROR;
@@ -932,7 +932,7 @@ int CNetMdSecure::transferSongPackets(TrackPackets* packets, size_t fullLength)
         else
         {
             packet_size = p->length;
-            if ((transferred = mNetMd.bulkTransfer(p->data, p->length)) == packet_size)
+            if ((transferred = mNetMd.bulkTransfer(p->data, p->length, 80'000)) == packet_size)
             {
                 total_transferred += static_cast<size_t>(transferred);
                 ret = NETMDERR_NO_ERROR;
@@ -1387,6 +1387,9 @@ int CNetMdSecure::sendAudioTrack(const std::string& filename, const std::string&
         static_cast<void>(mNetMd.aquireDev());
 
         // try to apply SP upload patch
+        /*
+         * homebrew stuff should be enabled before track transfer now!
+         *
         if (audio_patch == SP)
         {
             if (mPatch.applySpPatch((channels == NETMD_CHANNELS_STEREO) ? 2 : 1) != NETMDERR_NO_ERROR)
@@ -1401,6 +1404,7 @@ int CNetMdSecure::sendAudioTrack(const std::string& filename, const std::string&
                 mNetMdThrow(NETMDERR_NOT_SUPPORTED, "Can't patch NetMD device for mono transfer!");
             }
         }
+        */
 
         if (leaveSession() != NETMDERR_NO_ERROR)
         {
@@ -1556,6 +1560,9 @@ int CNetMdSecure::sendAudioTrack(const std::string& filename, const std::string&
         mLOG(DEBUG) << "leaveSession() failed!";
     }
 
+    /* 
+     * homebrew features will be deactivated after all tracks are transferred
+     * 
     if (audio_patch == SP)
     {
         mPatch.undoSpPatch();
@@ -1564,6 +1571,7 @@ int CNetMdSecure::sendAudioTrack(const std::string& filename, const std::string&
     {
         mPatch.undoPCM2MonoPatch();
     }
+    */
 
     // release device - needed by Sharp devices, may fail on Sony devices
     static_cast<void>(mNetMd.releaseDev());
@@ -1759,6 +1767,46 @@ int CNetMdSecure::applyPCMSpeedupPatch()
 void CNetMdSecure::undoPCMSpeedupPatch()
 {
     return mPatch.undoPCMSpeedupPatch();
+}
+
+//--------------------------------------------------------------------------
+//! @brief apply the SP upload patch
+//
+//! @param channels (1 for mono; 2 for stereo)
+//
+//! @return  NetMdErr
+//! @see     NetMdErr
+//---------------------------------------------------------------------------
+int CNetMdSecure::applySPUploadPatch(int channels)
+{
+    return mPatch.applySpPatch(channels);
+}
+
+//---------------------------------------------------------------------------
+//! @brief      undo SP upload patch
+//--------------------------------------------------------------------------
+void CNetMdSecure::undoSPUploadPatch()
+{
+    return mPatch.undoSpPatch();
+}
+
+//--------------------------------------------------------------------------
+//! @brief      apply PCM to Mono patch
+//!
+//! @return     NetMdErr
+//! @see        NetMdErr
+//--------------------------------------------------------------------------
+int CNetMdSecure::applyPCM2MonoPatch()
+{
+    return mPatch.applyPCM2MonoPatch();
+}
+
+//--------------------------------------------------------------------------
+//! @brief      undo PCM to Mono patch
+//--------------------------------------------------------------------------
+void CNetMdSecure::undoPCM2MonoPatch()
+{
+    return mPatch.undoPCM2MonoPatch();
 }
 
 } // ~namespace

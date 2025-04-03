@@ -553,10 +553,11 @@ int CNetMdDev::exchange(unsigned char* cmd, size_t cmdLen, NetMDResp* response,
 //!
 //! @param      cmd      The command bytes
 //! @param[in]  cmdLen   The command length
+//! @param[in]  timeOut  The time out
 //!
 //! @return     The response size or NetMdErr.
 //--------------------------------------------------------------------------
-int CNetMdDev::bulkTransfer(unsigned char* cmd, size_t cmdLen)
+int CNetMdDev::bulkTransfer(unsigned char* cmd, size_t cmdLen, int timeOut)
 {
     if (mDevice.mDevHdl == nullptr)
     {
@@ -572,9 +573,7 @@ int CNetMdDev::bulkTransfer(unsigned char* cmd, size_t cmdLen)
         err  = libusb_bulk_transfer(mDevice.mDevHdl,
                                     LIBUSB_RECIPIENT_ENDPOINT,
                                     cmd + bytesDone, cmdLen - bytesDone,
-                                    &sent, NETMD_BULK_TIMEOUT);
-
-        uwait(250'000);
+                                    &sent, timeOut);
 
         bytesDone += sent;
 

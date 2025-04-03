@@ -503,9 +503,37 @@ class CNetMdSecure
     int applyPCMSpeedupPatch();
 
     //--------------------------------------------------------------------------
-    //! @brief      apply PCM speedup patch
+    //! @brief      undo PCM speedup patch
     //--------------------------------------------------------------------------
     void undoPCMSpeedupPatch();
+
+    //--------------------------------------------------------------------------
+    //! @brief apply the SP upload patch
+    //
+    //! @param channels (1 for mono; 2 for stereo)
+    //
+    //! @return  NetMdErr
+    //! @see     NetMdErr
+    //---------------------------------------------------------------------------
+    int applySPUploadPatch(int channels = 2);
+
+    //---------------------------------------------------------------------------
+    //! @brief      undo SP upload patch
+    //--------------------------------------------------------------------------
+    void undoSPUploadPatch();
+
+    //--------------------------------------------------------------------------
+    //! @brief      apply PCM to Mono patch
+    //!
+    //! @return     NetMdErr
+    //! @see        NetMdErr
+    //--------------------------------------------------------------------------
+    int applyPCM2MonoPatch();
+
+    //--------------------------------------------------------------------------
+    //! @brief      undo PCM to Mono patch
+    //--------------------------------------------------------------------------
+    void undoPCM2MonoPatch();
 
     CNetMdDev& mNetMd;
 

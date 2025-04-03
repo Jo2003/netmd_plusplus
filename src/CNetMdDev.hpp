@@ -256,10 +256,11 @@ class CNetMdDev
     //!
     //! @param      cmd      The command bytes
     //! @param[in]  cmdLen   The command length
+    //! @param[in]  timeOut  The time out
     //!
     //! @return     The response size or NetMdErr.
     //--------------------------------------------------------------------------
-    int bulkTransfer(unsigned char* cmd, size_t cmdLen);
+    int bulkTransfer(unsigned char* cmd, size_t cmdLen, int timeOut);
 
     //--------------------------------------------------------------------------
     //! @brief      wait for the device respond to a command

@@ -258,7 +258,7 @@ const CNetMdPatch::PatchPayloadTab CNetMdPatch::smPatchPayloadTab =
         {
             {SDI_S1000 | SDI_S1100 | SDI_S1200 | SDI_S1300 | SDI_S1400 | SDI_S1500 | SDI_S1600, {0x00,0x0f,0x0f,0xe0}}
         }
-    },
+    }
 };
 
 /// exploit command lookup

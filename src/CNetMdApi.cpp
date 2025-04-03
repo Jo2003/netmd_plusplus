@@ -989,22 +989,77 @@ bool CNetMdApi::pcmSpeedupSupported()
 }
 
 //--------------------------------------------------------------------------
-//! @brief      apply PCM speedup patch
-//!
-//! @return     NetMdErr
-//! @see        NetMdErr
+//! @brief start homebrew 
+//
+//! @param features OR'd HomebrewFeatures
+//
+//! @return NetMdErr
+//! @see NetMdErr
 //--------------------------------------------------------------------------
-int CNetMdApi::applyPCMSpeedupPatch()
+int CNetMdApi::startHBSession(uint32_t features)
 {
-    return mpSecure->applyPCMSpeedupPatch();
+    int ret = NETMDERR_NO_ERROR;
+    int e   = NETMDERR_NO_ERROR;
+
+    if (features != NOTHING)
+    {
+        if ((features & SP_UPLOAD) && spUploadSupported())
+        {
+            mLOG(INFO) << "SP upload patch applied";
+            if ((e = mpSecure->applySPUploadPatch()) != NETMDERR_NO_ERROR)
+            {
+                ret = e;
+            }
+        }
+
+        if ((features & PCM_SPEEDUP) && pcmSpeedupSupported())
+        {
+            mLOG(INFO) << "PCM speedup patch applied";
+            if ((e = mpSecure->applyPCMSpeedupPatch()) != NETMDERR_NO_ERROR)
+            {
+                ret = e;
+            }
+        }
+
+        if ((features & PCM_2_MONO) && pcm2MonoSupported())
+        {
+            mLOG(INFO) << "PCM to mono patch applied";
+            if ((e = mpSecure->applyPCM2MonoPatch()) != NETMDERR_NO_ERROR)
+            {
+                ret = e;
+            }
+        }
+    }
+
+    return ret;
 }
 
 //--------------------------------------------------------------------------
-//! @brief      apply PCM speedup patch
+//! @brief  stop homebrew session
+//
+//! @param features OR'd HomebrewFeatures
+//
+//! @return NetMdErr
+//! @see NetMdErr
 //--------------------------------------------------------------------------
-void CNetMdApi::undoPCMSpeedupPatch()
+void CNetMdApi::endHBSession(uint32_t features)
 {
-    return mpSecure->undoPCMSpeedupPatch();
-}
+    features = (features == NOTHING) ? (SP_UPLOAD | PCM_SPEEDUP | PCM_2_MONO) : features;
+    
+    if ((features & SP_UPLOAD) && spUploadSupported())
+    {
+        mpSecure->undoSPUploadPatch();
+    }
+
+    if ((features & PCM_SPEEDUP) && pcmSpeedupSupported())
+    {
+        mpSecure->undoPCMSpeedupPatch();
+    }
+
+    if ((features & PCM_2_MONO) && pcm2MonoSupported())
+    {
+        mpSecure->undoPCM2MonoPatch();
+    }
+} 
 
 } // ~namespace
