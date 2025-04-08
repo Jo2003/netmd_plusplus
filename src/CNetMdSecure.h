@@ -126,6 +126,11 @@ class CNetMdSecure
     {}
 
     //--------------------------------------------------------------------------
+    //! @brief      device was removed
+    //--------------------------------------------------------------------------
+    void deviceRemoved();
+
+    //--------------------------------------------------------------------------
     //! @brief      get payload position in response
     //!
     //! @param[in]  dataLen  The data length (optional)

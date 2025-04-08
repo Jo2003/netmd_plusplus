@@ -41,6 +41,14 @@
 namespace netmd {
 
 //--------------------------------------------------------------------------
+//! @brief      device was removed
+//--------------------------------------------------------------------------
+void CNetMdSecure::deviceRemoved()
+{
+    mPatch.deviceRemoved();
+}
+
+//--------------------------------------------------------------------------
 //! @brief      get payload position in response
 //!
 //! @param[in]  dataLen  The data length (optional)

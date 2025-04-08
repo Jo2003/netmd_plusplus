@@ -431,8 +431,27 @@ public:
     //--------------------------------------------------------------------------
     void endHBSession(uint32_t features);
 
-protected:
+    //--------------------------------------------------------------------------
+    //! @brief      register hotplug callback function
+    //
+    //! @param[in]  cb  callback function to e called on device add / removal
+    //--------------------------------------------------------------------------
+    void registerForHotplugEvents(EvtCallback cb);
 
+    //--------------------------------------------------------------------------
+    //! @brief      check if hotplug is supported
+    //
+    //! @return     true if so; false otherwise
+    //--------------------------------------------------------------------------
+    bool hotplugSupported() const;
+
+protected:
+    //--------------------------------------------------------------------------
+    //! @brief      register device callback function
+    //
+    //! @param[in]  added  callback function to e called on device add / removal
+    //--------------------------------------------------------------------------           
+    void hotplugEvent(bool added);
 
 private:
     /// disc header
@@ -443,6 +462,12 @@ private:
 
     /// secure implmentation
     CNetMdSecure* mpSecure;
+
+    /// hotplug callback function
+    EvtCallback mHotplugCallback; 
+
+    /// mutex for hotplug callback
+    std::mutex mMutexHotplug;
 };
 
 } // ~namespace

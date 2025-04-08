@@ -42,7 +42,8 @@ namespace netmd {
 //! @brief      Constructs a new instance.
 //--------------------------------------------------------------------------
 CNetMdApi::CNetMdApi()
-    : mpDiscHeader(nullptr), mpNetMd(nullptr), mpSecure(nullptr)
+    : mpDiscHeader(nullptr), mpNetMd(nullptr), 
+      mpSecure(nullptr), mHotplugCallback(nullptr)
 {
     mpDiscHeader = new CMDiscHeader;
     mpNetMd      = new CNetMdDev;
@@ -50,6 +51,7 @@ CNetMdApi::CNetMdApi()
     if (mpNetMd != nullptr)
     {
         mpSecure = new CNetMdSecure(*mpNetMd);
+        mpNetMd->registerDeviceCallback(std::bind(&CNetMdApi::hotplugEvent, this, std::placeholders::_1));
     }
 }
 
@@ -84,7 +86,7 @@ CNetMdApi::~CNetMdApi()
 //--------------------------------------------------------------------------
 void CNetMdApi::setLogLevel(int severity)
 {
-    std::unique_lock lck(LOGCFG.mtxLog);
+    std::unique_lock<std::mutex> lck(LOGCFG.mtxLog);
     LOGCFG.level = severity;
 }
 
@@ -95,7 +97,7 @@ void CNetMdApi::setLogLevel(int severity)
 //--------------------------------------------------------------------------
 void CNetMdApi::setLogStream(std::ostream& os)
 {
-    std::unique_lock lck(LOGCFG.mtxLog);
+    std::unique_lock<std::mutex> lck(LOGCFG.mtxLog);
     LOGCFG.sout = &os;
 }
 
@@ -1061,5 +1063,50 @@ void CNetMdApi::endHBSession(uint32_t features)
         mpSecure->undoPCM2MonoPatch();
     }
 } 
+
+//--------------------------------------------------------------------------
+//! @brief      register device callback function
+//
+//! @param[in]  added  callback function to e called on device add / removal
+//--------------------------------------------------------------------------           
+void CNetMdApi::hotplugEvent(bool added)
+{
+    std::unique_lock<std::mutex> lck(mMutexHotplug);
+    if (mHotplugCallback)
+    {
+        mHotplugCallback(added);
+    }
+
+    if (!added)
+    {
+        mLOG(INFO) << "Device removed";
+        mpSecure->deviceRemoved();
+    }
+    else
+    {
+        mLOG(INFO) << "Device added";
+    }
+}
+
+//--------------------------------------------------------------------------
+//! @brief      register hotplug callback function
+//
+//! @param[in]  cb  callback function to e called on device add / removal
+//--------------------------------------------------------------------------
+void CNetMdApi::registerForHotplugEvents(EvtCallback cb)
+{
+    std::unique_lock<std::mutex> lck(mMutexHotplug);
+    mHotplugCallback = cb;
+}
+
+//--------------------------------------------------------------------------
+//! @brief      check if hotplug is supported
+//
+//! @return     true if so; false otherwise
+//--------------------------------------------------------------------------
+bool CNetMdApi::hotplugSupported() const
+{
+    return mpNetMd->hotplugSupported();
+}
 
 } // ~namespace

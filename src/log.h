@@ -62,7 +62,7 @@ public:
 
     ~LOG()
     {
-        std::unique_lock lck(LOGCFG.mtxLog);
+        std::unique_lock<std::mutex> lck(LOGCFG.mtxLog);
         if(opened)
         {
             *LOGCFG.sout << std::endl;
@@ -73,7 +73,7 @@ public:
     template<class T>
     LOG &operator<<(const T &msg)
     {
-        std::unique_lock lck(LOGCFG.mtxLog);
+        std::unique_lock<std::mutex> lck(LOGCFG.mtxLog);
         if(msglevel >= LOGCFG.level)
         {
             *LOGCFG.sout << msg;

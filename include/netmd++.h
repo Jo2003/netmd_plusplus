@@ -236,6 +236,8 @@ delete [] pData;
 #include <sstream>
 #include <vector>
 #include <ctime>
+#include <functional>
+#include <mutex>
 
 namespace netmd {
 
@@ -362,6 +364,13 @@ using Groups = std::vector<Group>;
 
 /// byte vector
 using NetMDByteVector = std::vector<uint8_t>;
+
+//--------------------------------------------------------------------------
+//! @brief hotplug callback function signature
+//
+//! @param[in]  true if device is added; false if removed
+//--------------------------------------------------------------------------
+using EvtCallback = std::function<void(bool)>;
 
 //--------------------------------------------------------------------------
 //! @brief      format helper for TrackTime
@@ -758,6 +767,20 @@ public:
     //--------------------------------------------------------------------------
     void endHBSession(uint32_t features);
 
+    //--------------------------------------------------------------------------
+    //! @brief      register hotplug callback function
+    //
+    //! @param[in]  cb  callback function to e called on device add / removal
+    //--------------------------------------------------------------------------
+    void registerForHotplugEvents(EvtCallback cb);
+
+    //--------------------------------------------------------------------------
+    //! @brief      check if hotplug is supported
+    //
+    //! @return     true if so; false otherwise
+    //--------------------------------------------------------------------------
+    bool hotplugSupported() const;
+
 private:
     /// disc header
     CMDiscHeader* mpDiscHeader;
@@ -767,6 +790,12 @@ private:
 
     /// secure implementation
     CNetMdSecure* mpSecure;
+
+    /// hotplug callback function
+    EvtCallback mHotplugCallback; 
+
+    /// mutex for hotplug callback
+    std::mutex mMutexHotplug;
 };
 
 namespace toc
