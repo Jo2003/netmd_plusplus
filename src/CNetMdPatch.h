@@ -30,6 +30,7 @@
 #include "CNetMdDev.hpp"
 #include "netmd_defines.h"
 #include <cstdint>
+#include <optional>
 
 namespace netmd {
 
@@ -100,6 +101,14 @@ class CNetMdPatch
         int mNextFreePatch;         ///< next free patch slot
     };
 
+    /// storage structure for installed patches
+    struct PatchStorage
+    {
+        PatchId mPid;               ///< patch id
+        uint32_t mAddr;             ///< patch address
+        NetMDByteVector mPatchData; ///< patch data
+    };
+
     //--------------------------------------------------------------------------
     //! @brief      print helper for PatchId
     //!
@@ -162,22 +171,11 @@ class CNetMdPatch
     int maxPatches() const;
 
     //--------------------------------------------------------------------------
-    //! @brief      get next pree patch index
-    //!
-    //! @param[in]  pid   The pid
-    //!
-    //! @return     -1 -> no more free | > -1 -> free patch index
+    //! @brief      get free patch slots
+    //
+    //! @return     a vector with free patch slots
     //--------------------------------------------------------------------------
-    int nextFreePatch(PatchId pid);
-
-    //--------------------------------------------------------------------------
-    //! @brief      mark patch as unused
-    //!
-    //! @param[in]  pid   The pid
-    //!
-    //! @return     -1 -> not found | > -1 -> last used patch index
-    //--------------------------------------------------------------------------
-    int patchUnused(PatchId pid);
+    std::vector<int> freePatchSlots();
 
     //------------------------------------------------------------------------------
     //! @brief      get patch address by name and device info
@@ -219,14 +217,25 @@ class CNetMdPatch
     static NetMDByteVector exploitData(SonyDevInfo devinfo, ExploitId eid);
 
     //--------------------------------------------------------------------------
+    //! @brief      reverse search for patch id
+    //!
+    //! @param[in]  devinfo   The device info
+    //! @param[in]  addr      The patch address
+    //! @param[in]  patch_cnt The patch content
+    //!
+    //! @return     patch id or nullopt
+    //--------------------------------------------------------------------------
+    static std::optional<PatchId> reverserSearchPatchId(SonyDevInfo devinfo, uint32_t addr, 
+                                                        const NetMDByteVector& patch_cnt); 
+
+    //--------------------------------------------------------------------------
     //! @brief      check if patch is active
     //!
     //! @param[in]  pid      The patch id
-    //! @param[in]  devinfo  The device info
     //!
     //! @return     1 -> patch is active; 0 -> not active
     //--------------------------------------------------------------------------
-    int checkPatch(PatchId pid, SonyDevInfo devinfo);
+    int checkPatch(PatchId pid);
 
     //--------------------------------------------------------------------------
     //! @brief      Reads an utoc sector.
@@ -325,6 +334,16 @@ class CNetMdPatch
     int unpatch(PatchId pid);
 
     //--------------------------------------------------------------------------
+    //! @brief      unpatch a patch related to index
+    //!
+    //! @param[in]  idx   patch id of patch to undo
+    //!
+    //! @return     NetMdErr
+    //! @see        NetMdErr
+    //--------------------------------------------------------------------------
+    int unpatchIdx(int idx);
+
+    //--------------------------------------------------------------------------
     //! @brief      do safety patch of needed
     //!
     //! @return     NetMdErr
@@ -415,11 +434,19 @@ class CNetMdPatch
     //! @brief      apply PCM speedup patch
     //--------------------------------------------------------------------------
     void undoPCMSpeedupPatch();
-    
+
+    //--------------------------------------------------------------------------
+    //! @brief      update patch storage
+    //--------------------------------------------------------------------------
+    void updatePatchStorage();
+
     CNetMdDev& mNetMd;
 
     //! @brief patch areas used
-    PatchId mUsedPatches[MAX_PATCH];
+    PatchStorage mPatchStorage[MAX_PATCH];
+
+    /// is the patch store valid?
+    bool mPatchStoreValid;
 };
 
 } // ~namespace
