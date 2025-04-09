@@ -34,6 +34,8 @@
 #include <string>
 #include <mutex>
 #include <functional>
+#include <thread>
+#include <atomic>
 
 #include "netmd_defines.h"
 #include "log.h"
@@ -68,6 +70,7 @@ class CNetMdDev
 
     /// dev handle is a pointer to libusb_device_handle
     using netmd_dev_handle = libusb_device_handle*;
+    using netmd_dev        = libusb_device;
 
     /// NetMD device
     struct NetMDDevice
@@ -76,6 +79,7 @@ class CNetMdDev
         std::string mName;              ///< name
         std::string mSerial;            ///< serial number
         netmd_dev_handle mDevHdl;       ///< device handle
+        netmd_dev* mDevPtr;             ///< device pointer
     };
 
     /// map of known devices
@@ -254,6 +258,13 @@ class CNetMdDev
     //! @return     NetMdErr
     //--------------------------------------------------------------------------
     static int deviceAdded(libusb_context *ctx, libusb_device *device, libusb_hotplug_event event, void *user_data);
+
+    //--------------------------------------------------------------------------
+    //! @brief poll for device add / remove (hotplug emulation)
+    //
+    //! @return NetMdErr
+    //--------------------------------------------------------------------------
+    int pollThread();
 
     //--------------------------------------------------------------------------
     //! @brief      Gets the device name.
@@ -484,9 +495,10 @@ class CNetMdDev
     int enableFactory();
 
     //--------------------------------------------------------------------------
-    //! @brief      register device callback function
-    //!
+    //! @brief      register hotplug callback function
+    //
     //! @param[in]  cb  callback function to e called on device add / removal
+    //!                 if is nullptr, the callback will be removed
     //--------------------------------------------------------------------------
     void registerDeviceCallback(EvtCallback cb);
 
@@ -501,7 +513,7 @@ class CNetMdDev
     bool mInitialized = false;
 
     /// NetMD device
-    NetMDDevice mDevice = {{0, 0, nullptr, false, false, false}, "", "", nullptr};
+    NetMDDevice mDevice = {{0, 0, nullptr, false, false, false}, "", "", nullptr, nullptr};
 
     /// descriptor data
     static const DscrtData smDescrData;
@@ -523,6 +535,12 @@ class CNetMdDev
 
     /// hotplug callback function
     EvtCallback mDevApiCallback;
+
+    /// poll thread
+    std::thread mPollThread; 
+
+    /// poll while true
+    std::atomic_bool mDoPoll;
 };
 
 } // /namespace netmd

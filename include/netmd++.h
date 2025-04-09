@@ -771,15 +771,9 @@ public:
     //! @brief      register hotplug callback function
     //
     //! @param[in]  cb  callback function to e called on device add / removal
+    //!                 if is nullptr, the callback will be removed
     //--------------------------------------------------------------------------
     void registerForHotplugEvents(EvtCallback cb);
-
-    //--------------------------------------------------------------------------
-    //! @brief      check if hotplug is supported
-    //
-    //! @return     true if so; false otherwise
-    //--------------------------------------------------------------------------
-    bool hotplugSupported() const;
 
 private:
     /// disc header

@@ -438,13 +438,6 @@ public:
     //--------------------------------------------------------------------------
     void registerForHotplugEvents(EvtCallback cb);
 
-    //--------------------------------------------------------------------------
-    //! @brief      check if hotplug is supported
-    //
-    //! @return     true if so; false otherwise
-    //--------------------------------------------------------------------------
-    bool hotplugSupported() const;
-
 protected:
     //--------------------------------------------------------------------------
     //! @brief      register device callback function

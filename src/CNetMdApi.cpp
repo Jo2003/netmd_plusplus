@@ -1099,14 +1099,4 @@ void CNetMdApi::registerForHotplugEvents(EvtCallback cb)
     mHotplugCallback = cb;
 }
 
-//--------------------------------------------------------------------------
-//! @brief      check if hotplug is supported
-//
-//! @return     true if so; false otherwise
-//--------------------------------------------------------------------------
-bool CNetMdApi::hotplugSupported() const
-{
-    return mpNetMd->hotplugSupported();
-}
-
 } // ~namespace

@@ -37,6 +37,7 @@
 #include <unistd.h>
 #include <cmath>
 #include <algorithm>
+#include <chrono>
 
 namespace netmd {
 
@@ -152,13 +153,14 @@ std::ostream& operator<<(std::ostream& os, const CNetMdDev::SonyDevInfo& dinfo)
 CNetMdDev::CNetMdDev()
     :mhdHPAdd(-1), mhdHPRmv(-1), 
     mSonyDevInfo(SDI_UNKNOWN), mFactoryMode(false),
-    mDevApiCallback(nullptr)
+    mDevApiCallback(nullptr), mDoPoll(false)
 {
     mInitialized = libusb_init(NULL) == 0;
     mLOG(INFO) << "Init: " << mInitialized;
 
     if (mInitialized && hotplugSupported())
     {
+        mLOG(INFO) << "Hotplug supported!";
         libusb_hotplug_register_callback(
             NULL,
             LIBUSB_HOTPLUG_EVENT_DEVICE_ARRIVED,
@@ -181,9 +183,11 @@ CNetMdDev::CNetMdDev()
             static_cast<void*>(this),
             &mhdHPRmv);
     }
-    else
+    else if (mInitialized)
     {
-        mLOG(INFO) << "No hotplug support!";
+        mLOG(INFO) << "Hotplug emulated!";
+        mDoPoll = true;
+        mPollThread = std::thread(std::bind(&CNetMdDev::pollThread, this));
     }
 }
 
@@ -206,6 +210,14 @@ CNetMdDev::~CNetMdDev()
         {
             libusb_hotplug_deregister_callback(NULL, mhdHPRmv);
             mhdHPRmv = -1;
+        }
+    }
+    else
+    {
+        if (mPollThread.joinable())
+        {
+            mDoPoll = false;
+            mPollThread.join();
         }
     }
 
@@ -239,24 +251,9 @@ int CNetMdDev::initDevice()
     {
         if (mDevice.mDevHdl != nullptr)
         {
-            if (hotplugSupported())
-            {
-                // after being initialized the first time, all other device
-                // handling has to go through hotplug
-                return NETMDERR_NO_ERROR;
-            }
-            else
-            {
-                if (libusb_release_interface(mDevice.mDevHdl, 0) == 0)
-                {
-                    libusb_close(mDevice.mDevHdl);
-                    mDevice.mDevHdl = nullptr;
-                    if (mDevApiCallback)
-                    {
-                        mDevApiCallback(false);
-                    }
-                }
-            }
+            // after being initialized the first time, all other device
+            // handling has to go through hotplug
+            return NETMDERR_NO_ERROR;
         }
 
         libusb_device **devs = nullptr;
@@ -270,13 +267,7 @@ int CNetMdDev::initDevice()
             {
                 if (libusb_get_device_descriptor(devs[i], &descr) == 0)
                 {
-                    if (((ret = openDevice(devs[i], &descr)) == NETMDERR_NO_ERROR) && !hotplugSupported())
-                    {
-                        if (mDevApiCallback)
-                        {
-                            mDevApiCallback(true);
-                        }
-                    }
+                    ret = openDevice(devs[i], &descr);
                 }
             }
         }
@@ -308,6 +299,7 @@ int CNetMdDev::openDevice(libusb_device* dev, libusb_device_descriptor* desc)
     {
         mLOG(DEBUG) << "Found supported device: " << cit->second.mModel;
         mDevice.mKnownDev = cit->second;
+        mDevice.mDevPtr   = dev;
         bool success = false;
 #ifdef __linux__
         int cycle    = 5;
@@ -388,18 +380,16 @@ int CNetMdDev::openDevice(libusb_device* dev, libusb_device_descriptor* desc)
 //--------------------------------------------------------------------------
 int CNetMdDev::deviceRemoved(libusb_context*, libusb_device *device, libusb_hotplug_event, void *userData)
 {
-    libusb_device_descriptor desc;
-    libusb_get_device_descriptor(device, &desc);
-
     if (CNetMdDev* pDev = static_cast<CNetMdDev*>(userData))
     {
         std::unique_lock<std::recursive_mutex> lock(pDev->mMtxDevAcc);
 
-        if (pDev->mDevice.mDevHdl 
-            && (desc.idVendor == pDev->mDevice.mKnownDev.mVendorID) 
-            && (desc.idProduct == pDev->mDevice.mKnownDev.mDeviceID))
+        //! @bug Since we can't get a description from a removed device,
+        //!      we assume the device pointer to the libusb_device is 
+        //!      the unique key.
+        if (pDev->mDevice.mDevHdl && (device == pDev->mDevice.mDevPtr)) 
         {
-            mLOG(INFO) << "Device removed";
+            mLOG(INFO) << "Device " << pDev->mDevice.mKnownDev.mModel << " removed.";
             libusb_close(pDev->mDevice.mDevHdl);
             pDev->mDevice.mDevHdl = nullptr;
             pDev->mSonyDevInfo    = SDI_UNKNOWN;
@@ -433,11 +423,82 @@ int CNetMdDev::deviceAdded(libusb_context*, libusb_device *device, libusb_hotplu
 
             libusb_device_descriptor desc;
             libusb_get_device_descriptor(device, &desc);
-            static_cast<void>(pDev->openDevice(device, &desc));
-            if (pDev->mDevApiCallback)
+
+            if (pDev->openDevice(device, &desc) == NETMDERR_NO_ERROR) 
             {
-                pDev->mDevApiCallback(true);
+                if (pDev->mDevApiCallback)
+                {
+                    pDev->mDevApiCallback(true);
+                }
             }
+        }
+    }
+    return 0;
+}
+
+//--------------------------------------------------------------------------
+//! @brief poll for device add / remove (hotplug emulation)
+//
+//! @return NetMdErr
+//--------------------------------------------------------------------------
+int CNetMdDev::pollThread()
+{
+    std::map<uint64_t, libusb_device*> lastDevices, currDevices;
+
+    while (mDoPoll)
+    {
+        libusb_device **devs = nullptr;
+        libusb_device_descriptor descr;
+
+        currDevices.clear();
+
+        ssize_t cnt = libusb_get_device_list(NULL, &devs);
+
+        if (cnt > -1)
+        {
+            for (ssize_t i = 0; i < cnt; i++)
+            {
+                if (libusb_get_device_descriptor(devs[i], &descr) == 0)
+                {
+                    uint64_t devId = (static_cast<uint64_t>(descr.idVendor) << 32) | static_cast<uint64_t>(descr.idProduct);
+                    currDevices[devId] = devs[i];
+                }
+            }
+        }
+
+        if (devs != nullptr)
+        {
+            libusb_free_device_list(devs, 1);
+        }
+
+        // removed
+        for (const auto &[key, val] : lastDevices)
+        {
+            const auto it = currDevices.find(key);
+
+            if (it == currDevices.cend())
+            {
+                deviceRemoved(nullptr, val, LIBUSB_HOTPLUG_EVENT_DEVICE_LEFT, this);
+            }
+        }
+
+        // added
+        for (const auto &[key, val] : currDevices)
+        {
+            const auto it = lastDevices.find(key);
+
+            if (it == lastDevices.cend())
+            {
+                deviceAdded(nullptr, val, LIBUSB_HOTPLUG_EVENT_DEVICE_ARRIVED, this);
+            }
+        }
+
+        lastDevices = currDevices;
+
+        if (mDoPoll)
+        {
+            // wait for 750ms
+            std::this_thread::sleep_for(std::chrono::milliseconds(750));
         }
     }
     return 0;
@@ -1317,9 +1378,10 @@ int CNetMdDev::enableFactory()
 }
 
 //--------------------------------------------------------------------------
-//! @brief      register device callback function
-//!
+//! @brief      register hotplug callback function
+//
 //! @param[in]  cb  callback function to e called on device add / removal
+//!                 if is nullptr, the callback will be removed
 //--------------------------------------------------------------------------
 void CNetMdDev::registerDeviceCallback(EvtCallback cb)
 {
