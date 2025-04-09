@@ -46,9 +46,9 @@ const CNetMdPatch::PatchAdrrTab CNetMdPatch::smPatchAddrTab =
     {
         PID_DEVTYPE,
         {
-            {SDI(S1600), 0x02003fcf},
+            {SDI(S1600), 0x02003eff + 208},
             {SDI(S1500), 0x02003fc7},
-            {SDI(S1400), 0x03000220},
+            {SDI(S1400), 0x02003fab},
             {SDI(S1300), 0x02003e97},
             {SDI(S1000), 0x0200401b}
         }
@@ -126,27 +126,28 @@ const CNetMdPatch::PatchAdrrTab CNetMdPatch::smPatchAddrTab =
     {   /// anti brick patch
         PID_SAFETY,
         {
-            {SDI(S1600), 0x000000c4},
-            {SDI(S1500), 0x000000c4},
-            {SDI(S1400), 0x000000c4},
-            {SDI(S1000), 0x000000c4}
+            {SDI(S1000), 0x000000C4},
+            {SDI(S1600), 0x000000C4},
+            {SDI(S1500), 0x000000C4},
+            {SDI(S1400), 0x000000C4}
         }
     },
     {
         PID_USB_EXE,
         {
+            {SDI(S1600), 0x0000e69c},
+            {SDI(S1500), 0x0000e538},
+            {SDI(S1400), 0x0000e4c4},
+            {SDI(S1300), 0x0000daa8},
+            {SDI(S1200), 0x0000d834},
+            {SDI(S1100), 0x0000d784},
+            {SDI(S1000), 0x0000e784},
+
             {SDI(R1000), 0x00056228},
             {SDI(R1100), 0x00056aac},
             {SDI(R1200), 0x000577f8},
             {SDI(R1300), 0x00057b48},
-            {SDI(R1400), 0x00057be8},
-            {SDI(S1000), 0x0000e784},
-            {SDI(S1100), 0x0000d784},
-            {SDI(S1200), 0x0000d834},
-            {SDI(S1300), 0x0000daa8},
-            {SDI(S1400), 0x0000e4c4},
-            {SDI(S1500), 0x0000e538},
-            {SDI(S1600), 0x0000e69c}
+            {SDI(R1400), 0x00057be8}
         }
     },
     {
@@ -159,6 +160,7 @@ const CNetMdPatch::PatchAdrrTab CNetMdPatch::smPatchAddrTab =
             {SDI(S1200), 0x000129c0},
             {SDI(S1100), 0x00012910},
             {SDI(S1000), 0x00013e6c},
+
             {SDI(R1000), 0x000576e8},
             {SDI(R1100), 0x00057f8c},
             {SDI(R1200), 0x00058cf8},
@@ -169,25 +171,25 @@ const CNetMdPatch::PatchAdrrTab CNetMdPatch::smPatchAddrTab =
     {
         PID_PCM_SPEEDUP_1,
         {
-            {SDI(S1000), 0x0007852c},
-            {SDI(S1100), 0x00071c04},
-            {SDI(S1200), 0x0007258c},
-            {SDI(S1300), 0x00073c40},
-            {SDI(S1400), 0x00077300},
+            {SDI(S1600), 0x000783cc},
             {SDI(S1500), 0x000779d4},
-            {SDI(S1600), 0x000783cc}
+            {SDI(S1400), 0x00077300},
+            {SDI(S1300), 0x00073c40},
+            {SDI(S1200), 0x0007258c},
+            {SDI(S1100), 0x00071c04},
+            {SDI(S1000), 0x0007852c}
         }
     },
     {
         PID_PCM_SPEEDUP_2,
         {
-            {SDI(S1000), 0x0001ad94},
-            {SDI(S1100), 0x00019464},
-            {SDI(S1200), 0x00019628},
-            {SDI(S1300), 0x000198f8},
-            {SDI(S1400), 0x0001a820},
+            {SDI(S1600), 0x0001ac9c},
             {SDI(S1500), 0x0001aa94},
-            {SDI(S1600), 0x0001ac9c}
+            {SDI(S1400), 0x0001a820},
+            {SDI(S1300), 0x000198f8},
+            {SDI(S1200), 0x00019628},
+            {SDI(S1100), 0x00019464},
+            {SDI(S1000), 0x0001ad94}
         }
     }
 };
@@ -198,67 +200,67 @@ const CNetMdPatch::PatchPayloadTab CNetMdPatch::smPatchPayloadTab =
     {
         PID_PATCH_0,
         {
-            {SDI(S1000) | SDI(S1100) | SDI(S1200) | SDI(S1300) | SDI(S1400) | SDI(S1500) | SDI(S1600), {0x00,0x00,0xa0,0xe1}}
+            {SDI(S1000) | SDI(S1100) | SDI(S1200) | SDI(S1300) | SDI(S1400) | SDI(S1500) | SDI(S1600), {0x00, 0x00, 0xa0, 0xe1}}
         }
     },
     {
         PID_PREP_PATCH,
         {
-            {SDI(S1000) | SDI(S1100) | SDI(S1200) | SDI(S1300) | SDI(S1400) | SDI(S1500) | SDI(S1600), {0x0D,0x31,0x01,0x60}}
+            {SDI(S1000) | SDI(S1100) | SDI(S1200) | SDI(S1300) | SDI(S1400) | SDI(S1500) | SDI(S1600), {0x0D, 0x31, 0x01, 0x60}}
         }
     },
     {
         PID_PATCH_CMN_1,
         {
-            {SDI(S1000) | SDI(S1100) | SDI(S1200) | SDI(S1300) | SDI(S1400) | SDI(S1500) | SDI(S1600), {0x14,0x80,0x80,0x03}}
+            {SDI(S1000) | SDI(S1100) | SDI(S1200) | SDI(S1300) | SDI(S1400) | SDI(S1500) | SDI(S1600), {0x14, 0x80, 0x80, 0x03}}
         }
     },
     {
         PID_PATCH_CMN_2,
         {
-            {SDI(S1000) | SDI(S1100) | SDI(S1200) | SDI(S1300) | SDI(S1400) | SDI(S1500) | SDI(S1600), {0x14,0x90,0x80,0x03}}
+            {SDI(S1000) | SDI(S1100) | SDI(S1200) | SDI(S1300) | SDI(S1400) | SDI(S1500) | SDI(S1600), {0x14, 0x90, 0x80, 0x03}}
         }
     },
     {
         PID_TRACK_TYPE,
         {
-            {SDI(S1000) | SDI(S1100) | SDI(S1200) | SDI(S1300) | SDI(S1400) | SDI(S1500) | SDI(S1600), {0x06,0x02,0x00,0x04}}
+            {SDI(S1000) | SDI(S1100) | SDI(S1200) | SDI(S1300) | SDI(S1400) | SDI(S1500) | SDI(S1600), {6, 2, 0, 4}}
         }
     },
     {   //! anti brick patch
         PID_SAFETY,
         {
-            {SDI(S1000) | SDI(S1400) | SDI(S1500) | SDI(S1600), {0xdc,0xff,0xff,0xea}}
+            {SDI(S1000) | SDI(S1400) | SDI(S1500) | SDI(S1600), {0xdc, 0xff, 0xff, 0xea}}
         }
     },
     {
         PID_USB_EXE,
         {
-            {SDI(S1000) | SDI(S1100) | SDI(S1200) | SDI(S1300) | SDI(S1400) | SDI(S1500) | SDI(S1600), {0x13,0x48,0x00,0x47}},
-            {SDI(R1000) | SDI(R1100) | SDI(R1200) | SDI(R1300) | SDI(R1400)                          , {0x1a,0x48,0x00,0x47}},
+            {SDI(S1000) | SDI(S1100) | SDI(S1200) | SDI(S1300) | SDI(S1400) | SDI(S1500) | SDI(S1600), {0x13, 0x48, 0x00, 0x47}},
+            {SDI(R1000) | SDI(R1100) | SDI(R1200) | SDI(R1300) | SDI(R1400)                          , {0x1a, 0x48, 0x00, 0x47}},
         }
     },
     {
         PID_PCM_TO_MONO,
         {
-            {SDI(S1000) | SDI(S1600) | SDI(S1500)                          , {0x00,0x46,0x2a,0xf0}},
-            {SDI(S1400)                                                    , {0x00,0x46,0x29,0xf0}},
-            {SDI(S1300)                                                    , {0x00,0x46,0x28,0xf0}},
-            {SDI(S1200)                                                    , {0x00,0x46,0x27,0xf0}},
-            {SDI(S1100)                                                    , {0x28,0x1c,0x00,0x46}},
-            {SDI(R1000) | SDI(R1100) | SDI(R1200) | SDI(R1300) | SDI(R1400), {0x03,0x29,0x0b,0xe0}},
+            {SDI(S1000) | SDI(S1600) | SDI(S1500)                          , {0x00, 0x46, 0x2a, 0xf0}},
+            {SDI(S1400)                                                    , {0x00, 0x46, 0x29, 0xf0}},
+            {SDI(S1300)                                                    , {0x00, 0x46, 0x28, 0xf0}},
+            {SDI(S1200)                                                    , {0x00, 0x46, 0x27, 0xf0}},
+            {SDI(S1100)                                                    , {0x28, 0x1c, 0x00, 0x46}},
+            {SDI(R1000) | SDI(R1100) | SDI(R1200) | SDI(R1300) | SDI(R1400), {0x03, 0x29, 0x0b, 0xe0}},
         }
     },
     {
         PID_PCM_SPEEDUP_1,
         {
-            {SDI(S1000) | SDI(S1100) | SDI(S1200) | SDI(S1300) | SDI(S1400) | SDI(S1500) | SDI(S1600), {0x41,0x31,0x01,0x60}}
+            {SDI(S1000) | SDI(S1100) | SDI(S1200) | SDI(S1300) | SDI(S1400) | SDI(S1500) | SDI(S1600), {0x41, 0x31, 0x01, 0x60}}
         }
     },
     {
         PID_PCM_SPEEDUP_2,
         {
-            {SDI(S1000) | SDI(S1100) | SDI(S1200) | SDI(S1300) | SDI(S1400) | SDI(S1500) | SDI(S1600), {0x00,0x0f,0x0f,0xe0}}
+            {SDI(S1000) | SDI(S1100) | SDI(S1200) | SDI(S1300) | SDI(S1400) | SDI(S1500) | SDI(S1600), {0x00, 0x0f, 0x0f, 0xe0}}
         }
     }
 };
@@ -1163,25 +1165,51 @@ int CNetMdPatch::patch(uint32_t addr, const NetMDByteVector& data, int patchNo)
 }
 
 //--------------------------------------------------------------------------
-//! @brief      unpatch a patch
+//! @brief      unpatch up to all installed patches
 //!
-//! @param[in]  pid   patch id of patch to undo
+//! @param[in]  pids    patches to do unpatch for, if empty unpatch all.
 //!
 //! @return     NetMdErr
 //! @see        NetMdErr
 //--------------------------------------------------------------------------
-int CNetMdPatch::unpatch(PatchId pid)
+int CNetMdPatch::unpatch(const std::vector<PatchId>& pids)
 {
-    mLOG(DEBUG);
+    int ret = NETMDERR_NO_ERROR;
 
-    for (int i = 0; i < maxPatches(); i++)
+    updatePatchStorage();
+
+    if (pids.empty())
     {
-        if (mPatchStorage[i].mPid == pid)
+        for (int i = 0; i < maxPatches(); i++)
         {
-            return unpatchIdx(i);
+            if ((mPatchStorage[i].mPid != PID_UNUSED) && (mPatchStorage[i].mPid != PID_SAFETY))
+            {
+                mLOG(INFO) << "Unpatching " << mPatchStorage[i].mPid << " at patch slot #" << i << ".";
+                if (unpatchIdx(i) != NETMDERR_NO_ERROR)
+                {
+                    ret = NETMDERR_USB;
+                }
+            }
         }
     }
-    return NETMDERR_CMD_FAILED;
+    else
+    {
+        for (const auto& pid : pids)
+        {
+            for (int i = 0; i < maxPatches(); i++)
+            {
+                if ((mPatchStorage[i].mPid == pid) && (mPatchStorage[i].mPid != PID_SAFETY))
+                {
+                    mLOG(INFO) << "Unpatching " << mPatchStorage[i].mPid << " at patch slot #" << i << ".";
+                    if (unpatchIdx(i) != NETMDERR_NO_ERROR)
+                    {
+                        ret = NETMDERR_USB;
+                    }
+                }
+            }
+        }
+    }
+    return ret;
 }
 
 //--------------------------------------------------------------------------
@@ -1368,13 +1396,13 @@ int CNetMdPatch::applySpPatch(int chanNo)
         {
             patch0 = PID_PATCH_0_B;
         }
-        if ((devcode >= SDI(S_START)) && (devcode <= SDI(S_END)))
+        else if ((devcode >= SDI(S_START)) && (devcode <= SDI(S_END)))
         {
             if ((addr = patchAddress(devcode, PID_DEVTYPE)) != 0)
             {
                 if ((mNetMd.cleanRead(addr, 1, data) == NETMDERR_NO_ERROR) && !data.empty())
                 {
-                    patch0 = (data.at(0) == 1) ? PID_PATCH_0_B : PID_PATCH_0_A;
+                    patch0 = (data.at(0) != 1) ? PID_PATCH_0_A : PID_PATCH_0_B;
                 }
             }
         }
@@ -1481,12 +1509,11 @@ int CNetMdPatch::applySpPatch(int chanNo)
             LOG(CRITICAL) << e.mErrDescr;
             
             // undo all patches
-            unpatch(PID_TRACK_TYPE);
-            unpatch(PID_PREP_PATCH);
-            unpatch(PID_PATCH_CMN_2);
-            unpatch(PID_PATCH_CMN_1);
-            unpatch(patch0);
-
+            static_cast<void>(unpatch({PID_TRACK_TYPE, 
+                                       PID_PREP_PATCH, 
+                                       PID_PATCH_CMN_2, 
+                                       PID_PATCH_CMN_1, 
+                                       patch0}));
         }
         return e.mErr;
     }
@@ -1505,25 +1532,12 @@ int CNetMdPatch::applySpPatch(int chanNo)
 void CNetMdPatch::undoSpPatch()
 {
     mLOG(DEBUG);
-    if (!mNetMd.isMaybePatchable())
-    {
-        return;
-    }
-
-    mLOG(DEBUG) << "=== Undo patch 0 ===";
-    static_cast<void>(unpatch(PID_PATCH_0));
-
-    mLOG(DEBUG) << "=== Undo patch common 1 ===";
-    static_cast<void>(unpatch(PID_PATCH_CMN_1));
-
-    mLOG(DEBUG) << "=== Undo patch common 2 ===";
-    static_cast<void>(unpatch(PID_PATCH_CMN_2));
-
-    mLOG(DEBUG) << "=== Undo prep patch ===";
-    static_cast<void>(unpatch(PID_PREP_PATCH));
-
-    mLOG(DEBUG) << "=== Undo track type patch ===";
-    static_cast<void>(unpatch(PID_TRACK_TYPE));
+    static_cast<void>(unpatch({PID_TRACK_TYPE, 
+                               PID_PREP_PATCH, 
+                               PID_PATCH_CMN_2, 
+                               PID_PATCH_CMN_1, 
+                               PID_PATCH_0_A,
+                               PID_PATCH_0_B}));
 }
 
 //--------------------------------------------------------------------------
@@ -1539,11 +1553,6 @@ int CNetMdPatch::applyPCM2MonoPatch()
     {
         return NETMDERR_NOT_SUPPORTED;
     }
-
-    PatchId         patch0 = PID_UNUSED;
-    uint32_t        addr   = 0;
-    NetMDByteVector data;
-    SonyDevInfo     devcode;
 
     try
     {
@@ -1608,13 +1617,7 @@ int CNetMdPatch::applyPCM2MonoPatch()
 void CNetMdPatch::undoPCM2MonoPatch()
 {
     mLOG(DEBUG);
-    if (!mNetMd.isMaybePatchable())
-    {
-        return;
-    }
-
-    mLOG(DEBUG) << "=== Undo PCM to mono patch ===";
-    static_cast<void>(unpatch(PID_PCM_TO_MONO));
+    static_cast<void>(unpatch({PID_PCM_TO_MONO}));
 }
 
 //--------------------------------------------------------------------------
@@ -1766,8 +1769,7 @@ int CNetMdPatch::applyPCMSpeedupPatch()
         else
         {
             LOG(CRITICAL) << e.mErrDescr;
-            unpatch(PID_PCM_SPEEDUP_1);
-            unpatch(PID_PCM_SPEEDUP_2);
+            static_cast<void>(unpatch({PID_PCM_SPEEDUP_1, PID_PCM_SPEEDUP_2}));
         }
         return e.mErr;
     }
@@ -1786,16 +1788,7 @@ int CNetMdPatch::applyPCMSpeedupPatch()
 void CNetMdPatch::undoPCMSpeedupPatch()
 {
     mLOG(DEBUG);
-    if (!mNetMd.isMaybePatchable())
-    {
-        return;
-    }
-
-    mLOG(DEBUG) << "=== Undo PCM Speedup Patch #1 ===";
-    static_cast<void>(unpatch(PID_PCM_SPEEDUP_1));
-
-    mLOG(DEBUG) << "=== Undo PCM Speedup Patch #2 ===";
-    static_cast<void>(unpatch(PID_PCM_SPEEDUP_2));
+    static_cast<void>(unpatch({PID_PCM_SPEEDUP_1, PID_PCM_SPEEDUP_2}));
 }
 
 //--------------------------------------------------------------------------
@@ -1826,6 +1819,8 @@ void CNetMdPatch::updatePatchStorage()
             }
         }
     }
+
+    mPatchStoreValid = true;
 }
 
 } // ~namespace

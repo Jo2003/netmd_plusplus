@@ -324,14 +324,14 @@ class CNetMdPatch
     int patch(const PatchComplect& pc);
 
     //--------------------------------------------------------------------------
-    //! @brief      unpatch a patch
+    //! @brief      unpatch up to all installed patches
     //!
-    //! @param[in]  pid   patch id of patch to undo
+    //! @param[in]  pids    patches to do unpatch for, if empty unpatch all.
     //!
     //! @return     NetMdErr
     //! @see        NetMdErr
     //--------------------------------------------------------------------------
-    int unpatch(PatchId pid);
+    int unpatch(const std::vector<PatchId>& pids = {});
 
     //--------------------------------------------------------------------------
     //! @brief      unpatch a patch related to index

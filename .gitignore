@@ -4,3 +4,4 @@ netmd++.sublime-*
 doc/latex/*
 !doc/latex/refman.pdf
 .vscode/*
+build/*

@@ -501,7 +501,7 @@ class CNetMdDev
     bool mInitialized = false;
 
     /// NetMD device
-    NetMDDevice mDevice = {{0, 0, nullptr, false, false}, "", "", nullptr};
+    NetMDDevice mDevice = {{0, 0, nullptr, false, false, false}, "", "", nullptr};
 
     /// descriptor data
     static const DscrtData smDescrData;

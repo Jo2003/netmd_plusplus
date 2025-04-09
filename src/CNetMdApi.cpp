@@ -1048,17 +1048,17 @@ void CNetMdApi::endHBSession(uint32_t features)
 {
     features = (features == NOTHING) ? (SP_UPLOAD | PCM_SPEEDUP | PCM_2_MONO) : features;
     
-    if ((features & SP_UPLOAD) && spUploadSupported())
+    if (features & SP_UPLOAD)
     {
         mpSecure->undoSPUploadPatch();
     }
 
-    if ((features & PCM_SPEEDUP) && pcmSpeedupSupported())
+    if (features & PCM_SPEEDUP)
     {
         mpSecure->undoPCMSpeedupPatch();
     }
 
-    if ((features & PCM_2_MONO) && pcm2MonoSupported())
+    if (features & PCM_2_MONO)
     {
         mpSecure->undoPCM2MonoPatch();
     }

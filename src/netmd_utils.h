@@ -215,19 +215,24 @@ T fromLittleEndian(const T& val)
 template <typename T>
 T fromLittleEndianByteVector(const NetMDByteVector& val)
 {
+    T ret = static_cast<T>(-1);
+    
     if(sizeof(T) == val.size())
     {
-        uint8_t data[val.size()];
-        for (size_t i = 0; i < val.size(); i++)
+        uint8_t* data = new uint8_t[val.size()];
+        if (data != nullptr)
         {
-            data[i] = val.at(i);
+            for (size_t i = 0; i < val.size(); i++)
+            {
+                data[i] = val.at(i);
+            }
+            ret = fromLittleEndian(*reinterpret_cast<T*>(data));
+
+            delete [] data;
         }
-        return fromLittleEndian(*reinterpret_cast<T*>(data));
     }
-    else
-    {
-        return static_cast<T>(-1);
-    }
+
+    return ret;
 }
 
 //------------------------------------------------------------------------------
