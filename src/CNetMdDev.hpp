@@ -219,6 +219,13 @@ class CNetMdDev
     ~CNetMdDev();
 
     //--------------------------------------------------------------------------
+    //! @brief      init libusb hotplug (native or emulation)
+    //
+    //! @return     NetMdErr
+    //--------------------------------------------------------------------------
+    int initHotPlug();
+
+    //--------------------------------------------------------------------------
     //! @brief      Initializes the device.
     //!
     //! @return     NetMdErr
@@ -541,6 +548,9 @@ class CNetMdDev
 
     /// poll while true
     std::atomic_bool mDoPoll;
+
+    /// was hotplug enabled?
+    bool mbHotPlug;
 };
 
 } // /namespace netmd

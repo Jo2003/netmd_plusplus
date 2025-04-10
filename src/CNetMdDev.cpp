@@ -153,42 +153,10 @@ std::ostream& operator<<(std::ostream& os, const CNetMdDev::SonyDevInfo& dinfo)
 CNetMdDev::CNetMdDev()
     :mhdHPAdd(-1), mhdHPRmv(-1), 
     mSonyDevInfo(SDI_UNKNOWN), mFactoryMode(false),
-    mDevApiCallback(nullptr), mDoPoll(false)
+    mDevApiCallback(nullptr), mDoPoll(false), mbHotPlug(false)
 {
     mInitialized = libusb_init(NULL) == 0;
     mLOG(INFO) << "Init: " << mInitialized;
-
-    if (mInitialized && hotplugSupported())
-    {
-        mLOG(INFO) << "Hotplug supported!";
-        libusb_hotplug_register_callback(
-            NULL,
-            LIBUSB_HOTPLUG_EVENT_DEVICE_ARRIVED,
-            0,
-            LIBUSB_HOTPLUG_MATCH_ANY,
-            LIBUSB_HOTPLUG_MATCH_ANY,
-            LIBUSB_HOTPLUG_MATCH_ANY,
-            &CNetMdDev::deviceAdded,
-            static_cast<void*>(this),
-            &mhdHPAdd);
-
-        libusb_hotplug_register_callback(
-            NULL,
-            LIBUSB_HOTPLUG_EVENT_DEVICE_LEFT,
-            0,
-            LIBUSB_HOTPLUG_MATCH_ANY,
-            LIBUSB_HOTPLUG_MATCH_ANY,
-            LIBUSB_HOTPLUG_MATCH_ANY,
-            &CNetMdDev::deviceRemoved,
-            static_cast<void*>(this),
-            &mhdHPRmv);
-    }
-    else if (mInitialized)
-    {
-        mLOG(INFO) << "Hotplug emulated!";
-        mDoPoll = true;
-        mPollThread = std::thread(std::bind(&CNetMdDev::pollThread, this));
-    }
 }
 
 //--------------------------------------------------------------------------
@@ -200,17 +168,8 @@ CNetMdDev::~CNetMdDev()
 
     if (hotplugSupported())
     {
-        if (mhdHPAdd > -1)
-        {
-            libusb_hotplug_deregister_callback(NULL, mhdHPAdd);
-            mhdHPAdd = -1;
-        }
-
-        if (mhdHPRmv > -1)
-        {
-            libusb_hotplug_deregister_callback(NULL, mhdHPRmv);
-            mhdHPRmv = -1;
-        }
+        libusb_hotplug_deregister_callback(NULL, mhdHPAdd);
+        libusb_hotplug_deregister_callback(NULL, mhdHPRmv);
     }
     else
     {
@@ -237,6 +196,56 @@ CNetMdDev::~CNetMdDev()
 }
 
 //--------------------------------------------------------------------------
+//! @brief      init libusb hotplug (native or emulation)
+//
+//! @return     NetMdErr
+//--------------------------------------------------------------------------
+int CNetMdDev::initHotPlug()
+{
+    if (mInitialized)
+    {
+        mbHotPlug = true;
+
+        // get a valid status
+        initDevice();
+
+        if (hotplugSupported())
+        {
+            mLOG(INFO) << "Hotplug supported!";
+            libusb_hotplug_register_callback(
+                NULL,
+                LIBUSB_HOTPLUG_EVENT_DEVICE_ARRIVED,
+                0,
+                LIBUSB_HOTPLUG_MATCH_ANY,
+                LIBUSB_HOTPLUG_MATCH_ANY,
+                LIBUSB_HOTPLUG_MATCH_ANY,
+                &CNetMdDev::deviceAdded,
+                static_cast<void*>(this),
+                &mhdHPAdd);
+
+            libusb_hotplug_register_callback(
+                NULL,
+                LIBUSB_HOTPLUG_EVENT_DEVICE_LEFT,
+                0,
+                LIBUSB_HOTPLUG_MATCH_ANY,
+                LIBUSB_HOTPLUG_MATCH_ANY,
+                LIBUSB_HOTPLUG_MATCH_ANY,
+                &CNetMdDev::deviceRemoved,
+                static_cast<void*>(this),
+                &mhdHPRmv);
+        }
+        else
+        {
+            mLOG(INFO) << "Hotplug emulated!";
+            mDoPoll = true;
+            mPollThread = std::thread(std::bind(&CNetMdDev::pollThread, this));
+        }
+    }
+
+    return mInitialized ? NETMDERR_NO_ERROR : NETMDERR_USB;
+}
+
+//--------------------------------------------------------------------------
 //! @brief      Initializes the device.
 //!
 //! @return     NetMdErr
@@ -251,9 +260,24 @@ int CNetMdDev::initDevice()
     {
         if (mDevice.mDevHdl != nullptr)
         {
-            // after being initialized the first time, all other device
-            // handling has to go through hotplug
-            return NETMDERR_NO_ERROR;
+            if (mbHotPlug)
+            {
+                // after being initialized the first time, all other device
+                // handling has to go through hotplug
+                return NETMDERR_NO_ERROR;
+            }
+            else
+            {
+                // in case hotplug wasn't enabled, we do a complete device recognition
+                libusb_close(mDevice.mDevHdl);
+                mDevice = {{0, 0, nullptr, false, false, false}, "", "", nullptr, nullptr};
+                mSonyDevInfo    = SDI_UNKNOWN;
+                mFactoryMode    = false;
+                if (mDevApiCallback)
+                {
+                    mDevApiCallback(false);
+                }
+            }
         }
 
         libusb_device **devs = nullptr;
@@ -263,7 +287,7 @@ int CNetMdDev::initDevice()
 
         if (cnt > -1)
         {
-            for (ssize_t i = 0; ((i < cnt) && (ret == -1)); i++)
+            for (ssize_t i = 0; ((i < cnt) && (ret != NETMDERR_NO_ERROR)); i++)
             {
                 if (libusb_get_device_descriptor(devs[i], &descr) == 0)
                 {
@@ -293,73 +317,60 @@ int CNetMdDev::openDevice(libusb_device* dev, libusb_device_descriptor* desc)
 {
     int ret = NETMDERR_USB;
 
+    mLOG(DEBUG) << "Checking device: " << std::hex << desc->idVendor << ":" << desc->idProduct 
+        << ", device class: " << std::dec << static_cast<int>(desc->bDeviceClass);
+
+    if (mDevice.mDevHdl != nullptr)
+    {
+        mLOG(DEBUG) << "A NetMd device is already in use!";
+        return NETMDERR_NOTREADY;
+    }
+
     KnownDevices::const_iterator cit;
 
     if ((cit = smKnownDevices.find(vendorDev(desc->idVendor, desc->idProduct))) != smKnownDevices.cend())
     {
-        mLOG(DEBUG) << "Found supported device: " << cit->second.mModel;
+        mLOG(DEBUG) << "Found supported device: " << cit->second.mModel << " @ " << dev;
         mDevice.mKnownDev = cit->second;
-        mDevice.mDevPtr   = dev;
+
         bool success = false;
-#ifdef __linux__
-        int cycle    = 5;
-        do
+
+        if (libusb_open(dev, &mDevice.mDevHdl) == 0)
         {
-            if (libusb_open(dev, &mDevice.mDevHdl) == 0)
+            int cycle = 5;
+            do
             {
-                if ((ret = libusb_reset_device(mDevice.mDevHdl)) == 0)
+                if (libusb_claim_interface(mDevice.mDevHdl, 0) == 0)
                 {
-                    if (libusb_claim_interface(mDevice.mDevHdl, 0) == 0)
-                    {
-                        success = true;
-                        ret     = NETMDERR_NO_ERROR;
-                        break;
-                    }
+                    success = true;
+                    ret     = NETMDERR_NO_ERROR;
+                    break;
                 }
-                else if (ret == LIBUSB_ERROR_NOT_FOUND)
+                else
                 {
-                    mLOG(DEBUG) << "Can't reset " << cit->second.mModel;
+                    // libusb_reset_device(mDevice.mDevHdl);
+                    std::this_thread::sleep_for(std::chrono::milliseconds(100));
+                    mLOG(DEBUG) << "Can't claim interface " << cit->second.mModel;
                 }
             }
-
-            if (!success && mDevice.mDevHdl)
-            {
-                libusb_close(mDevice.mDevHdl);
-                mDevice.mDevHdl = nullptr;
-            }
-
-            uwait(100'000);
+            while(!success && cycle--);
         }
-        while(!success && cycle--);
 
-#else // not linux
-        if ((ret = libusb_open(dev, &mDevice.mDevHdl)) == 0)
-        {
-            if ((ret = libusb_claim_interface(mDevice.mDevHdl, 0)) == 0)
-            {
-                success = true;
-                ret     = NETMDERR_NO_ERROR;
-            }
-            else
-            {
-                mLOG(CRITICAL) << "Can't claim USB device: " << libusb_strerror(static_cast<libusb_error>(ret));
-                libusb_close(mDevice.mDevHdl);
-                mDevice.mDevHdl = nullptr;
-            }
-        }
-        else
-        {
-            mLOG(CRITICAL) << "Can't open USB device: " << libusb_strerror(static_cast<libusb_error>(ret));
-        }
-#endif // __linux__
         if (success)
         {
+            mDevice.mDevPtr = dev;
             static_cast<void>(waitForSync());
             static_cast<void>(getStrings(*desc));
-            mLOG(INFO) << "Product name: " << mDevice.mName << ", serial number: " << mDevice.mSerial;
+            mLOG(INFO) << "Product name: " << mDevice.mName << ", serial number: " << mDevice.mSerial << " @ " << mDevice.mDevPtr;
         }
         else
         {
+            if (mDevice.mDevHdl != nullptr)
+            {
+                libusb_close(mDevice.mDevHdl);
+                mDevice.mDevHdl = nullptr;
+            }
+            mDevice = {{0, 0, nullptr, false, false, false}, "", "", nullptr, nullptr};
             ret = NETMDERR_USB;
             mLOG(CRITICAL) << "Can't init usb device!";
         }
@@ -384,14 +395,14 @@ int CNetMdDev::deviceRemoved(libusb_context*, libusb_device *device, libusb_hotp
     {
         std::unique_lock<std::recursive_mutex> lock(pDev->mMtxDevAcc);
 
-        //! @bug Since we can't get a description from a removed device,
-        //!      we assume the device pointer to the libusb_device is 
-        //!      the unique key.
+        //! @note Since we can't get a description from a removed device,
+        //!       we use the device pointer to the libusb_device is 
+        //!       the unique key.
         if (pDev->mDevice.mDevHdl && (device == pDev->mDevice.mDevPtr)) 
         {
-            mLOG(INFO) << "Device " << pDev->mDevice.mKnownDev.mModel << " removed.";
+            mLOG(INFO) << "Device " << pDev->mDevice.mKnownDev.mModel  << " @ " << device << " removed.";
             libusb_close(pDev->mDevice.mDevHdl);
-            pDev->mDevice.mDevHdl = nullptr;
+            pDev->mDevice = {{0, 0, nullptr, false, false, false}, "", "", nullptr, nullptr};
             pDev->mSonyDevInfo    = SDI_UNKNOWN;
             pDev->mFactoryMode    = false;
             if (pDev->mDevApiCallback)
@@ -466,11 +477,6 @@ int CNetMdDev::pollThread()
             }
         }
 
-        if (devs != nullptr)
-        {
-            libusb_free_device_list(devs, 1);
-        }
-
         // removed
         for (const auto &[key, val] : lastDevices)
         {
@@ -493,12 +499,21 @@ int CNetMdDev::pollThread()
             }
         }
 
+        if (devs != nullptr)
+        {
+            libusb_free_device_list(devs, 1);
+        }
+
+        //! @note  All libusb_device pointers are now invalid. The only exception is
+        //!        the pointer we created a netmd device handle from. This stands valid and 
+        //!        will be used to check if our NetMD device was removed.
+
         lastDevices = currDevices;
 
         if (mDoPoll)
         {
-            // wait for 750ms
-            std::this_thread::sleep_for(std::chrono::milliseconds(750));
+            // wait for 250ms
+            std::this_thread::sleep_for(std::chrono::milliseconds(250));
         }
     }
     return 0;
@@ -1212,7 +1227,6 @@ int CNetMdDev::changeMemState(uint32_t addr, uint8_t size, MemAcc acc)
 //--------------------------------------------------------------------------
 CNetMdDev::SonyDevInfo CNetMdDev::sonyDevCode()
 {
-    mLOG(DEBUG);
     if (mSonyDevInfo == SDI_UNKNOWN)
     {
         if (!isMaybePatchable())
@@ -1221,6 +1235,7 @@ CNetMdDev::SonyDevInfo CNetMdDev::sonyDevCode()
         }
         else
         {
+            mLOG(DEBUG) << "get device info from hardware ...";
             uint8_t query[] = {0x00, 0x18, 0x12, 0xff};
             uint8_t chip    = 255, hwid = 255, version = 255, subversion = 255;
 
@@ -1345,11 +1360,11 @@ CNetMdDev::SonyDevInfo CNetMdDev::sonyDevCode()
 //--------------------------------------------------------------------------
 int CNetMdDev::enableFactory()
 {
-    mLOG(DEBUG);
     int ret = NETMDERR_NO_ERROR;
 
     if (!mFactoryMode)
     {
+        mLOG(DEBUG) << "enable factory ...";
         uint8_t p1[]  = {0x00, 0x18, 0x09, 0x00, 0xff, 0x00, 0x00, 0x00,
                         0x00, 0x00};
 

@@ -35,7 +35,34 @@ struct structlog
 
 extern structlog LOGCFG;
 
-#define mLOG(x_) LOG(x_) << __FUNCTION__ << "():" << __LINE__ << ": "
+#ifdef __GNUC__
+    constexpr std::string_view method_name(const char* s)
+    {
+        std::string_view prettyFunction(s);
+        size_t bracket = prettyFunction.rfind("(");
+        size_t colon1  = prettyFunction.rfind("::", bracket);
+        size_t colon2  = prettyFunction.rfind("::", colon1);
+        size_t space   = std::string::npos;
+        if (colon1 != std::string::npos)
+        {
+            size_t colon2  = prettyFunction.rfind("::", colon1 - 1);
+            if (colon2 != std::string::npos)
+            {
+                space = colon2 + 2;
+            }
+        }
+        else
+        {
+            space = prettyFunction.rfind(" ", bracket) + 1;
+        }
+        return prettyFunction.substr(space, bracket-space);
+    }
+    #define __METHOD_NAME__ method_name(__PRETTY_FUNCTION__)
+#else
+    #define __METHOD_NAME__ __FUNCTION__
+#endif
+
+#define mLOG(x_) LOG(x_) << __METHOD_NAME__ << "():" << __LINE__ << ": "
 
 //------------------------------------------------------------------------------
 //! @brief      This class describes a log helper
@@ -76,7 +103,7 @@ public:
         std::unique_lock<std::mutex> lck(LOGCFG.mtxLog);
         if(msglevel >= LOGCFG.level)
         {
-            *LOGCFG.sout << msg;
+            *LOGCFG.sout << msg << std::flush;
             opened = true;
         }
         return *this;

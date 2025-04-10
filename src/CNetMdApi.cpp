@@ -102,6 +102,22 @@ void CNetMdApi::setLogStream(std::ostream& os)
 }
 
 //--------------------------------------------------------------------------
+//! @brief      init libusb hotplug (native or emulation)
+//
+//! @return     NetMdErr
+//--------------------------------------------------------------------------
+int CNetMdApi::initHotPlug()
+{
+    mLOG(DEBUG);
+    int ret;
+    if ((ret = mpNetMd->initHotPlug()) == NETMDERR_NO_ERROR)
+    {
+        return initDiscHeader();
+    }
+    return ret;
+}
+
+//--------------------------------------------------------------------------
 //! @brief      Initializes the device.
 //!
 //! @return     NetMdErr
@@ -1007,7 +1023,7 @@ int CNetMdApi::startHBSession(uint32_t features)
     {
         if ((features & SP_UPLOAD) && spUploadSupported())
         {
-            mLOG(INFO) << "SP upload patch applied";
+            mLOG(INFO) << "apply SP upload patch ...";
             if ((e = mpSecure->applySPUploadPatch()) != NETMDERR_NO_ERROR)
             {
                 ret = e;
@@ -1016,7 +1032,7 @@ int CNetMdApi::startHBSession(uint32_t features)
 
         if ((features & PCM_SPEEDUP) && pcmSpeedupSupported())
         {
-            mLOG(INFO) << "PCM speedup patch applied";
+            mLOG(INFO) << "apply PCM speedup patch ...";
             if ((e = mpSecure->applyPCMSpeedupPatch()) != NETMDERR_NO_ERROR)
             {
                 ret = e;
@@ -1025,7 +1041,7 @@ int CNetMdApi::startHBSession(uint32_t features)
 
         if ((features & PCM_2_MONO) && pcm2MonoSupported())
         {
-            mLOG(INFO) << "PCM to mono patch applied";
+            mLOG(INFO) << "apply PCM to mono patch ...";
             if ((e = mpSecure->applyPCM2MonoPatch()) != NETMDERR_NO_ERROR)
             {
                 ret = e;

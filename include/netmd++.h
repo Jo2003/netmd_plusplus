@@ -107,11 +107,11 @@ netmd::netmd_pp* pNetMd = new netmd::netmd_pp();
 ~~~
 if (pNetMd != nullptr)
 {
-    pNetMd->initDevice();
+    pNetMd->initHotPlug();
 }
 ~~~
 
- - If you change or re-plug the device, simply run above code (initDevice()) again!
+ - If you change or re-plug the device, it should be recognized by the hotplug implementation!
 
 ## Examples
 ### Track transfer
@@ -124,15 +124,19 @@ int main()
 {
     netmd::netmd_pp* pNetMd = new netmd::netmd_pp();
 
-    if ((pNetMd != nullptr) && (pNetMd->initDevice() == netmd::NETMDERR_NO_ERROR))
+    if (pNetMd != nullptr)
     {
-        if (pNetMd->otfEncodeSupported())
+        pNetMd->initHotPlug();
+        if (pNetMd->initDevice() == netmd::NETMDERR_NO_ERROR)
         {
-            pNetMd->sendAudioFile("/path/to/nice/audio.wav", "Very nice Audio file (LP2)", netmd::NETMD_DISKFORMAT_LP2);
-        }
-        else
-        {
-            pNetMd->sendAudioFile("/path/to/nice/audio.wav", "Very nice Audio file (SP)", netmd::NO_ONTHEFLY_CONVERSION);
+            if (pNetMd->otfEncodeSupported())
+            {
+                pNetMd->sendAudioFile("/path/to/nice/audio.wav", "Very nice Audio file (LP2)", netmd::NETMD_DISKFORMAT_LP2);
+            }
+            else
+            {
+                pNetMd->sendAudioFile("/path/to/nice/audio.wav", "Very nice Audio file (SP)", netmd::NO_ONTHEFLY_CONVERSION);
+            }
         }
     }
     return 0;
@@ -147,11 +151,15 @@ int main()
 {
     netmd::netmd_pp* pNetMd = new netmd::netmd_pp();
 
-    if ((pNetMd != nullptr) && (pNetMd->initDevice() == netmd::NETMDERR_NO_ERROR))
+    if (pNetMd != nullptr)
     {
-        pNetMd->eraseDisc();
-        pNetMd->setDiscTitle("Amazing MD");
+        pNetMd->initHotPlug();
+        if (pNetMd->initDevice() == netmd::NETMDERR_NO_ERROR)
+        {
+            pNetMd->eraseDisc();
+            pNetMd->setDiscTitle("Amazing MD");
 
+        }
     }
     return 0;
 }
@@ -442,6 +450,13 @@ public:
     //! @brief      Destroys the object.
     //--------------------------------------------------------------------------
     ~CNetMdApi();
+
+    //--------------------------------------------------------------------------
+    //! @brief      init libusb hotplug (native or emulation)
+    //
+    //! @return     NetMdErr
+    //--------------------------------------------------------------------------
+    int initHotPlug();
 
     //--------------------------------------------------------------------------
     //! @brief      Initializes the device.
