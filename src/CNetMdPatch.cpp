@@ -1229,6 +1229,8 @@ int CNetMdPatch::unpatchIdx(int idx)
             mNetMdThrow(NETMDERR_PARAM, "Error with patch number!");
         }
 
+        // patch(PATCH_CLEAN_DATA.mDevs, PATCH_CLEAN_DATA.mPtData, idx);
+
         const uint32_t base    = PERIPHERAL_BASE + idx           * 0x10;
         const uint32_t control = PERIPHERAL_BASE + iMaxPatches   * 0x10;
 
@@ -1256,6 +1258,12 @@ int CNetMdPatch::unpatchIdx(int idx)
         if (mNetMd.cleanWrite(base, reply) != NETMDERR_NO_ERROR)
         {
             mNetMdThrow(NETMDERR_USB, "Error while writing patch control #1.");
+        }
+
+        // clean entry
+        if (mNetMd.cleanWrite(base + 4, {0, 0, 0, 0, 0, 0, 0, 0}) != NETMDERR_NO_ERROR)
+        {
+            mNetMdThrow(NETMDERR_USB, "Error while cleaning patch info.");
         }
 
         // write 5, 9 to main control
@@ -1357,7 +1365,7 @@ int CNetMdPatch::applySpPatch(int chanNo)
         PatchComplect pc;
 
         SonyDevInfo devcode = mNetMd.sonyDevCode();
-        if (!((devcode <= SDI(S_START)) && (devcode >= SDI(S_END))))
+        if (!((devcode >= SDI(S_START)) && (devcode <= SDI(S_END))))
         {
             mNetMdThrow(NETMDERR_OTHER, "Unknown or unsupported NetMD device!");
         }

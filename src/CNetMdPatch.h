@@ -109,6 +109,8 @@ class CNetMdPatch
         NetMDByteVector mPatchData; ///< patch data
     };
 
+    // const PayLoad PATCH_CLEAN_DATA = {0, {0, 0, 0, 0}};
+
     //--------------------------------------------------------------------------
     //! @brief      print helper for PatchId
     //!

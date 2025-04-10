@@ -27,6 +27,7 @@
 #include <iostream>
 #include <netmd++.h>
 #include <cstring>
+#include <thread>
 
 using namespace netmd;
 
@@ -80,8 +81,32 @@ int main (int argc, char* argv[])
         }
         return 0;
     }
-    netmd_pp* pNetMD = new netmd_pp();
 
+    netmd_pp* pNetMD = nullptr;
+
+    std::vector<HomebrewFeatures> featTest = {SP_UPLOAD, SP_UPLOAD, PCM_SPEEDUP, SP_UPLOAD, PCM_2_MONO, SP_UPLOAD, PCM_2_MONO, PCM_SPEEDUP};
+
+    for (const auto f : featTest)
+    {
+        if ((pNetMD = new netmd_pp()) != nullptr)
+        {
+            pNetMD->setLogLevel(INFO);
+            pNetMD->initHotPlug();
+
+            std::this_thread::sleep_for(std::chrono::seconds(2));
+            pNetMD->startHBSession(f);
+            std::this_thread::sleep_for(std::chrono::seconds(2));
+            pNetMD->endHBSession(f);
+            std::this_thread::sleep_for(std::chrono::seconds(1));
+            
+            delete pNetMD;
+        }
+    }
+    return 0;
+}
+
+/*
+{
     if (pNetMD)
     {
         pNetMD->setLogLevel(INFO);
@@ -91,10 +116,21 @@ int main (int argc, char* argv[])
         {
             std::cout << "NetMD device initialized!" << std::endl;
 
+            // SP_UPLOAD | PCM_SPEEDUP | PCM_2_MONO
+            pNetMD->startHBSession(PCM_SPEEDUP);
+            std::this_thread::sleep_for(std::chrono::seconds(2));
+            pNetMD->endHBSession(PCM_SPEEDUP);
+
+            delete pNetMD;
+            std::this_thread::sleep_for(std::chrono::seconds(2));
+
+            pNetMD = new netmd_pp();
+            pNetMD->setLogLevel(INFO);
+            pNetMD->initHotPlug();
+
             // pNetMD->eraseDisc();
             pNetMD->sendAudioFile("./funky.wav", "Funky track", DiskFormat::NO_ONTHEFLY_CONVERSION);
-
-            /*
+            
             std::string s;
 
             if (pNetMD->discTitle(s) == NETMDERR_NO_ERROR)
@@ -141,7 +177,7 @@ int main (int argc, char* argv[])
             bool support = pNetMD->spUploadSupported();
 
             std::cout << "Supports SP upload: " << support << std::endl;
-            */
+
             if (pNetMD->prepareTOCManip() == NETMDERR_NO_ERROR)
             {
                 NetMDByteVector toc;
@@ -192,7 +228,6 @@ int main (int argc, char* argv[])
                     utoc.addTrack(8, 39'000, "Funky Track Less Than One Minute Part #8", now);
                     utoc.setDiscTitle("8 Funky tracks on gapless NetMD");
                     
-                    /*
                     utoc.addTrack(2, 261'490, "What Do You Want From Me");
                     utoc.addTrack(3, 424'560, "Poles Apart");
                     utoc.addTrack(4, 328'290, "Marooned");
@@ -204,7 +239,6 @@ int main (int argc, char* argv[])
                     utoc.addTrack(10, 314'730, "Lost For Words");
                     utoc.addTrack(11, 511'520, "High Hopes");
                     utoc.setDiscTitle("Pink Floyd - The Division Bell (7243 8 28984 2 9)");
-                    */
 
                     i = utoc.trackCount();
 
@@ -278,6 +312,7 @@ int main (int argc, char* argv[])
             {
                 std::cout << "Can't prepare TOC manip!" << std::endl;
             }
+
         }
 
         delete pNetMD;
@@ -285,3 +320,4 @@ int main (int argc, char* argv[])
 
     return 0;
 }
+*/
