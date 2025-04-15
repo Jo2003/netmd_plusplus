@@ -256,9 +256,7 @@ public:
         return oss.str();
     }
 
-private:
-
-    inline std::string getLabel(int type)
+    static std::string getLabel(int type)
     {
         std::string label;
         switch(type)
@@ -272,6 +270,60 @@ private:
         return label;
     }
 
+private:
     bool opened = false;
     int msglevel = DEBUG;
+};
+
+#define mFLOW(x_) Flow flow_(x_, std::string{__METHOD_NAME__})
+
+//------------------------------------------------------------------------------
+//! @brief      Helper class to indicate the program flow
+//------------------------------------------------------------------------------
+class Flow
+{
+public:
+    Flow(int sev, const std::string& f) 
+        : mMsglevel(sev), mFunc(f)
+    {
+        std::unique_lock<std::mutex> lck(LOGCFG.mtxLog);
+
+        if(LOGCFG.time && mMsglevel >= LOGCFG.level)
+        {
+            *LOGCFG.sout << LOG::timeStamp();
+        }
+
+        if(LOGCFG.headers && mMsglevel >= LOGCFG.level)
+        {
+            *LOGCFG.sout  << LOG::getLabel(mMsglevel) << "|";
+        }
+
+        if(LOGCFG.headers && mMsglevel >= LOGCFG.level)
+        {
+            *LOGCFG.sout << mFunc << "() --> in" << std::endl;
+        }
+    }
+
+    ~Flow()
+    {
+        std::unique_lock<std::mutex> lck(LOGCFG.mtxLog);
+        if(LOGCFG.time && mMsglevel >= LOGCFG.level)
+        {
+            *LOGCFG.sout << LOG::timeStamp();
+        }
+
+        if(LOGCFG.headers && mMsglevel >= LOGCFG.level)
+        {
+            *LOGCFG.sout  << LOG::getLabel(mMsglevel) << "|";
+        }
+
+        if(mMsglevel >= LOGCFG.level)
+        {
+            *LOGCFG.sout << mFunc << "() <-- out" << std::endl;
+        }
+    }
+
+private:
+    int mMsglevel;
+    std::string mFunc;
 };

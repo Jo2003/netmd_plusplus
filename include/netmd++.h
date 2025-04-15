@@ -365,6 +365,7 @@ enum HomebrewFeatures : uint32_t
     SP_UPLOAD   = 0x01, //!< SP upload
     PCM_2_MONO  = 0x02, //!< PCM to mono
     PCM_SPEEDUP = 0x04, //!< PCM speedup
+    USB_EXEC    = 0x08, //!< USB execution
 };
 
 /// netmd groups

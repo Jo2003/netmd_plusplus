@@ -109,8 +109,6 @@ class CNetMdPatch
         NetMDByteVector mPatchData; ///< patch data
     };
 
-    // const PayLoad PATCH_CLEAN_DATA = {0, {0, 0, 0, 0}};
-
     //--------------------------------------------------------------------------
     //! @brief      print helper for PatchId
     //!
@@ -260,12 +258,12 @@ class CNetMdPatch
     int writeUTOCSector(UTOCSector s, const NetMDByteVector& data);
 
     //--------------------------------------------------------------------------
-    //! @brief      prepare TOC manipulation
+    //! @brief      apply USB execution patch
     //!
     //! @return     NetMdErr
     //! @see        NetMdErr
     //--------------------------------------------------------------------------
-    int prepareTOCManip();
+    int applyUSBExecPatch();
 
     //--------------------------------------------------------------------------
     //! @brief      finalize TOC though exploit
@@ -382,6 +380,11 @@ class CNetMdPatch
     void undoPCM2MonoPatch();
 
     //--------------------------------------------------------------------------
+    //! @brief      undo the PCM to mono patch
+    //--------------------------------------------------------------------------
+    bool pcm2MonoSupported();
+
+    //--------------------------------------------------------------------------
     //! @brief      check if device supports SP upload
     //!
     //! @return     true -> supports; false -> doesn't support
@@ -436,6 +439,14 @@ class CNetMdPatch
     //! @brief      apply PCM speedup patch
     //--------------------------------------------------------------------------
     void undoPCMSpeedupPatch();
+
+    //--------------------------------------------------------------------------
+    //! @brief      undo USB execution patch
+    //!
+    //! @return     NetMdErr
+    //! @see        NetMdErr
+    //--------------------------------------------------------------------------
+    void undoUSBExecPatch();
 
     //--------------------------------------------------------------------------
     //! @brief      update patch storage

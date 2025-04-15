@@ -84,20 +84,21 @@ int main (int argc, char* argv[])
 
     netmd_pp* pNetMD = nullptr;
 
-    std::vector<HomebrewFeatures> featTest = {SP_UPLOAD, SP_UPLOAD, PCM_SPEEDUP, SP_UPLOAD, PCM_2_MONO, SP_UPLOAD, PCM_2_MONO, PCM_SPEEDUP};
+    std::vector<uint32_t> featTest = {(SP_UPLOAD | USB_EXEC), SP_UPLOAD, (USB_EXEC | PCM_2_MONO), PCM_SPEEDUP, (USB_EXEC | PCM_2_MONO)};
 
     for (const auto f : featTest)
     {
         if ((pNetMD = new netmd_pp()) != nullptr)
         {
             pNetMD->setLogLevel(INFO);
-            pNetMD->initHotPlug();
-
-            std::this_thread::sleep_for(std::chrono::seconds(2));
-            pNetMD->startHBSession(f);
-            std::this_thread::sleep_for(std::chrono::seconds(2));
-            pNetMD->endHBSession(f);
-            std::this_thread::sleep_for(std::chrono::seconds(1));
+            if (pNetMD->initDevice() == NETMDERR_NO_ERROR)
+            {
+                std::this_thread::sleep_for(std::chrono::seconds(2));
+                pNetMD->startHBSession(f);
+                std::this_thread::sleep_for(std::chrono::seconds(2));
+                pNetMD->endHBSession(f);
+                std::this_thread::sleep_for(std::chrono::seconds(1));
+            }
             
             delete pNetMD;
         }

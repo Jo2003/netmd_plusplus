@@ -35,6 +35,8 @@
 #include <sstream>
 #include <unistd.h>
 #include <utility>
+#include <thread>
+#include <chrono>
 
 namespace netmd {
 
@@ -425,6 +427,7 @@ CNetMdPatch::CNetMdPatch(CNetMdDev& netMd)
 //--------------------------------------------------------------------------
 void CNetMdPatch::deviceRemoved()
 {
+    mFLOW(INFO);
     for (uint8_t i = 0; i < MAX_PATCH; i++)
     {
         mPatchStorage[i] = {PID_UNUSED, 0, {0,0,0,0}};
@@ -672,7 +675,7 @@ NetMDByteVector CNetMdPatch::exploitData(SonyDevInfo devinfo, ExploitId eid)
 //--------------------------------------------------------------------------
 int CNetMdPatch::checkPatch(PatchId pid)
 {
-    mLOG(DEBUG);
+    mFLOW(INFO);
     updatePatchStorage();
 
     for (int i = 0; i < maxPatches(); i++)
@@ -750,14 +753,14 @@ int CNetMdPatch::writeUTOCSector(UTOCSector s, const NetMDByteVector& data)
 }
 
 //--------------------------------------------------------------------------
-//! @brief      prepare TOC manipulation
+//! @brief      apply USB execution patch
 //!
 //! @return     NetMdErr
 //! @see        NetMdErr
 //--------------------------------------------------------------------------
-int CNetMdPatch::prepareTOCManip()
+int CNetMdPatch::applyUSBExecPatch()
 {
-    mLOG(DEBUG);
+    mFLOW(INFO);
     if (!mNetMd.isMaybePatchable())
     {
         return NETMDERR_NOT_SUPPORTED;
@@ -826,6 +829,7 @@ int CNetMdPatch::prepareTOCManip()
 int CNetMdPatch::USBExecute(SonyDevInfo devInfo, const NetMDByteVector& execData,
                             NetMDResp* pResp, bool sendOnly)
 {
+    mFLOW(INFO);
     NetMDResp query, resp;
     NetMDParams params;
     int ret;
@@ -879,7 +883,7 @@ int CNetMdPatch::USBExecute(SonyDevInfo devInfo, const NetMDByteVector& execData
 //--------------------------------------------------------------------------
 bool CNetMdPatch::checkUSBExec(const SonyDevInfo& devcode)
 {
-    mLOG(DEBUG);
+    mFLOW(INFO);
     if (devcode != SDI(UNKNOWN))
     {
         NetMDResp resp;
@@ -916,6 +920,7 @@ bool CNetMdPatch::checkUSBExec(const SonyDevInfo& devcode)
 //--------------------------------------------------------------------------
 int CNetMdPatch::finalizeTOC(bool reset)
 {
+    mFLOW(INFO);
     try
     {
         SonyDevInfo devcode = mNetMd.sonyDevCode();
@@ -934,7 +939,7 @@ int CNetMdPatch::finalizeTOC(bool reset)
 
         for(int i = 1; i <= 5; i++)
         {
-            uwait(250'000);
+            std::this_thread::sleep_for(std::chrono::milliseconds(250));
             mLOG(CAPTURE) << "Finalizing TOC: " << std::setw(2) << std::setfill('0') << i << "%";
         }
         
@@ -946,7 +951,7 @@ int CNetMdPatch::finalizeTOC(bool reset)
 
         for(int i = 6; i <= 89; i++)
         {
-            uwait(250'000);
+            std::this_thread::sleep_for(std::chrono::milliseconds(250));
             mLOG(CAPTURE) << "Finalizing TOC: " << std::setw(2) << std::setfill('0') << i << "%";
         }
 
@@ -993,7 +998,7 @@ int CNetMdPatch::finalizeTOC(bool reset)
 //--------------------------------------------------------------------------
 int CNetMdPatch::readPatchData(int patchNo, uint32_t& addr, NetMDByteVector& patch)
 {
-    mLOG(DEBUG);
+    mFLOW(INFO);
     int            ret   = NETMDERR_NO_ERROR;
     const uint32_t base  = PERIPHERAL_BASE + patchNo * 0x10;
     NetMDByteVector reply;
@@ -1042,7 +1047,7 @@ int CNetMdPatch::patch(const PatchComplect& pc)
 //--------------------------------------------------------------------------
 int CNetMdPatch::patch(uint32_t addr, const NetMDByteVector& data, int patchNo)
 {
-    mLOG(DEBUG);
+    mFLOW(INFO);
     // Original method written by Sir68k.
     try
     {
@@ -1166,6 +1171,7 @@ int CNetMdPatch::patch(uint32_t addr, const NetMDByteVector& data, int patchNo)
 //--------------------------------------------------------------------------
 int CNetMdPatch::unpatch(const std::vector<PatchId>& pids)
 {
+    mFLOW(INFO);
     int ret = NETMDERR_NO_ERROR;
 
     updatePatchStorage();
@@ -1214,7 +1220,7 @@ int CNetMdPatch::unpatch(const std::vector<PatchId>& pids)
 //--------------------------------------------------------------------------
 int CNetMdPatch::unpatchIdx(int idx)
 {
-    mLOG(DEBUG);
+    mFLOW(INFO);
     try
     {
         if ((idx < 0) || (idx >= maxPatches()))
@@ -1229,7 +1235,11 @@ int CNetMdPatch::unpatchIdx(int idx)
             mNetMdThrow(NETMDERR_PARAM, "Error with patch number!");
         }
 
-        // patch(PATCH_CLEAN_DATA.mDevs, PATCH_CLEAN_DATA.mPtData, idx);
+        // clean entry
+        if (patch(0, {0, 0, 0, 0}, idx) != NETMDERR_NO_ERROR)
+        {
+            mNetMdThrow(NETMDERR_USB, "Error while cleaning patch data.");
+        }
 
         const uint32_t base    = PERIPHERAL_BASE + idx           * 0x10;
         const uint32_t control = PERIPHERAL_BASE + iMaxPatches   * 0x10;
@@ -1260,11 +1270,13 @@ int CNetMdPatch::unpatchIdx(int idx)
             mNetMdThrow(NETMDERR_USB, "Error while writing patch control #1.");
         }
 
+        /*
         // clean entry
         if (mNetMd.cleanWrite(base + 4, {0, 0, 0, 0, 0, 0, 0, 0}) != NETMDERR_NO_ERROR)
         {
             mNetMdThrow(NETMDERR_USB, "Error while cleaning patch info.");
         }
+        */
 
         // write 5, 9 to main control
         if (mNetMd.cleanWrite(control, {5}) != NETMDERR_NO_ERROR)
@@ -1300,6 +1312,7 @@ int CNetMdPatch::unpatchIdx(int idx)
 //--------------------------------------------------------------------------
 int CNetMdPatch::safetyPatch()
 {
+    mFLOW(INFO);
     try
     {
         PatchComplect pc;
@@ -1350,7 +1363,7 @@ int CNetMdPatch::safetyPatch()
 //--------------------------------------------------------------------------
 int CNetMdPatch::applySpPatch(int chanNo)
 {
-    mLOG(DEBUG);
+    mFLOW(INFO);
     if (!mNetMd.isMaybePatchable())
     {
         return NETMDERR_NOT_SUPPORTED;
@@ -1435,7 +1448,6 @@ int CNetMdPatch::applySpPatch(int chanNo)
 
         if (!checkPatch(PID_PREP_PATCH))
         {
-            mLOG(DEBUG) << "=== Apply prep patch ===";
             if (fillPatchComplect(PID_PREP_PATCH, devcode, pc) != NETMDERR_NO_ERROR)
             {
                 mNetMdThrow(NETMDERR_NOT_SUPPORTED, "Can't find patch data prep patch!");
@@ -1448,7 +1460,6 @@ int CNetMdPatch::applySpPatch(int chanNo)
 
         if (!checkPatch(PID_TRACK_TYPE))
         {
-            mLOG(DEBUG) << "=== Apply track type patch ===";
             if (fillPatchComplect(PID_TRACK_TYPE, devcode, pc) != NETMDERR_NO_ERROR)
             {
                 mNetMdThrow(NETMDERR_NOT_SUPPORTED, "Can't find patch data track type!");
@@ -1493,7 +1504,7 @@ int CNetMdPatch::applySpPatch(int chanNo)
 //--------------------------------------------------------------------------
 void CNetMdPatch::undoSpPatch()
 {
-    mLOG(DEBUG);
+    mFLOW(INFO);
     static_cast<void>(unpatch({PID_TRACK_TYPE, 
                                PID_PREP_PATCH, 
                                PID_PATCH_CMN_2, 
@@ -1510,7 +1521,7 @@ void CNetMdPatch::undoSpPatch()
 //--------------------------------------------------------------------------
 int CNetMdPatch::applyPCM2MonoPatch()
 {
-    mLOG(DEBUG);
+    mFLOW(INFO);
     if (!mNetMd.isMaybePatchable())
     {
         return NETMDERR_NOT_SUPPORTED;
@@ -1571,7 +1582,7 @@ int CNetMdPatch::applyPCM2MonoPatch()
 //--------------------------------------------------------------------------
 void CNetMdPatch::undoPCM2MonoPatch()
 {
-    mLOG(DEBUG);
+    mFLOW(INFO);
     static_cast<void>(unpatch({PID_PCM_TO_MONO}));
 }
 
@@ -1582,7 +1593,7 @@ void CNetMdPatch::undoPCM2MonoPatch()
 //--------------------------------------------------------------------------
 bool CNetMdPatch::supportsSpUpload()
 {
-    mLOG(DEBUG);
+    mFLOW(DEBUG);
     bool ret = false;
 
     // only available on Sony devices!
@@ -1606,7 +1617,7 @@ bool CNetMdPatch::supportsSpUpload()
 //--------------------------------------------------------------------------
 bool CNetMdPatch::tocManipSupported()
 {
-    mLOG(DEBUG);
+    mFLOW(DEBUG);
     bool ret = false;
 
     // only available on Sony devices!
@@ -1624,13 +1635,22 @@ bool CNetMdPatch::tocManipSupported()
 }
 
 //--------------------------------------------------------------------------
+//! @brief      undo the PCM to mono patch
+//--------------------------------------------------------------------------
+bool CNetMdPatch::pcm2MonoSupported()
+{
+    mFLOW(DEBUG);
+    return tocManipSupported();
+}
+
+//--------------------------------------------------------------------------
 //! @brief      is PCM speedup supportd
 //!
 //! @return     true if supported, false if not
 //--------------------------------------------------------------------------
 bool CNetMdPatch::pcmSpeedupSupported()
 {
-    mLOG(DEBUG);
+    mFLOW(DEBUG);
     bool ret = false;
 
     // only available on Sony devices!
@@ -1655,7 +1675,7 @@ bool CNetMdPatch::pcmSpeedupSupported()
 //--------------------------------------------------------------------------
 int CNetMdPatch::applyPCMSpeedupPatch()
 {
-    mLOG(DEBUG);
+    mFLOW(INFO);
     if (!mNetMd.isMaybePatchable())
     {
         return NETMDERR_NOT_SUPPORTED;
@@ -1730,15 +1750,29 @@ int CNetMdPatch::applyPCMSpeedupPatch()
 //--------------------------------------------------------------------------
 void CNetMdPatch::undoPCMSpeedupPatch()
 {
-    mLOG(DEBUG);
-    static_cast<void>(unpatch({PID_PCM_SPEEDUP_1, PID_PCM_SPEEDUP_2}));
+    mFLOW(INFO);
+    static_cast<void>(unpatch({PID_PCM_SPEEDUP_2, PID_PCM_SPEEDUP_1}));
 }
+
+//--------------------------------------------------------------------------
+//! @brief      undo USB execution patch
+//!
+//! @return     NetMdErr
+//! @see        NetMdErr
+//--------------------------------------------------------------------------
+void CNetMdPatch::undoUSBExecPatch()
+{
+    mFLOW(INFO);
+    static_cast<void>(unpatch({PID_USB_EXE}));
+}
+
 
 //--------------------------------------------------------------------------
 //! @brief      update patch storage
 //--------------------------------------------------------------------------
 void CNetMdPatch::updatePatchStorage()
 {
+    mFLOW(INFO);
     if (mPatchStoreValid)
     {
         return;
@@ -1753,7 +1787,7 @@ void CNetMdPatch::updatePatchStorage()
         {
             if (auto pid = reverserSearchPatchId(mNetMd.sonyDevCode(), patch_addr, patch_data))
             {
-                mLOG(DEBUG) << "Found patch " << pid.value() << " at index " << i;
+                mLOG(INFO) << "Found patch " << pid.value() << " at index " << i;
                 mPatchStorage[i] = { pid.value(), patch_addr, patch_data };
             }
             else

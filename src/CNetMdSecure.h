@@ -455,12 +455,12 @@ class CNetMdSecure
     int setInitTrackTitle(uint16_t trackNo, const std::string& title);
 
     //--------------------------------------------------------------------------
-    //! @brief      prepare TOC manipulation
+    //! @brief      apply USB execution patch
     //!
     //! @return     NetMdErr
     //! @see        NetMdErr
     //--------------------------------------------------------------------------
-    int prepareTOCManip();
+    int applyUSBExecPatch();
 
     //--------------------------------------------------------------------------
     //! @brief      Reads an utoc sector.
@@ -539,6 +539,14 @@ class CNetMdSecure
     //! @brief      undo PCM to Mono patch
     //--------------------------------------------------------------------------
     void undoPCM2MonoPatch();
+
+    //--------------------------------------------------------------------------
+    //! @brief      undo USB execution patch
+    //!
+    //! @return     NetMdErr
+    //! @see        NetMdErr
+    //--------------------------------------------------------------------------
+    void undoUSBExecPatch();
 
     CNetMdDev& mNetMd;
 

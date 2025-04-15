@@ -37,6 +37,8 @@
 #include <unistd.h>
 #include <fstream>
 #include <ios>
+#include <thread>
+#include <chrono>
 
 namespace netmd {
 
@@ -90,7 +92,7 @@ int CNetMdSecure::chainLength(Keychain* chain)
 int CNetMdSecure::buildSendKeyDataCmd(const Ekb& ekb,
                                       NetMDResp& query)
 {
-    mLOG(DEBUG);
+    mFLOW(INFO);
     uint16_t chainLen   = chainLength(ekb.chain);
     uint16_t expQuerySz = 22 + (chainLen * 16) + 24 ;
     uint16_t dataBytes  = expQuerySz - 6;
@@ -670,7 +672,7 @@ int CNetMdSecure::secureReceive(uint8_t cmd, NetMDResp* response)
 //--------------------------------------------------------------------------
 int CNetMdSecure::enterSession()
 {
-    mLOG(DEBUG);
+    mFLOW(DEBUG);
     if (secureExchange(0x80) > NETMDERR_NO_ERROR)
     {
         return NETMDERR_NO_ERROR;
@@ -686,7 +688,7 @@ int CNetMdSecure::enterSession()
 //--------------------------------------------------------------------------
 int CNetMdSecure::leaveSession()
 {
-    mLOG(DEBUG);
+    mFLOW(DEBUG);
     if (secureExchange(0x81) > NETMDERR_NO_ERROR)
     {
         return NETMDERR_NO_ERROR;
@@ -704,7 +706,7 @@ int CNetMdSecure::leaveSession()
 //--------------------------------------------------------------------------
 int CNetMdSecure::leafId(uint64_t& playerId)
 {
-    mLOG(DEBUG);
+    mFLOW(DEBUG);
     NetMDResp resp;
     int ret    = secureExchange(0x11, nullptr, 0, &resp);
     int offset = payloadOffset();
@@ -732,7 +734,7 @@ int CNetMdSecure::leafId(uint64_t& playerId)
 //--------------------------------------------------------------------------
 int CNetMdSecure::sendKeyData(const Ekb& ekb)
 {
-    mLOG(DEBUG);
+    mFLOW(DEBUG);
     NetMDResp query, response;
     int size   = buildSendKeyDataCmd(ekb, query);
     int respSz = 0;
@@ -768,7 +770,7 @@ int CNetMdSecure::sendKeyData(const Ekb& ekb)
 //--------------------------------------------------------------------------
 int CNetMdSecure::sessionKeyExchange(uint8_t randIn[8], uint8_t randOut[8])
 {
-    mLOG(DEBUG);
+    mFLOW(DEBUG);
     int ret;
 
     NetMDResp resp;
@@ -808,7 +810,7 @@ int CNetMdSecure::sessionKeyExchange(uint8_t randIn[8], uint8_t randOut[8])
 //--------------------------------------------------------------------------
 int CNetMdSecure::sessionKeyForget()
 {
-    mLOG(DEBUG);
+    mFLOW(DEBUG);
     int ret;
 
     NetMDResp resp;
@@ -842,7 +844,7 @@ int CNetMdSecure::sessionKeyForget()
 //--------------------------------------------------------------------------
 int CNetMdSecure::setupDownload(const uint8_t contentId[20], const uint8_t kek[8], const uint8_t sessionKey[8])
 {
-    mLOG(DEBUG);
+    mFLOW(DEBUG);
     int ret;
 
     uint8_t cmdhdr[] = { 0x00, 0x00 };
@@ -892,7 +894,7 @@ int CNetMdSecure::setupDownload(const uint8_t contentId[20], const uint8_t kek[8
 //--------------------------------------------------------------------------
 int CNetMdSecure::transferSongPackets(TrackPackets* packets, size_t fullLength)
 {
-    mLOG(DEBUG);
+    mFLOW(DEBUG);
     int ret = NETMDERR_OTHER;
     TrackPackets *p;
     int packet_size;
@@ -998,7 +1000,7 @@ int CNetMdSecure::sendTrack(WireFormat wf, DiskFormat df, uint32_t frames,
                             uint8_t sessionKey[8], uint16_t& track,
                             uint8_t uuid[8], uint8_t contentId[20])
 {
-    mLOG(DEBUG);
+    mFLOW(DEBUG);
     try
     {
         int ret;
@@ -1118,7 +1120,7 @@ int CNetMdSecure::sendTrack(WireFormat wf, DiskFormat df, uint32_t frames,
 //--------------------------------------------------------------------------
 int CNetMdSecure::commitTrack(uint16_t track, uint8_t sessionKey[8])
 {
-    mLOG(DEBUG);
+    mFLOW(DEBUG);
     int ret;
     const char* format = "00 10 01 %>w %*";
 
@@ -1193,7 +1195,7 @@ int CNetMdSecure::commitTrack(uint16_t track, uint8_t sessionKey[8])
 //--------------------------------------------------------------------------
 int CNetMdSecure::setTrackProtection(uint8_t val)
 {
-    mLOG(DEBUG);
+    mFLOW(DEBUG);
     int ret;
     uint8_t cmd[] = {0x00, 0x01, 0x00, 0x00, 0x00};
     cmd[sizeof(cmd) - 1] = val;
@@ -1225,7 +1227,7 @@ int CNetMdSecure::setTrackProtection(uint8_t val)
 //--------------------------------------------------------------------------
 int CNetMdSecure::sendAudioTrack(const std::string& filename, const std::string& title, DiskFormat otf)
 {
-    mLOG(DEBUG);
+    mFLOW(DEBUG);
     int ret = NETMDERR_NO_ERROR;
     Ekb ekb = {0, nullptr, 0, {0,}};
 
@@ -1560,7 +1562,7 @@ int CNetMdSecure::sendAudioTrack(const std::string& filename, const std::string&
         mLOG(DEBUG) << "sessionKeyForget() failed!";
     }
 
-    uwait(1'000'000);
+    std::this_thread::sleep_for(std::chrono::milliseconds(1'000));
 
     // leave session
     if (leaveSession() != NETMDERR_NO_ERROR)
@@ -1618,7 +1620,7 @@ bool CNetMdSecure::nativeMonoUploadSupported()
 //--------------------------------------------------------------------------
 int CNetMdSecure::setInitTrackTitle(uint16_t trackNo, const std::string& title)
 {
-    mLOG(DEBUG);
+    mFLOW(DEBUG);
     int ret = 1;
 
     // handshakes for 780/980/etc
@@ -1661,14 +1663,14 @@ int CNetMdSecure::setInitTrackTitle(uint16_t trackNo, const std::string& title)
 }
 
 //--------------------------------------------------------------------------
-//! @brief      prepare TOC manipulation
+//! @brief      apply USB execution patch
 //!
 //! @return     NetMdErr
 //! @see        NetMdErr
 //--------------------------------------------------------------------------
-int CNetMdSecure::prepareTOCManip()
+int CNetMdSecure::applyUSBExecPatch()
 {
-    return mPatch.prepareTOCManip();
+    return mPatch.applyUSBExecPatch();
 }
 
 //--------------------------------------------------------------------------
@@ -1727,7 +1729,7 @@ bool CNetMdSecure::tocManipSupported()
 //--------------------------------------------------------------------------
 bool CNetMdSecure::pcm2MonoSupported()
 {
-    return mPatch.pcmSpeedupSupported();
+    return mPatch.pcm2MonoSupported();
 }
 
 //--------------------------------------------------------------------------
@@ -1814,7 +1816,18 @@ int CNetMdSecure::applyPCM2MonoPatch()
 //--------------------------------------------------------------------------
 void CNetMdSecure::undoPCM2MonoPatch()
 {
-    return mPatch.undoPCM2MonoPatch();
+    mPatch.undoPCM2MonoPatch();
+}
+
+//--------------------------------------------------------------------------
+//! @brief      undo USB execution patch
+//!
+//! @return     NetMdErr
+//! @see        NetMdErr
+//--------------------------------------------------------------------------
+void CNetMdSecure::undoUSBExecPatch()
+{
+    mPatch.undoUSBExecPatch();
 }
 
 } // ~namespace

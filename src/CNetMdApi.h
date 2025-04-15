@@ -44,6 +44,7 @@ enum HomebrewFeatures : uint32_t
     SP_UPLOAD   = 0x01, //!< SP upload
     PCM_2_MONO  = 0x02, //!< PCM to mono
     PCM_SPEEDUP = 0x04, //!< PCM speedup
+    USB_EXEC    = 0x08, //!< USB execution
 };
 
 /// the API class
@@ -379,14 +380,6 @@ public:
     Groups groups();
 
     //--------------------------------------------------------------------------
-    //! @brief      prepare TOC manipulation
-    //!
-    //! @return     NetMdErr
-    //! @see        NetMdErr
-    //--------------------------------------------------------------------------
-    int prepareTOCManip();
-
-    //--------------------------------------------------------------------------
     //! @brief      Reads an utoc sector.
     //!
     //! @param[in]  s     sector number
@@ -410,13 +403,13 @@ public:
     //! @brief      finalize TOC through exploit
     //!
     //! @param[in]  reset      do reset if true (default: false)
-    //! @param[in]  resetWait  The optional reset wait time (15 seconds)
+    //! @param[in]  resetWait  The optional reset wait time (20 seconds)
     //!                        Only needed if reset is true
     //!
     //! @return     NetMdErr
     //! @see        NetMdErr
     //--------------------------------------------------------------------------
-    int finalizeTOC(bool reset = false, uint8_t resetWait = 15);
+    int finalizeTOC(bool reset = false, uint8_t resetWait = 20);
 
     //--------------------------------------------------------------------------
     //! @brief start homebrew 

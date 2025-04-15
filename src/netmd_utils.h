@@ -478,11 +478,4 @@ T simple_get(const NetMDParam& p, int *err = nullptr)
 #endif
 }
 
-//------------------------------------------------------------------------------
-//! @brief      wait using nanosleep not less then ms microseconds
-//!
-//! @param[in]  us - microseconds to wait
-//------------------------------------------------------------------------------
-void uwait(uint32_t us);
-
 } // ~namespace

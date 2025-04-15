@@ -91,7 +91,7 @@ const CNetMdDev::KnownDevices CNetMdDev::smKnownDevices = {
     
     // Sharp
     { mkDevEntry(0x04dd, 0x7202, "Sharp IM-MT880H/MT899H"          , false, false, false) },
-    { mkDevEntry(0x04dd, 0x9013, "Sharp IM-DR400/DR410"            , true , false, false) },
+    { mkDevEntry(0x04dd, 0x9013, "Sharp IM-DR400/DR410"            , true , false, true ) },
     { mkDevEntry(0x04dd, 0x9014, "Sharp IM-DR80/DR420/DR580"       , true , false, false) },
     
     // Panasonic
@@ -115,6 +115,8 @@ const CNetMdDev::DscrtData CNetMdDev::smDescrData = {
     {CNetMdDev::Descriptor::discSubunitIndentifier, {0x00}            },
     {CNetMdDev::Descriptor::operatingStatusBlock  , {0x80, 0x00}      },
 };
+
+const CNetMdDev::NetMDDevice CNetMdDev::UNINIT_DEV = {SKnownDevice{0, 0, nullptr, false, false, false}, "", nullptr, nullptr, SDI_UNKNOWN, false};
 
 //--------------------------------------------------------------------------
 //! @brief      print helper for SonyDevInfo
@@ -152,7 +154,6 @@ std::ostream& operator<<(std::ostream& os, const CNetMdDev::SonyDevInfo& dinfo)
 //--------------------------------------------------------------------------
 CNetMdDev::CNetMdDev()
     :mhdHPAdd(-1), mhdHPRmv(-1), 
-    mSonyDevInfo(SDI_UNKNOWN), mFactoryMode(false),
     mDevApiCallback(nullptr), mDoPoll(false), mbHotPlug(false)
 {
     mInitialized = libusb_init(NULL) == 0;
@@ -202,6 +203,7 @@ CNetMdDev::~CNetMdDev()
 //--------------------------------------------------------------------------
 int CNetMdDev::initHotPlug()
 {
+    mFLOW(INFO);
     if (mInitialized)
     {
         mbHotPlug = true;
@@ -252,6 +254,7 @@ int CNetMdDev::initHotPlug()
 //--------------------------------------------------------------------------
 int CNetMdDev::initDevice()
 {
+    mFLOW(INFO);
     std::unique_lock<std::recursive_mutex> lock(mMtxDevAcc);
 
     int ret = NETMDERR_USB;
@@ -270,9 +273,7 @@ int CNetMdDev::initDevice()
             {
                 // in case hotplug wasn't enabled, we do a complete device recognition
                 libusb_close(mDevice.mDevHdl);
-                mDevice = {{0, 0, nullptr, false, false, false}, "", "", nullptr, nullptr};
-                mSonyDevInfo    = SDI_UNKNOWN;
-                mFactoryMode    = false;
+                mDevice = UNINIT_DEV;
                 if (mDevApiCallback)
                 {
                     mDevApiCallback(false);
@@ -315,6 +316,8 @@ int CNetMdDev::initDevice()
 //--------------------------------------------------------------------------
 int CNetMdDev::openDevice(libusb_device* dev, libusb_device_descriptor* desc)
 {
+    mFLOW(INFO);
+    std::unique_lock<std::recursive_mutex> lock(mMtxDevAcc);
     int ret = NETMDERR_USB;
 
     mLOG(DEBUG) << "Checking device: " << std::hex << desc->idVendor << ":" << desc->idProduct 
@@ -333,6 +336,38 @@ int CNetMdDev::openDevice(libusb_device* dev, libusb_device_descriptor* desc)
         mLOG(DEBUG) << "Found supported device: " << cit->second.mModel << " @ " << dev;
         mDevice.mKnownDev = cit->second;
 
+        int cycle    = 5;
+        bool success = false;
+        do
+        {
+            if (libusb_open(dev, &mDevice.mDevHdl) == 0)
+            {
+                if ((ret = libusb_reset_device(mDevice.mDevHdl)) == 0)
+                {
+                    if (libusb_claim_interface(mDevice.mDevHdl, 0) == 0)
+                    {
+                        success = true;
+                        ret     = NETMDERR_NO_ERROR;
+                        break;
+                    }
+                }
+                else if (ret == LIBUSB_ERROR_NOT_FOUND)
+                {
+                    mLOG(DEBUG) << "Can't reset " << cit->second.mModel;
+                }
+            }
+
+            if (!success && mDevice.mDevHdl)
+            {
+                libusb_close(mDevice.mDevHdl);
+                mDevice.mDevHdl = nullptr;
+            }
+
+            std::this_thread::sleep_for(std::chrono::milliseconds(100));
+        }
+        while(!success && cycle--);
+
+        /*
         bool success = false;
 
         if (libusb_open(dev, &mDevice.mDevHdl) == 0)
@@ -348,29 +383,29 @@ int CNetMdDev::openDevice(libusb_device* dev, libusb_device_descriptor* desc)
                 }
                 else
                 {
-                    // libusb_reset_device(mDevice.mDevHdl);
+                    libusb_reset_device(mDevice.mDevHdl);
                     std::this_thread::sleep_for(std::chrono::milliseconds(100));
                     mLOG(DEBUG) << "Can't claim interface " << cit->second.mModel;
                 }
             }
             while(!success && cycle--);
         }
-
+*/
         if (success)
         {
             mDevice.mDevPtr = dev;
             static_cast<void>(waitForSync());
             static_cast<void>(getStrings(*desc));
-            mLOG(INFO) << "Product name: " << mDevice.mName << ", serial number: " << mDevice.mSerial << " @ " << mDevice.mDevPtr;
+            static_cast<void>(sonyDevCode());
+            mLOG(INFO) << "Product name: " << mDevice.mName << " @ " << mDevice.mDevPtr;
         }
         else
         {
             if (mDevice.mDevHdl != nullptr)
             {
                 libusb_close(mDevice.mDevHdl);
-                mDevice.mDevHdl = nullptr;
             }
-            mDevice = {{0, 0, nullptr, false, false, false}, "", "", nullptr, nullptr};
+            mDevice = UNINIT_DEV;
             ret = NETMDERR_USB;
             mLOG(CRITICAL) << "Can't init usb device!";
         }
@@ -402,9 +437,7 @@ int CNetMdDev::deviceRemoved(libusb_context*, libusb_device *device, libusb_hotp
         {
             mLOG(INFO) << "Device " << pDev->mDevice.mKnownDev.mModel  << " @ " << device << " removed.";
             libusb_close(pDev->mDevice.mDevHdl);
-            pDev->mDevice = {{0, 0, nullptr, false, false, false}, "", "", nullptr, nullptr};
-            pDev->mSonyDevInfo    = SDI_UNKNOWN;
-            pDev->mFactoryMode    = false;
+            pDev->mDevice = UNINIT_DEV;
             if (pDev->mDevApiCallback)
             {
                 pDev->mDevApiCallback(false);
@@ -428,10 +461,10 @@ int CNetMdDev::deviceAdded(libusb_context*, libusb_device *device, libusb_hotplu
 {
     if (CNetMdDev* pDev = static_cast<CNetMdDev*>(userData))
     {
+        std::unique_lock<std::recursive_mutex> lock(pDev->mMtxDevAcc);
+
         if (!pDev->mDevice.mDevHdl)
         {
-            std::unique_lock<std::recursive_mutex> lock(pDev->mMtxDevAcc);
-
             libusb_device_descriptor desc;
             libusb_get_device_descriptor(device, &desc);
 
@@ -528,33 +561,25 @@ int CNetMdDev::pollThread()
 //--------------------------------------------------------------------------
 int CNetMdDev::getStrings(const libusb_device_descriptor& descr)
 {
+    mFLOW(DEBUG);
+    std::unique_lock<std::recursive_mutex> lock(mMtxDevAcc);
+
     uint8_t buff[255] = {0,};
     int ret = NETMDERR_NO_ERROR;
     int sz;
 
     mDevice.mName   = "";
-    mDevice.mSerial = "";
 
-    int          vals[]  = {descr.iProduct, descr.iSerialNumber};
-    std::string* s[]     = {&mDevice.mName, &mDevice.mSerial};
-    const char* strErr[] = {"product name", "serial number"};
-
-    for(int i = 0; i < 2; i++)
+    if ((sz = libusb_get_string_descriptor_ascii(mDevice.mDevHdl, descr.iProduct, buff, 255)) < 0)
     {
-        if (vals[i] > -1)
+        mLOG(DEBUG) << "Can't read product name: " << libusb_strerror(static_cast<libusb_error>(sz));
+        ret = NETMDERR_USB;
+    }
+    else
+    {
+        for(int j = 0; j < sz; j++)
         {
-            if ((sz = libusb_get_string_descriptor_ascii(mDevice.mDevHdl, vals[i], buff, 255)) < 0)
-            {
-                mLOG(DEBUG) << "Can't read " << strErr[i] << ": " << libusb_strerror(static_cast<libusb_error>(sz));
-                ret = NETMDERR_USB;
-            }
-            else
-            {
-                for(int j = 0; j < sz; j++)
-                {
-                    s[i]->push_back(static_cast<char>(buff[j]));
-                }
-            }
+            mDevice.mName.push_back(static_cast<char>(buff[j]));
         }
     }
 
@@ -566,8 +591,9 @@ int CNetMdDev::getStrings(const libusb_device_descriptor& descr)
 //!
 //! @return     The device name.
 //--------------------------------------------------------------------------
-std::string CNetMdDev::getDeviceName() const
+std::string CNetMdDev::getDeviceName()
 {
+    std::unique_lock<std::recursive_mutex> lock(mMtxDevAcc);
     return {mDevice.mKnownDev.mModel == nullptr ? "" : mDevice.mKnownDev.mModel};
 }
 
@@ -580,13 +606,13 @@ std::string CNetMdDev::getDeviceName() const
 //--------------------------------------------------------------------------
 int CNetMdDev::responseLength(uint8_t& req)
 {
+    std::unique_lock<std::recursive_mutex> lock(mMtxDevAcc);
+
     if (mDevice.mDevHdl == nullptr)
     {
         mLOG(CRITICAL) << "No NetMD device available!";
         return NETMDERR_NOTREADY;
     }
-
-    std::unique_lock<std::recursive_mutex> lock(mMtxDevAcc);
 
     uint8_t pollbuf[] = {0, 0, 0, 0};
     static constexpr uint8_t REQ_TYPE = LIBUSB_ENDPOINT_IN | LIBUSB_REQUEST_TYPE_VENDOR | LIBUSB_RECIPIENT_INTERFACE;
@@ -615,6 +641,8 @@ int CNetMdDev::responseLength(uint8_t& req)
 //--------------------------------------------------------------------------
 void CNetMdDev::cleanupRespQueue()
 {
+    std::unique_lock<std::recursive_mutex> lock(mMtxDevAcc);
+
     uint8_t req = 0;
     int ret = responseLength(req);
 
@@ -646,6 +674,7 @@ void CNetMdDev::cleanupRespQueue()
 //--------------------------------------------------------------------------
 int CNetMdDev::sendCmd(unsigned char* cmd, size_t cmdLen, bool factory)
 {
+    mFLOW(DEBUG);
     // send data
     mLOG(DEBUG) << (factory ? "factory " : "") << "command:" << LOG::hexFormat(DEBUG, cmd, cmdLen);
 
@@ -720,7 +749,7 @@ int CNetMdDev::getResponse(NetMDResp& response, int overrideRespLength)
                 mLOG(DEBUG) << "still polling ... (" << i << " / " << NETMD_RECV_TRIES << " / " << sleep / 1000 << " ms)";
             }
 
-            uwait(sleep);
+            std::this_thread::sleep_for(std::chrono::microseconds(sleep));
             i++;
         }
     }
@@ -760,13 +789,14 @@ int CNetMdDev::getResponse(NetMDResp& response, int overrideRespLength)
 int CNetMdDev::exchange(unsigned char* cmd, size_t cmdLen, NetMDResp* response,
                         bool factory, NetMdStatus expected, int overrideRespLength)
 {
+    mFLOW(DEBUG);
+    std::unique_lock<std::recursive_mutex> lock(mMtxDevAcc);
+
     if (mDevice.mDevHdl == nullptr)
     {
         mLOG(CRITICAL) << "No NetMD device available!";
         return NETMDERR_NOTREADY;
     }
-
-    std::unique_lock<std::recursive_mutex> lock(mMtxDevAcc);
 
     int ret = 0;
     NetMDResp tmpRsp;
@@ -831,6 +861,8 @@ int CNetMdDev::exchange(unsigned char* cmd, size_t cmdLen, NetMDResp* response,
 //--------------------------------------------------------------------------
 int CNetMdDev::bulkTransfer(unsigned char* cmd, size_t cmdLen, int timeOut)
 {
+    std::unique_lock<std::recursive_mutex> lock(mMtxDevAcc);
+
     if (mDevice.mDevHdl == nullptr)
     {
         mLOG(CRITICAL) << "No NetMD device available!";
@@ -838,8 +870,6 @@ int CNetMdDev::bulkTransfer(unsigned char* cmd, size_t cmdLen, int timeOut)
     }
 
     int bytesDone = 0, sent, err = 0;
-
-    std::unique_lock<std::recursive_mutex> lock(mMtxDevAcc);
 
     do
     {
@@ -873,6 +903,9 @@ int CNetMdDev::bulkTransfer(unsigned char* cmd, size_t cmdLen, int timeOut)
 //--------------------------------------------------------------------------
 int CNetMdDev::waitForSync()
 {
+    mFLOW(DEBUG);
+    std::unique_lock<std::recursive_mutex> lock(mMtxDevAcc);
+
     if (mDevice.mDevHdl == nullptr)
     {
         mLOG(CRITICAL) << "No NetMD device available!";
@@ -883,8 +916,6 @@ int CNetMdDev::waitForSync()
     int tries = NETMD_SYNC_TRIES;
     int ret;
     bool success = false;
-
-    std::unique_lock<std::recursive_mutex> lock(mMtxDevAcc);
 
     do
     {
@@ -909,7 +940,7 @@ int CNetMdDev::waitForSync()
             break;
         }
 
-        uwait(100'000);
+        std::this_thread::sleep_for(std::chrono::milliseconds(100));
     }
     while (tries);
 
@@ -932,7 +963,7 @@ int CNetMdDev::waitForSync()
 //--------------------------------------------------------------------------
 int CNetMdDev::aquireDev()
 {
-    mLOG(DEBUG);
+    mFLOW(DEBUG);
     unsigned char request[] = {0x00, 0xff, 0x01, 0x0c, 0xff, 0xff, 0xff, 0xff,
                                0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff};
 
@@ -953,7 +984,7 @@ int CNetMdDev::aquireDev()
 //--------------------------------------------------------------------------
 int CNetMdDev::releaseDev()
 {
-    mLOG(DEBUG);
+    mFLOW(DEBUG);
     unsigned char request[] = {0x00, 0xff, 0x01, 0x00, 0xff, 0xff, 0xff, 0xff,
                                0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff};
 
@@ -977,7 +1008,7 @@ int CNetMdDev::releaseDev()
 //--------------------------------------------------------------------------
 int CNetMdDev::changeDscrtState(Descriptor d, DscrtAction a)
 {
-    mLOG(DEBUG);
+    mFLOW(DEBUG);
     int ret = NETMDERR_OTHER;
     DscrtData::const_iterator cit = smDescrData.find(d);
 
@@ -1076,7 +1107,7 @@ int CNetMdDev::writeMetadataPeripheral(uint16_t sector, uint16_t offset, const N
 //------------------------------------------------------------------------------
 int CNetMdDev::cleanRead(uint32_t addr, uint8_t sz, NetMDByteVector& data)
 {
-    mLOG(DEBUG);
+    mFLOW(DEBUG);
     int ret;
     static_cast<void>(changeMemState(addr, sz, MemAcc::NETMD_MEM_READ));
     ret = patchRead(addr, sz, data);
@@ -1095,7 +1126,7 @@ int CNetMdDev::cleanRead(uint32_t addr, uint8_t sz, NetMDByteVector& data)
 //------------------------------------------------------------------------------
 int CNetMdDev::cleanWrite(uint32_t addr, const NetMDByteVector& data)
 {
-    mLOG(DEBUG);
+    mFLOW(DEBUG);
     int ret;
     static_cast<void>(changeMemState(addr, data.size(), MemAcc::NETMD_MEM_WRITE));
     ret = patchWrite(addr, data);
@@ -1114,7 +1145,7 @@ int CNetMdDev::cleanWrite(uint32_t addr, const NetMDByteVector& data)
 //------------------------------------------------------------------------------
 int CNetMdDev::patchWrite(uint32_t addr, const NetMDByteVector& data)
 {
-    mLOG(DEBUG);
+    mFLOW(DEBUG);
     int ret;
     const char* format = "00 1822 ff 00 %<d %b 0000 %* %<w";
 
@@ -1148,7 +1179,7 @@ int CNetMdDev::patchWrite(uint32_t addr, const NetMDByteVector& data)
 //------------------------------------------------------------------------------
 int CNetMdDev::patchRead(uint32_t addr, uint8_t size, NetMDByteVector& data)
 {
-    mLOG(DEBUG);
+    mFLOW(DEBUG);
     int ret;
     const char* format  = "00 1821 ff 00 %<d %b";
     const char* capture = "%? 1821 00 %? %?%?%?%? %? %?%? %*";
@@ -1196,7 +1227,7 @@ int CNetMdDev::patchRead(uint32_t addr, uint8_t size, NetMDByteVector& data)
 //--------------------------------------------------------------------------
 int CNetMdDev::changeMemState(uint32_t addr, uint8_t size, MemAcc acc)
 {
-    mLOG(DEBUG);
+    mFLOW(DEBUG);
     int ret;
     const char* format = "00 1820 ff 00 %<d %b %b 00";
 
@@ -1227,15 +1258,17 @@ int CNetMdDev::changeMemState(uint32_t addr, uint8_t size, MemAcc acc)
 //--------------------------------------------------------------------------
 CNetMdDev::SonyDevInfo CNetMdDev::sonyDevCode()
 {
-    if (mSonyDevInfo == SDI_UNKNOWN)
+    std::unique_lock<std::recursive_mutex> lock(mMtxDevAcc);
+
+    if (mDevice.mDevInfo == SDI_UNKNOWN)
     {
         if (!isMaybePatchable())
         {
-            mSonyDevInfo = SDI_NO_SUPPORT;
+            mDevice.mDevInfo = SDI_NO_SUPPORT;
         }
         else
         {
-            mLOG(DEBUG) << "get device info from hardware ...";
+            mFLOW(INFO);
             uint8_t query[] = {0x00, 0x18, 0x12, 0xff};
             uint8_t chip    = 255, hwid = 255, version = 255, subversion = 255;
 
@@ -1252,14 +1285,14 @@ CNetMdDev::SonyDevInfo CNetMdDev::sonyDevCode()
                 rpSz = exchange(query, sizeof(query), &respone, true);
                 if ((rpSz < 8) || (respone == nullptr))
                 {
-                    mFactoryMode = enableFactory() == NETMDERR_NO_ERROR;
+                    enableFactory(mDevice.mFactoryMode);
                 }
             }
             while ((++chkCnt < 1) && ((rpSz < 8) || (respone == nullptr)));
 
             if ((rpSz >= 8) && (respone != nullptr))
             {
-                mFactoryMode = true;
+                mDevice.mFactoryMode = true;
 
                 chip       = respone[4];
                 hwid       = respone[5];
@@ -1294,75 +1327,78 @@ CNetMdDev::SonyDevInfo CNetMdDev::sonyDevCode()
                     code << static_cast<int>(version >> 4) << "." << static_cast<int>(version & 0xf)
                         << std::hex << std::setw(2) << std::setfill('0') << static_cast<int>(subversion);
 
-                    mLOG(DEBUG) << "Found device info: " << code.str();
+                    mLOG(INFO) << "Found device info: " << code.str();
 
                     if (code.str() == "R1.000")
                     {
-                        mSonyDevInfo = SonyDevInfo::SDI_R1000;
+                        mDevice.mDevInfo = SonyDevInfo::SDI_R1000;
                     }
                     else if (code.str() == "R1.100")
                     {
-                        mSonyDevInfo = SonyDevInfo::SDI_R1100;
+                        mDevice.mDevInfo = SonyDevInfo::SDI_R1100;
                     }
                     else if (code.str() == "R1.200")
                     {
-                        mSonyDevInfo = SonyDevInfo::SDI_R1200;
+                        mDevice.mDevInfo = SonyDevInfo::SDI_R1200;
                     }
                     else if (code.str() == "R1.300")
                     {
-                        mSonyDevInfo = SonyDevInfo::SDI_R1300;
+                        mDevice.mDevInfo = SonyDevInfo::SDI_R1300;
                     }
                     else if (code.str() == "R1.400")
                     {
-                        mSonyDevInfo = SonyDevInfo::SDI_R1400;
+                        mDevice.mDevInfo = SonyDevInfo::SDI_R1400;
                     }
                     else if (code.str() == "S1.000")
                     {
-                        mSonyDevInfo = SonyDevInfo::SDI_S1000;
+                        mDevice.mDevInfo = SonyDevInfo::SDI_S1000;
                     }
                     else if (code.str() == "S1.100")
                     {
-                        mSonyDevInfo = SonyDevInfo::SDI_S1100;
+                        mDevice.mDevInfo = SonyDevInfo::SDI_S1100;
                     }
                     else if (code.str() == "S1.200")
                     {
-                        mSonyDevInfo = SonyDevInfo::SDI_S1200;
+                        mDevice.mDevInfo = SonyDevInfo::SDI_S1200;
                     }
                     else if (code.str() == "S1.300")
                     {
-                        mSonyDevInfo = SonyDevInfo::SDI_S1300;
+                        mDevice.mDevInfo = SonyDevInfo::SDI_S1300;
                     }
                     else if (code.str() == "S1.400")
                     {
-                        mSonyDevInfo = SonyDevInfo::SDI_S1400;
+                        mDevice.mDevInfo = SonyDevInfo::SDI_S1400;
                     }
                     else if (code.str() == "S1.500")
                     {
-                        mSonyDevInfo = SonyDevInfo::SDI_S1500;
+                        mDevice.mDevInfo = SonyDevInfo::SDI_S1500;
                     }
                     else if (code.str() == "S1.600")
                     {
-                        mSonyDevInfo = SonyDevInfo::SDI_S1600;
+                        mDevice.mDevInfo = SonyDevInfo::SDI_S1600;
                     }
                 }
             }
         }
     }
 
-    return mSonyDevInfo;
+    return mDevice.mDevInfo;
 }
 
 //--------------------------------------------------------------------------
 //! @brief      Enables the factory mode.
-//!
+//
+//! @param[in,out]  marker   get / store factory state
+//
 //! @return     NetMdErr
 //! @see        NetMdErr
 //--------------------------------------------------------------------------
-int CNetMdDev::enableFactory()
+int CNetMdDev::enableFactory(bool& marker)
 {
+    mFLOW(INFO);
     int ret = NETMDERR_NO_ERROR;
 
-    if (!mFactoryMode)
+    if (!marker)
     {
         mLOG(DEBUG) << "enable factory ...";
         uint8_t p1[]  = {0x00, 0x18, 0x09, 0x00, 0xff, 0x00, 0x00, 0x00,
@@ -1386,6 +1422,11 @@ int CNetMdDev::enableFactory()
         if (exchange(p2, sizeof(p2), nullptr, true) <= 0)
         {
             ret = NETMDERR_USB;
+        }
+
+        if (ret == NETMDERR_NO_ERROR)
+        {
+            marker = true;
         }
     }
 

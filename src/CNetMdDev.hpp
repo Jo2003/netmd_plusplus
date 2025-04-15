@@ -68,6 +68,29 @@ class CNetMdDev
         bool mNativeMonoUpload; ///< is the device native mono upload capable?
     };
 
+    /// device info flags
+    enum SonyDevInfo : uint32_t
+    {
+        SDI_R1000      = (1ul <<  0),    //!< R1.000 version
+        SDI_R1100      = (1ul <<  1),    //!< R1.100 version
+        SDI_R1200      = (1ul <<  2),    //!< R1.200 version
+        SDI_R1300      = (1ul <<  3),    //!< R1.300 version
+        SDI_R1400      = (1ul <<  4),    //!< R1.400 version
+        SDI_R_START    = SDI_R1000,
+        SDI_R_END      = SDI_R1400,
+        SDI_S1000      = (1ul <<  5),    //!< S1.000 version
+        SDI_S1100      = (1ul <<  6),    //!< S1.100 version
+        SDI_S1200      = (1ul <<  7),    //!< S1.200 version
+        SDI_S1300      = (1ul <<  8),    //!< S1.300 version
+        SDI_S1400      = (1ul <<  9),    //!< S1.400 version
+        SDI_S1500      = (1ul << 10),    //!< S1.500 version
+        SDI_S1600      = (1ul << 11),    //!< S1.600 version
+        SDI_S_START    = SDI_S1000,
+        SDI_S_END      = SDI_S1600,
+        SDI_NO_SUPPORT = (1ul << 30),    //!< not supported
+        SDI_UNKNOWN    = (1ul << 31),    //!< unknown
+    };
+
     /// dev handle is a pointer to libusb_device_handle
     using netmd_dev_handle = libusb_device_handle*;
     using netmd_dev        = libusb_device;
@@ -77,10 +100,14 @@ class CNetMdDev
     {
         SKnownDevice mKnownDev;         ///< known device info
         std::string mName;              ///< name
-        std::string mSerial;            ///< serial number
         netmd_dev_handle mDevHdl;       ///< device handle
         netmd_dev* mDevPtr;             ///< device pointer
+        SonyDevInfo mDevInfo;           ///< device info
+        bool mFactoryMode;              ///< factory mode
     };
+
+    /// an uninitialzed device
+    static const NetMDDevice UNINIT_DEV;
 
     /// map of known devices
     using KnownDevices     = std::map<uint32_t, SKnownDevice>;
@@ -111,29 +138,6 @@ class CNetMdDev
         NETMD_MEM_READ       = 0x1,
         NETMD_MEM_WRITE      = 0x2,
         NETMD_MEM_READ_WRITE = 0x3,
-    };
-
-    /// device info flags
-    enum SonyDevInfo : uint32_t
-    {
-        SDI_R1000      = (1ul <<  0),    //!< R1.000 version
-        SDI_R1100      = (1ul <<  1),    //!< R1.100 version
-        SDI_R1200      = (1ul <<  2),    //!< R1.200 version
-        SDI_R1300      = (1ul <<  3),    //!< R1.300 version
-        SDI_R1400      = (1ul <<  4),    //!< R1.400 version
-        SDI_R_START    = SDI_R1000,
-        SDI_R_END      = SDI_R1400,
-        SDI_S1000      = (1ul <<  5),    //!< S1.000 version
-        SDI_S1100      = (1ul <<  6),    //!< S1.100 version
-        SDI_S1200      = (1ul <<  7),    //!< S1.200 version
-        SDI_S1300      = (1ul <<  8),    //!< S1.300 version
-        SDI_S1400      = (1ul <<  9),    //!< S1.400 version
-        SDI_S1500      = (1ul << 10),    //!< S1.500 version
-        SDI_S1600      = (1ul << 11),    //!< S1.600 version
-        SDI_S_START    = SDI_S1000,
-        SDI_S_END      = SDI_S1600,
-        SDI_NO_SUPPORT = (1ul << 30),    //!< not supported
-        SDI_UNKNOWN    = (1ul << 31),    //!< unknown
     };
 
     //--------------------------------------------------------------------------
@@ -278,7 +282,7 @@ class CNetMdDev
     //!
     //! @return     The device name.
     //--------------------------------------------------------------------------
-    std::string getDeviceName() const;
+    std::string getDeviceName();
 
     //--------------------------------------------------------------------------
     //! @brief      create unique id from vendor and device
@@ -495,11 +499,13 @@ class CNetMdDev
 
     //--------------------------------------------------------------------------
     //! @brief      Enables the factory mode.
-    //!
+    //
+    //! @param[in,out]  marker   get / store factory state
+    //
     //! @return     NetMdErr
     //! @see        NetMdErr
     //--------------------------------------------------------------------------
-    int enableFactory();
+    int enableFactory(bool& marker);
 
     //--------------------------------------------------------------------------
     //! @brief      register hotplug callback function
@@ -520,7 +526,7 @@ class CNetMdDev
     bool mInitialized = false;
 
     /// NetMD device
-    NetMDDevice mDevice = {{0, 0, nullptr, false, false, false}, "", "", nullptr, nullptr};
+    NetMDDevice mDevice = UNINIT_DEV;
 
     /// descriptor data
     static const DscrtData smDescrData;
@@ -533,12 +539,6 @@ class CNetMdDev
 
     /// synchronize access to NetMD device
     std::recursive_mutex mMtxDevAcc;
-
-    /// device info
-    SonyDevInfo mSonyDevInfo;
-
-    /// factory mode marker
-    bool mFactoryMode;
 
     /// hotplug callback function
     EvtCallback mDevApiCallback;
