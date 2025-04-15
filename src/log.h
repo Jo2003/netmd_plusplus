@@ -35,7 +35,34 @@ struct structlog
 
 extern structlog LOGCFG;
 
-#define mLOG(x_) LOG(x_) << __FUNCTION__ << "():" << __LINE__ << ": "
+#ifdef __GNUC__
+    constexpr std::string_view method_name(const char* s)
+    {
+        std::string_view prettyFunction(s);
+        size_t bracket = prettyFunction.rfind("(");
+        size_t colon1  = prettyFunction.rfind("::", bracket);
+        size_t colon2  = prettyFunction.rfind("::", colon1);
+        size_t space   = std::string::npos;
+        if (colon1 != std::string::npos)
+        {
+            size_t colon2  = prettyFunction.rfind("::", colon1 - 1);
+            if (colon2 != std::string::npos)
+            {
+                space = colon2 + 2;
+            }
+        }
+        else
+        {
+            space = prettyFunction.rfind(" ", bracket) + 1;
+        }
+        return prettyFunction.substr(space, bracket-space);
+    }
+    #define __METHOD_NAME__ method_name(__PRETTY_FUNCTION__)
+#else
+    #define __METHOD_NAME__ __FUNCTION__
+#endif
+
+#define mLOG(x_) LOG(x_) << __METHOD_NAME__ << "():" << __LINE__ << ": "
 
 //------------------------------------------------------------------------------
 //! @brief      This class describes a log helper
@@ -62,7 +89,7 @@ public:
 
     ~LOG()
     {
-        std::unique_lock lck(LOGCFG.mtxLog);
+        std::unique_lock<std::mutex> lck(LOGCFG.mtxLog);
         if(opened)
         {
             *LOGCFG.sout << std::endl;
@@ -73,10 +100,10 @@ public:
     template<class T>
     LOG &operator<<(const T &msg)
     {
-        std::unique_lock lck(LOGCFG.mtxLog);
+        std::unique_lock<std::mutex> lck(LOGCFG.mtxLog);
         if(msglevel >= LOGCFG.level)
         {
-            *LOGCFG.sout << msg;
+            *LOGCFG.sout << msg << std::flush;
             opened = true;
         }
         return *this;
@@ -229,9 +256,7 @@ public:
         return oss.str();
     }
 
-private:
-
-    inline std::string getLabel(int type)
+    static std::string getLabel(int type)
     {
         std::string label;
         switch(type)
@@ -245,6 +270,60 @@ private:
         return label;
     }
 
+private:
     bool opened = false;
     int msglevel = DEBUG;
+};
+
+#define mFLOW(x_) Flow flow_(x_, std::string{__METHOD_NAME__})
+
+//------------------------------------------------------------------------------
+//! @brief      Helper class to indicate the program flow
+//------------------------------------------------------------------------------
+class Flow
+{
+public:
+    Flow(int sev, const std::string& f) 
+        : mMsglevel(sev), mFunc(f)
+    {
+        std::unique_lock<std::mutex> lck(LOGCFG.mtxLog);
+
+        if(LOGCFG.time && mMsglevel >= LOGCFG.level)
+        {
+            *LOGCFG.sout << LOG::timeStamp();
+        }
+
+        if(LOGCFG.headers && mMsglevel >= LOGCFG.level)
+        {
+            *LOGCFG.sout  << LOG::getLabel(mMsglevel) << "|";
+        }
+
+        if(LOGCFG.headers && mMsglevel >= LOGCFG.level)
+        {
+            *LOGCFG.sout << mFunc << "() --> in" << std::endl;
+        }
+    }
+
+    ~Flow()
+    {
+        std::unique_lock<std::mutex> lck(LOGCFG.mtxLog);
+        if(LOGCFG.time && mMsglevel >= LOGCFG.level)
+        {
+            *LOGCFG.sout << LOG::timeStamp();
+        }
+
+        if(LOGCFG.headers && mMsglevel >= LOGCFG.level)
+        {
+            *LOGCFG.sout  << LOG::getLabel(mMsglevel) << "|";
+        }
+
+        if(mMsglevel >= LOGCFG.level)
+        {
+            *LOGCFG.sout << mFunc << "() <-- out" << std::endl;
+        }
+    }
+
+private:
+    int mMsglevel;
+    std::string mFunc;
 };

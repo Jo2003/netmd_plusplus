@@ -35,6 +35,18 @@
 
 namespace netmd {
 
+//-----------------------------------------------------------------------------
+//! @brief      NetMD homebrew features
+//-----------------------------------------------------------------------------
+enum HomebrewFeatures : uint32_t
+{
+    NOTHING     = 0x00, //!< no features
+    SP_UPLOAD   = 0x01, //!< SP upload
+    PCM_2_MONO  = 0x02, //!< PCM to mono
+    PCM_SPEEDUP = 0x04, //!< PCM speedup
+    USB_EXEC    = 0x08, //!< USB execution
+};
+
 /// the API class
 class CNetMdApi;
 
@@ -56,6 +68,13 @@ public:
     //! @brief      Destroys the object.
     //--------------------------------------------------------------------------
     ~CNetMdApi();
+
+    //--------------------------------------------------------------------------
+    //! @brief      init libusb hotplug (native or emulation)
+    //
+    //! @return     NetMdErr
+    //--------------------------------------------------------------------------
+    int initHotPlug();
 
     //--------------------------------------------------------------------------
     //! @brief      Initializes the device.
@@ -300,16 +319,18 @@ public:
     bool pcm2MonoSupported();
 
     //--------------------------------------------------------------------------
-    //! @brief      enable PCM to mono patch
+    //! @brief      is native mono upload supported?
     //!
-    //! @return     @ref NetMdErr
+    //! @return     true if supported, false if not
     //--------------------------------------------------------------------------
-    int enablePcm2Mono();
+    bool nativeMonoUploadSupported();
 
     //--------------------------------------------------------------------------
-    //! @brief      disable PCM to mono patch
+    //! @brief      is PCM speedup supportd
+    //!
+    //! @return     true if supported, false if not
     //--------------------------------------------------------------------------
-    void disablePcm2Mono();
+    bool pcmSpeedupSupported();
 
     //--------------------------------------------------------------------------
     //! @brief      Sends an audio track
@@ -359,14 +380,6 @@ public:
     Groups groups();
 
     //--------------------------------------------------------------------------
-    //! @brief      prepare TOC manipulation
-    //!
-    //! @return     NetMdErr
-    //! @see        NetMdErr
-    //--------------------------------------------------------------------------
-    int prepareTOCManip();
-
-    //--------------------------------------------------------------------------
     //! @brief      Reads an utoc sector.
     //!
     //! @param[in]  s     sector number
@@ -390,16 +403,48 @@ public:
     //! @brief      finalize TOC through exploit
     //!
     //! @param[in]  reset      do reset if true (default: false)
-    //! @param[in]  resetWait  The optional reset wait time (15 seconds)
+    //! @param[in]  resetWait  The optional reset wait time (20 seconds)
     //!                        Only needed if reset is true
     //!
     //! @return     NetMdErr
     //! @see        NetMdErr
     //--------------------------------------------------------------------------
-    int finalizeTOC(bool reset = false, uint8_t resetWait = 15);
+    int finalizeTOC(bool reset = false, uint8_t resetWait = 20);
+
+    //--------------------------------------------------------------------------
+    //! @brief start homebrew 
+    //
+    //! @param features OR'd HomebrewFeatures
+    //
+    //! @return NetMdErr
+    //! @see NetMdErr
+    //--------------------------------------------------------------------------
+    int startHBSession(uint32_t features);
+
+    //--------------------------------------------------------------------------
+    //! @brief  stop homebrew session
+    //
+    //! @param features OR'd HomebrewFeatures
+    //
+    //! @return NetMdErr
+    //! @see NetMdErr
+    //--------------------------------------------------------------------------
+    void endHBSession(uint32_t features);
+
+    //--------------------------------------------------------------------------
+    //! @brief      register hotplug callback function
+    //
+    //! @param[in]  cb  callback function to e called on device add / removal
+    //--------------------------------------------------------------------------
+    void registerForHotplugEvents(EvtCallback cb);
 
 protected:
-
+    //--------------------------------------------------------------------------
+    //! @brief      register device callback function
+    //
+    //! @param[in]  added  callback function to e called on device add / removal
+    //--------------------------------------------------------------------------           
+    void hotplugEvent(bool added);
 
 private:
     /// disc header
@@ -410,6 +455,12 @@ private:
 
     /// secure implmentation
     CNetMdSecure* mpSecure;
+
+    /// hotplug callback function
+    EvtCallback mHotplugCallback; 
+
+    /// mutex for hotplug callback
+    std::mutex mMutexHotplug;
 };
 
 } // ~namespace

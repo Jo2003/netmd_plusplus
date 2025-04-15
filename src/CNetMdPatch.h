@@ -30,6 +30,7 @@
 #include "CNetMdDev.hpp"
 #include "netmd_defines.h"
 #include <cstdint>
+#include <optional>
 
 namespace netmd {
 
@@ -46,28 +47,6 @@ class CNetMdPatch
     static constexpr uint32_t PERIPHERAL_BASE = 0x03802000;
     static constexpr uint8_t  MAX_PATCH       = 16; ///< HiMD supports up to 16
 
-    /// device info flags
-    enum SonyDevInfo : uint32_t
-    {
-        SDI_R1000   = (1ul <<  0),    //!< R1.000 version
-        SDI_R1100   = (1ul <<  1),    //!< R1.100 version
-        SDI_R1200   = (1ul <<  2),    //!< R1.200 version
-        SDI_R1300   = (1ul <<  3),    //!< R1.300 version
-        SDI_R1400   = (1ul <<  4),    //!< R1.400 version
-        SDI_R_START = SDI_R1000,
-        SDI_R_END   = SDI_R1400,
-        SDI_S1000   = (1ul <<  5),    //!< S1.000 version
-        SDI_S1100   = (1ul <<  6),    //!< S1.100 version
-        SDI_S1200   = (1ul <<  7),    //!< S1.200 version
-        SDI_S1300   = (1ul <<  8),    //!< S1.300 version
-        SDI_S1400   = (1ul <<  9),    //!< S1.400 version
-        SDI_S1500   = (1ul << 10),    //!< S1.500 version
-        SDI_S1600   = (1ul << 11),    //!< S1.600 version
-        SDI_S_START = SDI_S1000,
-        SDI_S_END   = SDI_S1600,
-        SDI_UNKNOWN = (1ul << 31),    //!< unsupported or unknown
-    };
-
     /// patch IDs
     enum PatchId : uint8_t
     {
@@ -83,6 +62,8 @@ class CNetMdPatch
         PID_SAFETY,
         PID_USB_EXE,
         PID_PCM_TO_MONO, ///< PCM upload, convert to mono on device
+        PID_PCM_SPEEDUP_1,
+        PID_PCM_SPEEDUP_2,
     };
 
     /// exploit ID
@@ -94,15 +75,6 @@ class CNetMdPatch
         EID_DEV_RESET,
     };
 
-    /// memory access
-    enum MemAcc : uint8_t
-    {
-        NETMD_MEM_CLOSE      = 0x0,
-        NETMD_MEM_READ       = 0x1,
-        NETMD_MEM_WRITE      = 0x2,
-        NETMD_MEM_READ_WRITE = 0x3,
-    };
-
     /// payload structure
     struct PayLoad
     {
@@ -111,6 +83,7 @@ class CNetMdPatch
     };
 
     /// type defines
+    using SonyDevInfo       = CNetMdDev::SonyDevInfo;
     using PatchAddr         = std::map<SonyDevInfo, uint32_t>;
     using PatchAdrrTab      = std::map<PatchId, PatchAddr>;
     using PatchPayloadTab   = std::map<PatchId, std::vector<PayLoad>>;
@@ -128,15 +101,13 @@ class CNetMdPatch
         int mNextFreePatch;         ///< next free patch slot
     };
 
-    //--------------------------------------------------------------------------
-    //! @brief      print helper for SonyDevInfo
-    //!
-    //! @param[in, out] os ref. to ostream
-    //! @param[in]      dinfo device info
-    //!
-    //! @returns       ref. to os
-    //--------------------------------------------------------------------------
-    friend std::ostream& operator<<(std::ostream& os, const SonyDevInfo& dinfo);
+    /// storage structure for installed patches
+    struct PatchStorage
+    {
+        PatchId mPid;               ///< patch id
+        uint32_t mAddr;             ///< patch address
+        NetMDByteVector mPatchData; ///< patch data
+    };
 
     //--------------------------------------------------------------------------
     //! @brief      print helper for PatchId
@@ -188,6 +159,11 @@ class CNetMdPatch
     CNetMdPatch(CNetMdDev& netMd); 
 
     //--------------------------------------------------------------------------
+    //! @brief      device was removed
+    //--------------------------------------------------------------------------
+    void deviceRemoved();
+
+    //--------------------------------------------------------------------------
     //! @brief      get number of max patches
     //!
     //! @return     -1 -> error; else max number of patches
@@ -195,22 +171,11 @@ class CNetMdPatch
     int maxPatches() const;
 
     //--------------------------------------------------------------------------
-    //! @brief      get next pree patch index
-    //!
-    //! @param[in]  pid   The pid
-    //!
-    //! @return     -1 -> no more free | > -1 -> free patch index
+    //! @brief      get free patch slots
+    //
+    //! @return     a vector with free patch slots
     //--------------------------------------------------------------------------
-    int nextFreePatch(PatchId pid);
-
-    //--------------------------------------------------------------------------
-    //! @brief      mark patch as unused
-    //!
-    //! @param[in]  pid   The pid
-    //!
-    //! @return     -1 -> not found | > -1 -> last used patch index
-    //--------------------------------------------------------------------------
-    int patchUnused(PatchId pid);
+    std::vector<int> freePatchSlots();
 
     //------------------------------------------------------------------------------
     //! @brief      get patch address by name and device info
@@ -252,37 +217,25 @@ class CNetMdPatch
     static NetMDByteVector exploitData(SonyDevInfo devinfo, ExploitId eid);
 
     //--------------------------------------------------------------------------
+    //! @brief      reverse search for patch id
+    //!
+    //! @param[in]  devinfo   The device info
+    //! @param[in]  addr      The patch address
+    //! @param[in]  patch_cnt The patch content
+    //!
+    //! @return     patch id or nullopt
+    //--------------------------------------------------------------------------
+    static std::optional<PatchId> reverserSearchPatchId(SonyDevInfo devinfo, uint32_t addr, 
+                                                        const NetMDByteVector& patch_cnt); 
+
+    //--------------------------------------------------------------------------
     //! @brief      check if patch is active
     //!
     //! @param[in]  pid      The patch id
-    //! @param[in]  devinfo  The device info
     //!
     //! @return     1 -> patch is active; 0 -> not active
     //--------------------------------------------------------------------------
-    int checkPatch(PatchId pid, SonyDevInfo devinfo);
-
-    //--------------------------------------------------------------------------
-    //! @brief      Reads metadata peripheral.
-    //!
-    //! @param[in]  sector  The sector
-    //! @param[in]  offset  The offset
-    //! @param[in]  length  The length
-    //!
-    //! @return     NetMDByteVector
-    //--------------------------------------------------------------------------
-    NetMDByteVector readMetadataPeripheral(uint16_t sector, uint16_t offset, uint8_t length);
-
-    //--------------------------------------------------------------------------
-    //! @brief      Writes metadata peripheral.
-    //!
-    //! @param[in]  sector  The sector
-    //! @param[in]  offset  The offset
-    //! @param[in]  data    The data
-    //!
-    //! @return     NetMdErr
-    //! @see        NetMdErr
-    //--------------------------------------------------------------------------
-    int writeMetadataPeripheral(uint16_t sector, uint16_t offset, const NetMDByteVector& data);
+    int checkPatch(PatchId pid);
 
     //--------------------------------------------------------------------------
     //! @brief      Reads an utoc sector.
@@ -305,12 +258,12 @@ class CNetMdPatch
     int writeUTOCSector(UTOCSector s, const NetMDByteVector& data);
 
     //--------------------------------------------------------------------------
-    //! @brief      prepare TOC manipulation
+    //! @brief      apply USB execution patch
     //!
     //! @return     NetMdErr
     //! @see        NetMdErr
     //--------------------------------------------------------------------------
-    int prepareTOCManip();
+    int applyUSBExecPatch();
 
     //--------------------------------------------------------------------------
     //! @brief      finalize TOC though exploit
@@ -335,72 +288,6 @@ class CNetMdPatch
     //--------------------------------------------------------------------------
     int USBExecute(SonyDevInfo devInfo, const NetMDByteVector& execData,
                    NetMDResp* pResp = nullptr, bool sendOnly = false);
-
-    //------------------------------------------------------------------------------
-    //! @brief      write patch data
-    //!
-    //! @param[in]  addr      address
-    //! @param[in]  data      data to write
-    //!
-    //! @return     NetMdErr
-    //! @see        NetMdErr
-    //------------------------------------------------------------------------------
-    int patchWrite(uint32_t addr, const NetMDByteVector& data);
-
-    //------------------------------------------------------------------------------
-    //! @brief      read patch data
-    //!
-    //! @param[in]  addr      address
-    //! @param[in]  size      size to read
-    //! @param[in]  data      read data
-    //!
-    //! @return     NetMdErr
-    //! @see        NetMdErr
-    //------------------------------------------------------------------------------
-    int patchRead(uint32_t addr, uint8_t size, NetMDByteVector& data);
-
-    //--------------------------------------------------------------------------
-    //! @brief      change memory access state
-    //!
-    //! @param[in]  addr  The address
-    //! @param[in]  size  The size
-    //! @param[in]  acc   The memory access acc
-    //!
-    //! @return     NetMdErr
-    //! @see        NetMdErr
-    //--------------------------------------------------------------------------
-    int changeMemState(uint32_t addr, uint8_t size, MemAcc acc);
-
-    //------------------------------------------------------------------------------
-    //! @brief      open for read, read, close
-    //!
-    //! @param[in]  addr     address
-    //! @param[in]  sz       size of data to read
-    //! @param[out] data     read data
-    //!
-    //! @return     NetMdErr
-    //! @see        NetMdErr
-    //------------------------------------------------------------------------------
-    int cleanRead(uint32_t addr, uint8_t sz, NetMDByteVector& data);
-
-    //------------------------------------------------------------------------------
-    //! @brief      open for write, write, close
-    //!
-    //! @param[in]  addr     address
-    //! @param[in]  data     data to write
-    //!
-    //! @return     NetMdErr
-    //! @see        NetMdErr
-    //------------------------------------------------------------------------------
-    int cleanWrite(uint32_t addr, const NetMDByteVector& data);
-
-    //--------------------------------------------------------------------------
-    //! @brief      get device code
-    //!
-    //! @return     SonyDevInfo
-    //! @see        SonyDevInfo
-    //--------------------------------------------------------------------------
-    SonyDevInfo devCodeEx();
 
     //--------------------------------------------------------------------------
     //! @brief      Reads a patch data.
@@ -437,14 +324,24 @@ class CNetMdPatch
     int patch(const PatchComplect& pc);
 
     //--------------------------------------------------------------------------
-    //! @brief      unpatch a patch
+    //! @brief      unpatch up to all installed patches
     //!
-    //! @param[in]  pid   patch id of patch to undo
+    //! @param[in]  pids    patches to do unpatch for, if empty unpatch all.
     //!
     //! @return     NetMdErr
     //! @see        NetMdErr
     //--------------------------------------------------------------------------
-    int unpatch(PatchId pid);
+    int unpatch(const std::vector<PatchId>& pids = {});
+
+    //--------------------------------------------------------------------------
+    //! @brief      unpatch a patch related to index
+    //!
+    //! @param[in]  idx   patch id of patch to undo
+    //!
+    //! @return     NetMdErr
+    //! @see        NetMdErr
+    //--------------------------------------------------------------------------
+    int unpatchIdx(int idx);
 
     //--------------------------------------------------------------------------
     //! @brief      do safety patch of needed
@@ -453,14 +350,6 @@ class CNetMdPatch
     //! @see        NetMdErr
     //--------------------------------------------------------------------------
     int safetyPatch();
-
-    //--------------------------------------------------------------------------
-    //! @brief      Enables the factory mode.
-    //!
-    //! @return     NetMdErr
-    //! @see        NetMdErr
-    //--------------------------------------------------------------------------
-    int enableFactory();
 
     //--------------------------------------------------------------------------
     //! @brief      apply SP upload patch
@@ -489,6 +378,11 @@ class CNetMdPatch
     //! @brief      undo the PCM to mono patch
     //--------------------------------------------------------------------------
     void undoPCM2MonoPatch();
+
+    //--------------------------------------------------------------------------
+    //! @brief      undo the PCM to mono patch
+    //--------------------------------------------------------------------------
+    bool pcm2MonoSupported();
 
     //--------------------------------------------------------------------------
     //! @brief      check if device supports SP upload
@@ -526,13 +420,46 @@ class CNetMdPatch
     //--------------------------------------------------------------------------
     int fillPatchComplect(PatchId pid, SonyDevInfo dev, PatchComplect& patch, PatchId plpid = PID_UNUSED);
 
+    //--------------------------------------------------------------------------
+    //! @brief      is PCM speedup supportd
+    //!
+    //! @return     true if supported, false if not
+    //--------------------------------------------------------------------------
+    bool pcmSpeedupSupported();
+
+    //--------------------------------------------------------------------------
+    //! @brief      apply PCM speedup patch
+    //!
+    //! @return     NetMdErr
+    //! @see        NetMdErr
+    //--------------------------------------------------------------------------
+    int applyPCMSpeedupPatch();
+
+    //--------------------------------------------------------------------------
+    //! @brief      apply PCM speedup patch
+    //--------------------------------------------------------------------------
+    void undoPCMSpeedupPatch();
+
+    //--------------------------------------------------------------------------
+    //! @brief      undo USB execution patch
+    //!
+    //! @return     NetMdErr
+    //! @see        NetMdErr
+    //--------------------------------------------------------------------------
+    void undoUSBExecPatch();
+
+    //--------------------------------------------------------------------------
+    //! @brief      update patch storage
+    //--------------------------------------------------------------------------
+    void updatePatchStorage();
+
     CNetMdDev& mNetMd;
 
-    /// device info
-    SonyDevInfo mDevInfo;
-
     //! @brief patch areas used
-    PatchId mUsedPatches[MAX_PATCH];
+    PatchStorage mPatchStorage[MAX_PATCH];
+
+    /// is the patch store valid?
+    bool mPatchStoreValid;
 };
 
 } // ~namespace

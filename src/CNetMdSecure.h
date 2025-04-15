@@ -85,8 +85,8 @@ class CNetMdSecure
     enum AudioPatch : uint8_t
     {
         NO_PATCH, //!< no patch needed
-        WAVE,     //!< wave endianess patch
-        SP        //!< atrac1 SP padding patch
+        SP      , //!< atrac1 SP padding patch
+        PCM2MONO, //!< PCM to mono patch
     };
 
     static constexpr uint16_t NETMD_RIFF_FORMAT_TAG_ATRAC3 = 0x0270;
@@ -124,6 +124,11 @@ class CNetMdSecure
     CNetMdSecure(CNetMdDev& netMd)
         : mNetMd(netMd), mPatch(netMd)
     {}
+
+    //--------------------------------------------------------------------------
+    //! @brief      device was removed
+    //--------------------------------------------------------------------------
+    void deviceRemoved();
 
     //--------------------------------------------------------------------------
     //! @brief      get payload position in response
@@ -413,6 +418,20 @@ class CNetMdSecure
     bool tocManipSupported();
 
     //--------------------------------------------------------------------------
+    //! @brief      is PCM to mono supported?
+    //!
+    //! @return     true if supported, false if not
+    //--------------------------------------------------------------------------
+    bool pcm2MonoSupported();
+
+    //--------------------------------------------------------------------------
+    //! @brief      is native mono upload supported?
+    //!
+    //! @return     true if supported, false if not
+    //--------------------------------------------------------------------------
+    bool nativeMonoUploadSupported();
+
+    //--------------------------------------------------------------------------
     //! @brief      enable PCM to mono patch
     //!
     //! @return     @ref NetMdErr
@@ -436,12 +455,12 @@ class CNetMdSecure
     int setInitTrackTitle(uint16_t trackNo, const std::string& title);
 
     //--------------------------------------------------------------------------
-    //! @brief      prepare TOC manipulation
+    //! @brief      apply USB execution patch
     //!
     //! @return     NetMdErr
     //! @see        NetMdErr
     //--------------------------------------------------------------------------
-    int prepareTOCManip();
+    int applyUSBExecPatch();
 
     //--------------------------------------------------------------------------
     //! @brief      Reads an utoc sector.
@@ -472,6 +491,62 @@ class CNetMdSecure
     //! @see        NetMdErr
     //--------------------------------------------------------------------------
     int finalizeTOC(bool reset);
+
+    //--------------------------------------------------------------------------
+    //! @brief      is PCM speedup supportd
+    //!
+    //! @return     true if supported, false if not
+    //--------------------------------------------------------------------------
+    bool pcmSpeedupSupported();
+
+    //--------------------------------------------------------------------------
+    //! @brief      apply PCM speedup patch
+    //!
+    //! @return     NetMdErr
+    //! @see        NetMdErr
+    //--------------------------------------------------------------------------
+    int applyPCMSpeedupPatch();
+
+    //--------------------------------------------------------------------------
+    //! @brief      undo PCM speedup patch
+    //--------------------------------------------------------------------------
+    void undoPCMSpeedupPatch();
+
+    //--------------------------------------------------------------------------
+    //! @brief apply the SP upload patch
+    //
+    //! @param channels (1 for mono; 2 for stereo)
+    //
+    //! @return  NetMdErr
+    //! @see     NetMdErr
+    //---------------------------------------------------------------------------
+    int applySPUploadPatch(int channels = 2);
+
+    //---------------------------------------------------------------------------
+    //! @brief      undo SP upload patch
+    //--------------------------------------------------------------------------
+    void undoSPUploadPatch();
+
+    //--------------------------------------------------------------------------
+    //! @brief      apply PCM to Mono patch
+    //!
+    //! @return     NetMdErr
+    //! @see        NetMdErr
+    //--------------------------------------------------------------------------
+    int applyPCM2MonoPatch();
+
+    //--------------------------------------------------------------------------
+    //! @brief      undo PCM to Mono patch
+    //--------------------------------------------------------------------------
+    void undoPCM2MonoPatch();
+
+    //--------------------------------------------------------------------------
+    //! @brief      undo USB execution patch
+    //!
+    //! @return     NetMdErr
+    //! @see        NetMdErr
+    //--------------------------------------------------------------------------
+    void undoUSBExecPatch();
 
     CNetMdDev& mNetMd;
 

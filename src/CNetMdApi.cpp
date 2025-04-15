@@ -32,6 +32,8 @@
 #include <cstring>
 #include <sys/types.h>
 #include <unistd.h>
+#include <thread>
+#include <chrono>
 
 /// log configuration
 structlog LOGCFG = {true, true, DEBUG, &std::cout, {}};
@@ -42,7 +44,8 @@ namespace netmd {
 //! @brief      Constructs a new instance.
 //--------------------------------------------------------------------------
 CNetMdApi::CNetMdApi()
-    : mpDiscHeader(nullptr), mpNetMd(nullptr), mpSecure(nullptr)
+    : mpDiscHeader(nullptr), mpNetMd(nullptr), 
+      mpSecure(nullptr), mHotplugCallback(nullptr)
 {
     mpDiscHeader = new CMDiscHeader;
     mpNetMd      = new CNetMdDev;
@@ -50,6 +53,7 @@ CNetMdApi::CNetMdApi()
     if (mpNetMd != nullptr)
     {
         mpSecure = new CNetMdSecure(*mpNetMd);
+        mpNetMd->registerDeviceCallback(std::bind(&CNetMdApi::hotplugEvent, this, std::placeholders::_1));
     }
 }
 
@@ -84,7 +88,7 @@ CNetMdApi::~CNetMdApi()
 //--------------------------------------------------------------------------
 void CNetMdApi::setLogLevel(int severity)
 {
-    std::unique_lock lck(LOGCFG.mtxLog);
+    std::unique_lock<std::mutex> lck(LOGCFG.mtxLog);
     LOGCFG.level = severity;
 }
 
@@ -95,8 +99,23 @@ void CNetMdApi::setLogLevel(int severity)
 //--------------------------------------------------------------------------
 void CNetMdApi::setLogStream(std::ostream& os)
 {
-    std::unique_lock lck(LOGCFG.mtxLog);
+    std::unique_lock<std::mutex> lck(LOGCFG.mtxLog);
     LOGCFG.sout = &os;
+}
+
+//--------------------------------------------------------------------------
+//! @brief      init libusb hotplug (native or emulation)
+//
+//! @return     NetMdErr
+//--------------------------------------------------------------------------
+int CNetMdApi::initHotPlug()
+{
+    int ret;
+    if ((ret = mpNetMd->initHotPlug()) == NETMDERR_NO_ERROR)
+    {
+        return initDiscHeader();
+    }
+    return ret;
 }
 
 //--------------------------------------------------------------------------
@@ -132,7 +151,7 @@ std::string CNetMdApi::getDeviceName() const
 //--------------------------------------------------------------------------
 int CNetMdApi::cacheTOC()
 {
-    mLOG(DEBUG);
+    mFLOW(DEBUG);
     unsigned char request[] = {0x00, 0x18, 0x08, 0x10, 0x18, 0x02, 0x03, 0x00};
     int ret = mpNetMd->exchange(request, sizeof(request));
 
@@ -148,7 +167,7 @@ int CNetMdApi::cacheTOC()
 //--------------------------------------------------------------------------
 int CNetMdApi::syncTOC()
 {
-    mLOG(DEBUG);
+    mFLOW(DEBUG);
     unsigned char request[] = {0x00, 0x18, 0x08, 0x10, 0x18, 0x02, 0x00, 0x00};
     int ret = mpNetMd->exchange(request, sizeof(request));
 
@@ -164,7 +183,6 @@ int CNetMdApi::syncTOC()
 //--------------------------------------------------------------------------
 int CNetMdApi::trackCount()
 {
-    mLOG(DEBUG);
     unsigned char req[] = {0x00, 0x18, 0x06, 0x02, 0x10, 0x10,
                            0x01, 0x30, 0x00, 0x10, 0x00, 0xff,
                            0x00, 0x00, 0x00, 0x00, 0x00};
@@ -193,7 +211,6 @@ int CNetMdApi::trackCount()
 //--------------------------------------------------------------------------
 int CNetMdApi::discFlags()
 {
-    mLOG(DEBUG);
     unsigned char req[] = {0x00, 0x18, 0x06, 0x01, 0x10, 0x10,
                            0x00, 0xff, 0x00, 0x00, 0x01, 0x00,
                            0x0b};
@@ -222,7 +239,6 @@ int CNetMdApi::discFlags()
 //--------------------------------------------------------------------------
 int CNetMdApi::eraseDisc()
 {
-    mLOG(DEBUG);
     unsigned char request[] = {0x00, 0x18, 0x40, 0xff, 0x00, 0x00};
     int ret = mpNetMd->exchange(request, sizeof(request));
 
@@ -244,7 +260,6 @@ int CNetMdApi::eraseDisc()
 //--------------------------------------------------------------------------
 int CNetMdApi::trackTime(int trackNo, TrackTime& trackTime)
 {
-    mLOG(DEBUG);
     unsigned char hs[] = {0x00, 0x18, 0x08, 0x10, 0x10, 0x01, 0x01, 0x00};
 
     NetMDResp query, response;
@@ -277,7 +292,6 @@ int CNetMdApi::trackTime(int trackNo, TrackTime& trackTime)
 //--------------------------------------------------------------------------
 int CNetMdApi::rawDiscHeader(std::string& header)
 {
-    mLOG(DEBUG);
     header.clear();
 
     int ret;
@@ -349,7 +363,6 @@ int CNetMdApi::rawDiscHeader(std::string& header)
 //--------------------------------------------------------------------------
 int CNetMdApi::initDiscHeader()
 {
-    mLOG(DEBUG);
     std::string head;
 
     if (rawDiscHeader(head) == NETMDERR_NO_ERROR)
@@ -397,7 +410,6 @@ int CNetMdApi::setDiscTitle(const std::string& title)
 //--------------------------------------------------------------------------
 int CNetMdApi::writeRawDiscHeader()
 {
-    mLOG(DEBUG);
     const char* content;
     size_t contentSz = 0;
     std::string currHead;
@@ -458,7 +470,6 @@ int CNetMdApi::writeRawDiscHeader()
 //--------------------------------------------------------------------------
 int CNetMdApi::moveTrack(uint16_t from, uint16_t to)
 {
-    mLOG(DEBUG);
     int ret = 0;
     unsigned char hs[] = {0x00, 0x18, 0x08, 0x10, 0x10, 0x01, 0x00, 0x00};
 
@@ -492,7 +503,6 @@ int CNetMdApi::moveTrack(uint16_t from, uint16_t to)
 //--------------------------------------------------------------------------
 int CNetMdApi::setGroupTitle(uint16_t group, const std::string& title)
 {
-    mLOG(DEBUG);
     if (mpDiscHeader->renameGroup(group, title) == 0)
     {
         return writeRawDiscHeader();
@@ -512,7 +522,6 @@ int CNetMdApi::setGroupTitle(uint16_t group, const std::string& title)
 //--------------------------------------------------------------------------
 int CNetMdApi::createGroup(const std::string& title, int first, int last)
 {
-    mLOG(DEBUG);
     if (mpDiscHeader->addGroup(title, first, last) >= 0)
     {
         return writeRawDiscHeader();
@@ -531,7 +540,6 @@ int CNetMdApi::createGroup(const std::string& title, int first, int last)
 //--------------------------------------------------------------------------
 int CNetMdApi::addTrackToGroup(int track, int group)
 {
-    mLOG(DEBUG);
     // this might fail
     mpDiscHeader->delTrackFromGroup(group, track);
 
@@ -553,7 +561,6 @@ int CNetMdApi::addTrackToGroup(int track, int group)
 //--------------------------------------------------------------------------
 int CNetMdApi::delTrackFromGroup(int track, int group)
 {
-    mLOG(DEBUG);
     if (mpDiscHeader->delTrackFromGroup(group, track) == 0)
     {
         return writeRawDiscHeader();
@@ -571,7 +578,6 @@ int CNetMdApi::delTrackFromGroup(int track, int group)
 //--------------------------------------------------------------------------
 int CNetMdApi::deleteGroup(int group)
 {
-    mLOG(DEBUG);
     if (mpDiscHeader->delGroup(group) == 0)
     {
         return writeRawDiscHeader();
@@ -589,7 +595,6 @@ int CNetMdApi::deleteGroup(int group)
 //--------------------------------------------------------------------------
 int CNetMdApi::deleteTrack(uint16_t track)
 {
-    mLOG(DEBUG) << "Track " << track;
     int ret = 0;
 
     if (trackCount() > static_cast<int>(track))
@@ -635,7 +640,6 @@ int CNetMdApi::deleteTrack(uint16_t track)
 //--------------------------------------------------------------------------
 int CNetMdApi::trackBitRate(uint16_t track, AudioEncoding& encoding, uint8_t& channel)
 {
-    mLOG(DEBUG);
     encoding = AudioEncoding::UNKNOWN;
     channel  = 0;
 
@@ -645,7 +649,7 @@ int CNetMdApi::trackBitRate(uint16_t track, AudioEncoding& encoding, uint8_t& ch
 
     if (((ret = formatQuery(format, {{track}}, query)) == 19) && (query != nullptr))
     {
-        uwait(5'000);
+        std::this_thread::sleep_for(std::chrono::milliseconds(5));
 
         if ((mpNetMd->exchange(query.get(), ret, &response) >= 29) && (response != nullptr))
         {
@@ -676,7 +680,6 @@ int CNetMdApi::trackBitRate(uint16_t track, AudioEncoding& encoding, uint8_t& ch
 //--------------------------------------------------------------------------
 int CNetMdApi::trackFlags(uint16_t track, TrackProtection& flags)
 {
-    mLOG(DEBUG);
     flags = TrackProtection::UNKNOWN;
     int ret;
 
@@ -713,7 +716,6 @@ int CNetMdApi::trackFlags(uint16_t track, TrackProtection& flags)
 //--------------------------------------------------------------------------
 int CNetMdApi::trackTitle(uint16_t track, std::string& title)
 {
-    mLOG(DEBUG);
     title.clear();
 
     int ret;
@@ -752,7 +754,6 @@ int CNetMdApi::trackTitle(uint16_t track, std::string& title)
 //--------------------------------------------------------------------------
 bool CNetMdApi::spUploadSupported()
 {
-    mLOG(DEBUG);
     return mpSecure->spUploadSupported();
 }
 
@@ -767,7 +768,6 @@ bool CNetMdApi::spUploadSupported()
 //--------------------------------------------------------------------------
 int CNetMdApi::setTrackTitle(uint16_t trackNo, const std::string& title)
 {
-    mLOG(DEBUG);
     int ret;
     std::string currTitle;
     uint8_t oldSz = 0;
@@ -824,7 +824,7 @@ int CNetMdApi::setTrackTitle(uint16_t trackNo, const std::string& title)
 //--------------------------------------------------------------------------
 int CNetMdApi::sendAudioFile(const std::string& filename, const std::string& title, DiskFormat otf)
 {
-    mLOG(DEBUG);
+    mFLOW(INFO);
     return mpSecure->sendAudioTrack(filename, title, otf);
 }
 
@@ -848,7 +848,6 @@ bool CNetMdApi::otfEncodeSupported()
 //--------------------------------------------------------------------------
 int CNetMdApi::discCapacity(DiscCapacity& dcap)
 {
-    mLOG(DEBUG);
     int ret;
     uint8_t hs[] = {0x00, 0x18, 0x08, 0x10, 0x10, 0x00, 0x01, 0x00};
     uint8_t request[] = {0x00, 0x18, 0x06, 0x02, 0x10, 0x10,
@@ -883,17 +882,6 @@ Groups CNetMdApi::groups()
 }
 
 //--------------------------------------------------------------------------
-//! @brief      prepare TOC manipulation
-//!
-//! @return     NetMdErr
-//! @see        NetMdErr
-//--------------------------------------------------------------------------
-int CNetMdApi::prepareTOCManip()
-{
-    return mpSecure->prepareTOCManip();
-}
-
-//--------------------------------------------------------------------------
 //! @brief      Reads an utoc sector.
 //!
 //! @param[in]  s     sector number
@@ -923,7 +911,7 @@ int CNetMdApi::writeUTOCSector(UTOCSector s, const NetMDByteVector& data)
 //! @brief      finalize TOC through exploit
 //!
 //! @param[in]  reset      do reset if true (default: false)
-//! @param[in]  resetWait  The optional reset wait time (15 seconds)
+//! @param[in]  resetWait  The optional reset wait time (20 seconds)
 //!                        Only needed if reset is true
 //!
 //! @return     NetMdErr
@@ -935,13 +923,16 @@ int CNetMdApi::finalizeTOC(bool reset, uint8_t resetWait)
 
     if (reset && (ret == NETMDERR_NO_ERROR))
     {
-        int wait = resetWait * 1'000'000 / 10;
+        int wait = resetWait * 1'000 / 10;
         for(int i = 91; i < 100; i++)
         {
-            uwait(wait);
+            std::this_thread::sleep_for(std::chrono::milliseconds(wait));
             mLOG(CAPTURE) << "Finalizing TOC: " << std::setw(2) << std::setfill('0') << i << "%";
         }
-        ret = initDevice();
+        if (!mpNetMd->mbHotPlug)
+        {
+            ret = initDevice();
+        }
     }
     mLOG(CAPTURE) << "Finalizing TOC: 100%";
     return ret;
@@ -954,7 +945,7 @@ int CNetMdApi::finalizeTOC(bool reset, uint8_t resetWait)
 //------------------------------------------------------------------------------
 bool CNetMdApi::tocManipSupported()
 {
-    return mpSecure->tocManipSupported();
+    return mpSecure->pcm2MonoSupported();
 }
 
 //--------------------------------------------------------------------------
@@ -969,21 +960,150 @@ bool CNetMdApi::pcm2MonoSupported()
 }
 
 //--------------------------------------------------------------------------
-//! @brief      enable PCM to mono patch
+//! @brief      is native mono upload supported?
 //!
-//! @return     @ref NetMdErr
+//! @return     true if supported, false if not
 //--------------------------------------------------------------------------
-int CNetMdApi::enablePcm2Mono()
+bool CNetMdApi::nativeMonoUploadSupported()
 {
-    return mpSecure->enablePcm2Mono();
+    return mpSecure->nativeMonoUploadSupported();
 }
 
 //--------------------------------------------------------------------------
-//! @brief      disable PCM to mono patch
+//! @brief      is PCM speedup supportd
+//!
+//! @return     true if supported, false if not
 //--------------------------------------------------------------------------
-void CNetMdApi::disablePcm2Mono()
+bool CNetMdApi::pcmSpeedupSupported()
 {
-    mpSecure->disablePcm2Mono();
+    return mpSecure->pcmSpeedupSupported();
+}
+
+//--------------------------------------------------------------------------
+//! @brief start homebrew 
+//
+//! @param features OR'd HomebrewFeatures
+//
+//! @return NetMdErr
+//! @see NetMdErr
+//--------------------------------------------------------------------------
+int CNetMdApi::startHBSession(uint32_t features)
+{
+    mFLOW(INFO);
+    int ret = NETMDERR_NO_ERROR;
+    int e   = NETMDERR_NO_ERROR;
+
+    if (features != NOTHING)
+    {
+        if ((features & USB_EXEC) && tocManipSupported())
+        {
+            mLOG(INFO) << "apply USB Exec patch ...";
+            if ((e = mpSecure->applyUSBExecPatch()) != NETMDERR_NO_ERROR)
+            {
+                ret = e;
+            }
+        }
+
+        if ((features & PCM_2_MONO) && pcm2MonoSupported())
+        {
+            mLOG(INFO) << "apply PCM to mono patch ...";
+            if ((e = mpSecure->applyPCM2MonoPatch()) != NETMDERR_NO_ERROR)
+            {
+                ret = e;
+            }
+        }
+
+        if ((features & PCM_SPEEDUP) && pcmSpeedupSupported())
+        {
+            mLOG(INFO) << "apply PCM speedup patch ...";
+            if ((e = mpSecure->applyPCMSpeedupPatch()) != NETMDERR_NO_ERROR)
+            {
+                ret = e;
+            }
+        }
+
+        if ((features & SP_UPLOAD) && spUploadSupported())
+        {
+            mLOG(INFO) << "apply SP upload patch ...";
+            if ((e = mpSecure->applySPUploadPatch()) != NETMDERR_NO_ERROR)
+            {
+                ret = e;
+            }
+        }
+    }
+
+    return ret;
+}
+
+//--------------------------------------------------------------------------
+//! @brief  stop homebrew session
+//
+//! @param features OR'd HomebrewFeatures
+//
+//! @return NetMdErr
+//! @see NetMdErr
+//--------------------------------------------------------------------------
+void CNetMdApi::endHBSession(uint32_t features)
+{
+    mFLOW(INFO);
+    if (features & SP_UPLOAD)
+    {
+        mpSecure->undoSPUploadPatch();
+    }    
+    if (features & USB_EXEC)
+    {
+        mpSecure->undoUSBExecPatch();
+    }
+
+    if (features & PCM_2_MONO)
+    {
+        mpSecure->undoPCM2MonoPatch();
+    }
+
+    if (features & PCM_SPEEDUP)
+    {
+        mpSecure->undoPCMSpeedupPatch();
+    }
+
+    if (features & SP_UPLOAD)
+    {
+        mpSecure->undoSPUploadPatch();
+    }
+} 
+
+//--------------------------------------------------------------------------
+//! @brief      register device callback function
+//
+//! @param[in]  added  callback function to e called on device add / removal
+//--------------------------------------------------------------------------           
+void CNetMdApi::hotplugEvent(bool added)
+{
+    std::unique_lock<std::mutex> lck(mMutexHotplug);
+    if (mHotplugCallback)
+    {
+        mHotplugCallback(added);
+    }
+
+    if (!added)
+    {
+        mLOG(INFO) << "Device removed";
+        mpSecure->deviceRemoved();
+    }
+    else
+    {
+        mLOG(INFO) << "Device added";
+    }
+}
+
+//--------------------------------------------------------------------------
+//! @brief      register hotplug callback function
+//
+//! @param[in]  cb  callback function to e called on device add / removal
+//--------------------------------------------------------------------------
+void CNetMdApi::registerForHotplugEvents(EvtCallback cb)
+{
+    std::unique_lock<std::mutex> lck(mMutexHotplug);
+    mHotplugCallback = cb;
 }
 
 } // ~namespace

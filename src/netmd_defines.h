@@ -33,6 +33,7 @@
 #include <memory>
 #include <variant>
 #include <string>
+#include <functional>
 
 namespace  netmd  {
 
@@ -46,6 +47,13 @@ using NetMDResp       = std::unique_ptr<uint8_t[]>;
 using NetMDByteVector = std::vector<uint8_t>;
 using NetMDParam      = std::variant<uint8_t, uint16_t, uint32_t, uint64_t, NetMDByteVector>;
 using NetMDParams     = std::vector<NetMDParam>;
+
+//--------------------------------------------------------------------------
+//! @brief hotplug callback function signature
+//
+//! @param[in]  true if device is added; false if removed
+//--------------------------------------------------------------------------
+using EvtCallback = std::function<void(bool)>;
 
 /// type definitaion stored in param
 enum NetMDParamType
