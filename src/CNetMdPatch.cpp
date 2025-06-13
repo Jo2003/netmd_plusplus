@@ -1235,11 +1235,13 @@ int CNetMdPatch::unpatchIdx(int idx)
             mNetMdThrow(NETMDERR_PARAM, "Error with patch number!");
         }
 
+        /*
         // clean entry
         if (patch(0, {0, 0, 0, 0}, idx) != NETMDERR_NO_ERROR)
         {
             mNetMdThrow(NETMDERR_USB, "Error while cleaning patch data.");
         }
+        */
 
         const uint32_t base    = PERIPHERAL_BASE + idx           * 0x10;
         const uint32_t control = PERIPHERAL_BASE + iMaxPatches   * 0x10;
@@ -1385,10 +1387,12 @@ int CNetMdPatch::applySpPatch(int chanNo)
 
         updatePatchStorage();
 
+        /*
         if (safetyPatch() != NETMDERR_NO_ERROR)
         {
             mNetMdThrow(NETMDERR_USB, "Can't enable safety patch!");
         }
+        */
 
         if ((devcode == SDI(S1100)) || (devcode == SDI(S1200)))
         {
@@ -1537,10 +1541,12 @@ int CNetMdPatch::applyPCM2MonoPatch()
 
         updatePatchStorage();
 
+        /*
         if (safetyPatch() != NETMDERR_NO_ERROR)
         {
             mNetMdThrow(NETMDERR_USB, "Can't enable safety patch!");
         }
+        */
 
         PatchComplect pc;
 
@@ -1693,10 +1699,12 @@ int CNetMdPatch::applyPCMSpeedupPatch()
 
         updatePatchStorage();
         
+        /*
         if (safetyPatch() != NETMDERR_NO_ERROR)
         {
             mNetMdThrow(NETMDERR_USB, "Can't enable safety patch!");
         }
+        */
 
         if (!checkPatch(PID_PCM_SPEEDUP_1))
         {
@@ -1783,6 +1791,13 @@ void CNetMdPatch::updatePatchStorage()
         
     for (int i = 0; i < maxPatches(); i++)
     {
+        patch(patch_addr, patch_data, i);
+        
+        std::this_thread::sleep_for(std::chrono::milliseconds(100));
+        
+        unpatchIdx(i);
+
+        /*
         if (readPatchData(i, patch_addr, patch_data) == NETMDERR_NO_ERROR)
         {
             if (auto pid = reverserSearchPatchId(mNetMd.sonyDevCode(), patch_addr, patch_data))
@@ -1795,7 +1810,9 @@ void CNetMdPatch::updatePatchStorage()
                 unpatchIdx(i);
             }
         }
+        */
     }
+    safetyPatch();
 
     mPatchStoreValid = true;
 }

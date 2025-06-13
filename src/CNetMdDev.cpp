@@ -618,7 +618,7 @@ int CNetMdDev::responseLength(uint8_t& req)
     static constexpr uint8_t REQ_TYPE = LIBUSB_ENDPOINT_IN | LIBUSB_REQUEST_TYPE_VENDOR | LIBUSB_RECIPIENT_INTERFACE;
     int ret = 0;
 
-    if ((ret = libusb_control_transfer(mDevice.mDevHdl, REQ_TYPE, 0x01, 0, 0, pollbuf, 4, NETMD_POLL_TIMEOUT)) > 0)
+    if ((ret = libusb_control_transfer(mDevice.mDevHdl, REQ_TYPE, 0x01, 0, 0, pollbuf, 4, NETMD_POLL_TIMEOUT * 2)) > 0)
     {
         if (pollbuf[0] != 0)
         {
