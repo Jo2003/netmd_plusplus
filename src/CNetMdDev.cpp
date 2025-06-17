@@ -217,7 +217,7 @@ int CNetMdDev::initHotPlug()
             libusb_hotplug_register_callback(
                 NULL,
                 LIBUSB_HOTPLUG_EVENT_DEVICE_ARRIVED,
-                0,
+                LIBUSB_HOTPLUG_NO_FLAGS,
                 LIBUSB_HOTPLUG_MATCH_ANY,
                 LIBUSB_HOTPLUG_MATCH_ANY,
                 LIBUSB_HOTPLUG_MATCH_ANY,
@@ -228,7 +228,7 @@ int CNetMdDev::initHotPlug()
             libusb_hotplug_register_callback(
                 NULL,
                 LIBUSB_HOTPLUG_EVENT_DEVICE_LEFT,
-                0,
+                LIBUSB_HOTPLUG_NO_FLAGS,
                 LIBUSB_HOTPLUG_MATCH_ANY,
                 LIBUSB_HOTPLUG_MATCH_ANY,
                 LIBUSB_HOTPLUG_MATCH_ANY,

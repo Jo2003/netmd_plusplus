@@ -28,7 +28,7 @@ endif()
 
 # STATIC or SHARED is decided by option BUILD_SHARED_LIBS = ON
 add_library("netmd++" ${LIB_SRC})
-target_link_libraries("netmd++" usb-1.0 gcrypt gpg-error)
+target_link_libraries("netmd++" usb-1.0 gcrypt gpg-error pthread)
 
 if (APPLE)
     target_include_directories("netmd++" PRIVATE /usr/local/include)
