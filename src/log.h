@@ -41,7 +41,6 @@ extern structlog LOGCFG;
         std::string_view prettyFunction(s);
         size_t bracket = prettyFunction.rfind("(");
         size_t colon1  = prettyFunction.rfind("::", bracket);
-        size_t colon2  = prettyFunction.rfind("::", colon1);
         size_t space   = std::string::npos;
         if (colon1 != std::string::npos)
         {
@@ -78,7 +77,7 @@ public:
 
         if(LOGCFG.time)
         {
-            *this << timeStamp();
+		            *this << timeStamp();
         }
 
         if(LOGCFG.headers)
